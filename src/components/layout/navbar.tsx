@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Sparkles } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -45,6 +46,13 @@ export function Navbar() {
               className="text-sm font-medium transition-colors hover:text-primary"
             >
               Analytics
+            </Link>
+            <Link
+              href="/ai-advisor"
+              className="text-sm font-medium transition-colors hover:text-primary flex items-center"
+            >
+              <Sparkles className="mr-1 h-3 w-3" />
+              AI Advisor
             </Link>
           </nav>
           <div className="hidden md:flex items-center gap-4">

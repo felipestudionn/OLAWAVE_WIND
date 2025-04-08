@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import Image from "next/image";
+import { Sparkles } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -28,10 +29,11 @@ export default function HomePage() {
                     Explore Dashboard
                   </Link>
                   <Link
-                    href="/trends"
+                    href="/ai-advisor"
                     className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                   >
-                    View Trends
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    AI Advisor
                   </Link>
                 </div>
               </div>

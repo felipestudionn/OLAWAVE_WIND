@@ -8,7 +8,8 @@ import {
   Settings,
   ShoppingBag,
   Shirt,
-  Footprints
+  Footprints,
+  Sparkles
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -38,6 +39,13 @@ export function Sidebar() {
             >
               <BarChart3 className="mr-3 h-4 w-4" />
               Analytics
+            </Link>
+            <Link 
+              href="/ai-advisor" 
+              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground"
+            >
+              <Sparkles className="mr-3 h-4 w-4 text-primary" />
+              AI Advisor
             </Link>
           </div>
         </div>
