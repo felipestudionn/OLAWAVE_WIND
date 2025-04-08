@@ -5,7 +5,10 @@ import {
   BarChart3, 
   Instagram, 
   Search, 
-  Settings 
+  Settings,
+  ShoppingBag,
+  Shirt,
+  Footprints
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -38,6 +41,34 @@ export function Sidebar() {
             </Link>
           </div>
         </div>
+
+        <div className="py-2">
+          <h2 className="mb-5 px-4 text-lg font-semibold">Categories</h2>
+          <div className="space-y-3">
+            <Link 
+              href="/categories/clothing" 
+              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              <Shirt className="mr-3 h-4 w-4" />
+              Clothing
+            </Link>
+            <Link 
+              href="/categories/shoes" 
+              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              <Footprints className="mr-3 h-4 w-4" />
+              Shoes
+            </Link>
+            <Link 
+              href="/categories/bags" 
+              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              <ShoppingBag className="mr-3 h-4 w-4" />
+              Bags
+            </Link>
+          </div>
+        </div>
+        
         <div className="py-2">
           <h2 className="mb-5 px-4 text-lg font-semibold">Data Sources</h2>
           <div className="space-y-3">
@@ -71,6 +102,7 @@ export function Sidebar() {
             </Link>
           </div>
         </div>
+        
         <div className="py-2">
           <h2 className="mb-5 px-4 text-lg font-semibold">Settings</h2>
           <div className="space-y-3">
