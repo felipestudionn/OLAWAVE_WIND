@@ -4,27 +4,25 @@ import { BarChart3, PieChart, LineChart, Calendar, Download } from 'lucide-react
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground">
-            Detailed fashion trend metrics and visualizations
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 gap-1">
+    <div className="flex flex-col gap-10">
+      <div className="space-y-4 py-4">
+        <h1 className="text-3xl font-bold tracking-tight mb-3">Analytics</h1>
+        <p className="text-muted-foreground max-w-3xl">
+          Comprehensive fashion trend metrics and visualizations to inform strategic decisions.
+        </p>
+        <div className="flex items-center gap-3 pt-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2">
             <Calendar className="h-4 w-4" />
             Last 30 Days
           </Button>
-          <Button size="sm" className="h-8 gap-1">
+          <Button size="sm" className="h-9 gap-2">
             <Download className="h-4 w-4" />
             Export
           </Button>
         </div>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Platform Distribution</CardTitle>
@@ -95,7 +93,7 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-8 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Demographic Analysis</CardTitle>

@@ -1,32 +1,81 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import Image from "next/image";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="mr-4 flex">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">FashionTrend</span>
+    <div className="fixed top-0 left-0 right-0 z-50 border-b bg-white dark:bg-gray-950">
+      <div className="flex h-20 items-center px-4 md:px-6">
+        <div className="flex items-center gap-3">
+          {/* OLAWAVE Logo */}
+          <div className="relative h-20 w-20 flex items-center">
+            <Image
+              src="/images/olawave-logo.svg"
+              alt="OLAWAVE Logo"
+              width={84}
+              height={84}
+              className="object-contain"
+              priority
+            />
+          </div>
+          <Link href="/" className="flex flex-col">
+            <span className="olawave-font text-xl font-normal tracking-normal uppercase">
+              OLAWAVE AI
+            </span>
+            <span className="text-xs text-muted-foreground">
+              FASHION TRENDS
+            </span>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-2">
-            <Link href="/dashboard" passHref>
-              <Button variant="ghost">Dashboard</Button>
+        <div className="ml-auto flex items-center gap-4">
+          <nav className="hidden md:flex items-center gap-6">
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Dashboard
             </Link>
-            <Link href="/trends" passHref>
-              <Button variant="ghost">Trends</Button>
+            <Link
+              href="/trends"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Trends
             </Link>
-            <Link href="/analytics" passHref>
-              <Button variant="ghost">Analytics</Button>
-            </Link>
-            <Link href="/about" passHref>
-              <Button variant="ghost">About</Button>
+            <Link
+              href="/analytics"
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Analytics
             </Link>
           </nav>
+          <div className="hidden md:flex items-center gap-4">
+            <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+              Sign In
+            </button>
+            <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
+              Get Started
+            </button>
+          </div>
+          <button className="md:hidden inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 w-9">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+            >
+              <line x1="4" x2="20" y1="12" y2="12"></line>
+              <line x1="4" x2="20" y1="6" y2="6"></line>
+              <line x1="4" x2="20" y1="18" y2="18"></line>
+            </svg>
+            <span className="sr-only">Toggle Menu</span>
+          </button>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

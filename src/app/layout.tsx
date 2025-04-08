@@ -1,12 +1,9 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'Fashion Trend Analyzer',
-  description: 'A fashion trend analysis web application',
+  title: 'OLAWAVE AI - Fashion Trend Analyzer',
+  description: 'Intelligence in motion. Decoding patterns, revealing context, and transforming uncertainty into strategic insight.',
 };
 
 export default function RootLayout({
@@ -16,8 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        {children}
+      <body className="min-h-screen font-sans antialiased">
+        <div className="relative flex min-h-screen flex-col">
+          <div className="fixed inset-0 -z-10 olawave-gradient opacity-20"></div>
+          <main className="flex-1">{children}</main>
+        </div>
       </body>
     </html>
   );

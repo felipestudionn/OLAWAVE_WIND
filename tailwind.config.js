@@ -16,6 +16,17 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-open-sauce)', 'sans-serif'],
+        olawave: ['var(--font-open-sauce)', 'sans-serif'],
+      },
+      fontSize: {
+        'olawave-title': ['2.5rem', {
+          lineHeight: '1',
+          letterSpacing: '0.01em',
+          fontWeight: '400',
+        }],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
