@@ -14,7 +14,7 @@ import {
 
 export function Sidebar() {
   return (
-    <div className="h-screen w-64 border-r bg-background p-6 pt-8">
+    <div className="min-h-screen w-64 border-r bg-background p-6 pt-8">
       <div className="space-y-8">
         <div className="py-2">
           <h2 className="mb-5 px-4 text-lg font-semibold">Main</h2>
@@ -119,7 +119,7 @@ export function Sidebar() {
               className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
             >
               <Settings className="mr-3 h-4 w-4" />
-              Settings
+              Preferences
             </Link>
           </div>
         </div>
