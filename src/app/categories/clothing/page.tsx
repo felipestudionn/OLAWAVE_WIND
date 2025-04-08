@@ -1,15 +1,64 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Filter, Shirt } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Filter, Instagram, Search, ChevronRight } from 'lucide-react';
+import { TrendEvolutionChart } from "@/components/charts/trend-evolution-chart";
+import Link from "next/link";
 
 export default function ClothingCategoryPage() {
+  // Sample trend evolution data for each trend
+  const trendEvolutionData = {
+    "sustainable": [
+      { month: "Jan", value: 42 },
+      { month: "Feb", value: 45 },
+      { month: "Mar", value: 48 },
+      { month: "Apr", value: 52 },
+      { month: "May", value: 55 },
+      { month: "Jun", value: 60 }
+    ],
+    "oversized": [
+      { month: "Jan", value: 40 },
+      { month: "Feb", value: 43 },
+      { month: "Mar", value: 45 },
+      { month: "Apr", value: 48 },
+      { month: "May", value: 52 },
+      { month: "Jun", value: 55 }
+    ],
+    "dopamine": [
+      { month: "Jan", value: 25 },
+      { month: "Feb", value: 32 },
+      { month: "Mar", value: 38 },
+      { month: "Apr", value: 45 },
+      { month: "May", value: 52 },
+      { month: "Jun", value: 60 }
+    ],
+    "genderless": [
+      { month: "Jan", value: 30 },
+      { month: "Feb", value: 35 },
+      { month: "Mar", value: 42 },
+      { month: "Apr", value: 48 },
+      { month: "May", value: 55 },
+      { month: "Jun", value: 62 }
+    ],
+    "craftcore": [
+      { month: "Jan", value: 20 },
+      { month: "Feb", value: 28 },
+      { month: "Mar", value: 35 },
+      { month: "Apr", value: 42 },
+      { month: "May", value: 50 },
+      { month: "Jun", value: 58 }
+    ]
+  };
+
+  // Type for the evolution data to fix TypeScript error
+  type TrendEvolutionKeys = keyof typeof trendEvolutionData;
+
   return (
     <div className="flex flex-col gap-10">
       <div className="space-y-4 py-4">
         <h1 className="text-3xl font-bold tracking-tight mb-3">Clothing Trends</h1>
         <p className="text-muted-foreground max-w-3xl">
-          Explore the latest trends in clothing fashion across various platforms and demographics.
+          Analysis of current clothing trends across platforms, revealing patterns and consumer preferences in apparel.
         </p>
         <div className="flex items-center gap-3 pt-2">
           <Button variant="outline" size="sm" className="h-9 gap-2">
@@ -22,37 +71,67 @@ export default function ClothingCategoryPage() {
         </div>
       </div>
       
-      <div className="grid gap-8">
+      <div className="grid gap-8 md:grid-cols-2">
         {[
           {
             id: 1,
+            title: "Sustainable Fashion",
+            growth: "+18%",
+            description: "Eco-friendly and ethically produced clothing continues to gain momentum",
+            platforms: ["Instagram", "Pinterest", "Google"],
+            demographics: "25-34 age group, urban areas",
+            keywords: ["eco-friendly", "ethical", "sustainable", "recycled", "organic"],
+            sentiment: "Positive",
+            evolutionKey: "sustainable" as TrendEvolutionKeys,
+            color: "#4CAF50"
+          },
+          {
+            id: 2,
             title: "Oversized Silhouettes",
             growth: "+15%",
             description: "Loose-fitting clothing and oversized proportions dominating casual wear",
             platforms: ["Instagram", "TikTok"],
             demographics: "18-35 age group, urban centers",
             keywords: ["oversized", "baggy", "loose-fit", "comfort", "streetwear"],
-            sentiment: "Positive"
-          },
-          {
-            id: 2,
-            title: "Sustainable Materials",
-            growth: "+22%",
-            description: "Eco-friendly fabrics and sustainable production methods gaining popularity",
-            platforms: ["Instagram", "Pinterest"],
-            demographics: "25-40 age group, environmentally conscious consumers",
-            keywords: ["sustainable", "eco-friendly", "organic cotton", "recycled", "ethical"],
-            sentiment: "Very Positive"
+            sentiment: "Positive",
+            evolutionKey: "oversized" as TrendEvolutionKeys,
+            color: "#2196F3"
           },
           {
             id: 3,
-            title: "Y2K Revival",
-            growth: "+24%",
-            description: "Early 2000s fashion making a strong comeback among Gen Z",
-            platforms: ["TikTok", "Instagram"],
-            demographics: "16-24 age group, global trend",
-            keywords: ["y2k", "2000s", "low-rise", "butterfly", "rhinestone"],
-            sentiment: "Very Positive"
+            title: "Dopamine Dressing",
+            growth: "+22%",
+            description: "Vibrant colors and playful patterns to boost mood and express joy",
+            platforms: ["Instagram", "Pinterest", "TikTok"],
+            demographics: "18-40 age group, fashion-forward consumers",
+            keywords: ["colorful", "vibrant", "playful", "mood-boosting", "expressive"],
+            sentiment: "Very Positive",
+            evolutionKey: "dopamine" as TrendEvolutionKeys,
+            color: "#FF9800"
+          },
+          {
+            id: 4,
+            title: "Genderless Fashion",
+            growth: "+20%",
+            description: "Gender-neutral clothing challenging traditional fashion boundaries",
+            platforms: ["Instagram", "TikTok", "Pinterest"],
+            demographics: "18-30 age group, urban areas",
+            keywords: ["genderless", "unisex", "gender-neutral", "inclusive", "fluid"],
+            sentiment: "Very Positive",
+            evolutionKey: "genderless" as TrendEvolutionKeys,
+            color: "#607D8B"
+          },
+          {
+            id: 5,
+            title: "Craftcore Aesthetic",
+            growth: "+19%",
+            description: "Handmade, artisanal elements and traditional craftsmanship in modern fashion",
+            platforms: ["Instagram", "Pinterest"],
+            demographics: "25-45 age group, creative professionals",
+            keywords: ["handmade", "artisanal", "crochet", "patchwork", "craftsmanship"],
+            sentiment: "Positive",
+            evolutionKey: "craftcore" as TrendEvolutionKeys,
+            color: "#795548"
           }
         ].map(trend => (
           <Card key={trend.id} className="overflow-hidden relative group">
@@ -72,6 +151,9 @@ export default function ClothingCategoryPage() {
                   <div className="flex gap-2">
                     {trend.platforms.map(platform => (
                       <div key={platform} className="flex items-center gap-1 text-sm">
+                        {platform === "Instagram" && <Instagram className="h-4 w-4 text-pink-500" />}
+                        {platform === "TikTok" && <TrendingUp className="h-4 w-4 text-blue-500" />}
+                        {(platform === "Pinterest" || platform === "Google") && <Search className="h-4 w-4 text-gray-500" />}
                         <span>{platform}</span>
                       </div>
                     ))}
@@ -82,6 +164,13 @@ export default function ClothingCategoryPage() {
                   <h4 className="text-sm font-medium mb-2">Demographics</h4>
                   <p className="text-sm text-muted-foreground">{trend.demographics}</p>
                 </div>
+                
+                <TrendEvolutionChart 
+                  data={trendEvolutionData[trend.evolutionKey]} 
+                  title="6-Month Evolution" 
+                  color={trend.color}
+                  height={180}
+                />
                 
                 <div>
                   <h4 className="text-sm font-medium mb-2">Keywords</h4>
@@ -102,6 +191,16 @@ export default function ClothingCategoryPage() {
                   }`}>
                     {trend.sentiment}
                   </Badge>
+                </div>
+                
+                <div className="pt-2">
+                  <Link 
+                    href={`/trends/${trend.id}`} 
+                    className="inline-flex items-center text-sm text-primary hover:underline"
+                  >
+                    View detailed analysis
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
                 </div>
               </div>
               <div className="absolute bottom-0 right-0 h-24 w-24 -mb-8 -mr-8 rounded-full bg-primary/10 transition-all duration-300 group-hover:scale-150"></div>
