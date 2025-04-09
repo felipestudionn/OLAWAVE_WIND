@@ -74,46 +74,41 @@ export default function HomePage() {
         
         {/* Retail Insights Section - Inspired by Image 1 */}
         <section className="relative w-full py-24 px-4 md:px-6 overflow-hidden">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div>
+          <div className="w-full mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-12 items-center">
+              <div className="w-full">
                 <h2 className="text-4xl md:text-5xl font-normal tracking-tight mb-6">
                   Retail moves fast.<br />
                   But decisions are<br />
                   still blind.
                 </h2>
-                <div className="h-0.5 w-full bg-black/10 my-8"></div>
-                <ul className="space-y-4">
-                  <li className="flex items-start">
-                    <span className="text-black/70 mr-2">&gt;</span>
-                    <p>Sales reports show what happened, but not why.</p>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-black/70 mr-2">&gt;</span>
-                    <p>Inventory decisions based on outdated forecasts.</p>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-black/70 mr-2">&gt;</span>
-                    <p>Pricing strategies that react too late.</p>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-black/70 mr-2">&gt;</span>
-                    <p>Marketing campaigns launched in the dark.</p>
-                  </li>
-                </ul>
-                <div className="h-0.5 w-full bg-black/10 my-8"></div>
-                <button className="bg-gray-400/80 text-black px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-400/90 transition-all">
-                  FIND THE MISSING PIECE
-                </button>
-              </div>
-              <div className="glass-card h-96 flex items-center justify-center">
-                <Image 
-                  src="/icons/5.svg" 
-                  alt="Retail Insights"
-                  width={96}
-                  height={96}
-                  className="w-full h-full"
-                />
+                <div className="h-px w-full bg-black/20 my-8"></div>
+                <div className="flex justify-end pr-8 md:pr-16">
+                  <ul className="space-y-4 max-w-xl">
+                    <li className="flex items-start">
+                      <span className="text-black/70 mr-2">&gt;</span>
+                      <p>Sales reports show what happened, but not why.</p>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-black/70 mr-2">&gt;</span>
+                      <p>Inventory decisions based on outdated forecasts.</p>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-black/70 mr-2">&gt;</span>
+                      <p>Pricing strategies that react too late.</p>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-black/70 mr-2">&gt;</span>
+                      <p>Marketing campaigns launched in the dark.</p>
+                    </li>
+                  </ul>
+                </div>
+                <div className="h-px w-full bg-black/20 my-8"></div>
+                <div className="flex justify-end">
+                  <button className="bg-black text-white px-6 py-3 rounded-full font-medium flex items-center gap-2 hover:bg-black/80 transition-colors">
+                    FIND THE MISSING PIECE
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -217,14 +212,16 @@ export default function HomePage() {
               
               <div className="h-0.5 w-full bg-black/10 mt-12"></div>
               
-              <div className="flex justify-center mt-12">
-                <Image 
-                  src="/icons/6.svg" 
-                  alt="How It Works"
-                  width={96}
-                  height={96}
-                  className="w-full h-full"
-                />
+              <div className="flex justify-center mt-12 mb-12">
+                <div className="w-64 h-64">
+                  <ColoredSvg 
+                    src="/icons/5.svg" 
+                    alt="How It Works"
+                    width={256}
+                    height={256}
+                    color="#333333"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -254,13 +251,15 @@ export default function HomePage() {
                 </div>
                 
                 <div className="flex items-center justify-center">
-                  <Image 
-                    src="/icons/7.svg" 
-                    alt="BlackRock Reference"
-                    width={96}
-                    height={96}
-                    className="w-full h-full"
-                  />
+                  <div className="w-48 h-48">
+                    <ColoredSvg 
+                      src="/icons/6.svg" 
+                      alt="Economic Indicator"
+                      width={192}
+                      height={192}
+                      color="#333333"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
