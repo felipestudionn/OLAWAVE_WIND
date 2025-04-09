@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BarChart3, LineChart, Sparkles, TrendingUp } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
+import { ColoredSvg } from "@/components/ui/colored-svg";
 
 export default function HomePage() {
   return (
@@ -106,10 +107,13 @@ export default function HomePage() {
                 </button>
               </div>
               <div className="glass-card h-96 flex items-center justify-center">
-                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-48 h-48 text-[#0DD3BB] opacity-70">
-                  <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="2" fill="none" />
-                  <path d="M40,100 Q70,40 100,100 Q130,160 160,100" stroke="currentColor" strokeWidth="3" fill="none" />
-                </svg>
+                <Image 
+                  src="/icons/5.svg" 
+                  alt="Retail Insights"
+                  width={96}
+                  height={96}
+                  className="w-full h-full"
+                />
               </div>
             </div>
           </div>
@@ -130,50 +134,58 @@ export default function HomePage() {
         <section className="relative w-full py-24 px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl">
-                <h3 className="text-lg font-medium mb-6">Predictive Context</h3>
-                <div className="w-24 h-24 mb-6">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="1" fill="none" />
-                    <circle cx="50" cy="50" r="35" stroke="currentColor" strokeWidth="1" fill="none" />
-                    <circle cx="50" cy="50" r="25" stroke="currentColor" strokeWidth="1" fill="none" />
-                    <circle cx="50" cy="50" r="15" stroke="currentColor" strokeWidth="1" fill="none" />
-                  </svg>
+              <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8 rounded-3xl flex flex-col items-center text-center">
+                <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Predictive<br/>Context</h3>
+                <div className="w-52 h-52 my-8 flex items-center justify-center">
+                  <ColoredSvg 
+                    src="/icons/1.svg" 
+                    alt="Predictive Context"
+                    width={210}
+                    height={210}
+                    color="#ffffff"
+                  />
                 </div>
                 <p className="text-sm text-black/70">Anticipates not just trends, but their causes</p>
               </div>
               
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl">
-                <h3 className="text-lg font-medium mb-6">Pattern Recognition</h3>
-                <div className="w-24 h-24 mb-6">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <path d="M20,50 Q35,20 50,50 Q65,80 80,50" stroke="currentColor" strokeWidth="2" fill="none" />
-                    <path d="M20,60 Q35,30 50,60 Q65,90 80,60" stroke="currentColor" strokeWidth="2" fill="none" />
-                  </svg>
+              <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-8 rounded-3xl flex flex-col items-center text-center">
+                <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Pattern<br/>Recognition</h3>
+                <div className="w-52 h-52 my-8 flex items-center justify-center">
+                  <ColoredSvg 
+                    src="/icons/2.svg" 
+                    alt="Pattern Recognition"
+                    width={210}
+                    height={210}
+                    color="#ffffff"
+                  />
                 </div>
                 <p className="text-sm text-black/70">Identifies patterns invisible to humans</p>
               </div>
               
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl">
-                <h3 className="text-lg font-medium mb-6">Enhanced Data-Driven Decisions</h3>
-                <div className="w-24 h-24 mb-6">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <path d="M20,50 L80,50" stroke="currentColor" strokeWidth="2" />
-                    <path d="M20,40 L80,40" stroke="currentColor" strokeWidth="2" />
-                    <path d="M20,60 L80,60" stroke="currentColor" strokeWidth="2" />
-                    <path d="M20,30 L80,30" stroke="currentColor" strokeWidth="2" />
-                    <path d="M20,70 L80,70" stroke="currentColor" strokeWidth="2" />
-                  </svg>
+              <div className="bg-gradient-to-br from-pink-50 via-blue-50 to-purple-50 p-8 rounded-3xl flex flex-col items-center text-center">
+                <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Enhanced Data-Driven<br/>Decisions</h3>
+                <div className="w-52 h-52 my-8 flex items-center justify-center">
+                  <ColoredSvg 
+                    src="/icons/3.svg" 
+                    alt="Enhanced Data-Driven Decisions"
+                    width={210}
+                    height={210}
+                    color="#ffffff"
+                  />
                 </div>
                 <p className="text-sm text-black/70">Turns uncertainty into strategic advantage</p>
               </div>
               
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl">
-                <h3 className="text-lg font-medium mb-6">Retail Optimization</h3>
-                <div className="w-24 h-24 mb-6">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                    <path d="M20,80 C40,20 60,20 80,80" stroke="currentColor" strokeWidth="2" fill="none" />
-                  </svg>
+              <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-8 rounded-3xl flex flex-col items-center text-center">
+                <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Retail<br/>Optimization</h3>
+                <div className="w-52 h-52 my-8 flex items-center justify-center">
+                  <ColoredSvg 
+                    src="/icons/4.svg" 
+                    alt="Retail Optimization"
+                    width={210}
+                    height={210}
+                    color="#ffffff"
+                  />
                 </div>
                 <p className="text-sm text-black/70">Enhances pricing, stock, conversion, and customer experience</p>
               </div>
@@ -206,15 +218,13 @@ export default function HomePage() {
               <div className="h-0.5 w-full bg-black/10 mt-12"></div>
               
               <div className="flex justify-center mt-12">
-                <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#ff6b6b]">
-                  <circle cx="20" cy="30" r="10" fill="currentColor" />
-                  <circle cx="80" cy="30" r="10" fill="currentColor" />
-                  <circle cx="20" cy="70" r="10" fill="currentColor" />
-                  <circle cx="80" cy="70" r="10" fill="currentColor" />
-                  <path d="M20,30 Q50,10 80,30" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path d="M80,30 Q50,50 20,70" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path d="M20,70 Q50,90 80,70" stroke="currentColor" strokeWidth="4" fill="none" />
-                </svg>
+                <Image 
+                  src="/icons/6.svg" 
+                  alt="How It Works"
+                  width={96}
+                  height={96}
+                  className="w-full h-full"
+                />
               </div>
             </div>
           </div>
@@ -244,15 +254,13 @@ export default function HomePage() {
                 </div>
                 
                 <div className="flex items-center justify-center">
-                  <svg width="120" height="100" viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#ff9966]">
-                    <rect x="10" y="90" width="100" height="10" fill="currentColor" />
-                    <rect x="10" y="75" width="100" height="10" fill="currentColor" opacity="0.9" />
-                    <rect x="10" y="60" width="100" height="10" fill="currentColor" opacity="0.8" />
-                    <rect x="10" y="45" width="100" height="10" fill="currentColor" opacity="0.7" />
-                    <rect x="10" y="30" width="100" height="10" fill="currentColor" opacity="0.6" />
-                    <rect x="10" y="15" width="100" height="10" fill="currentColor" opacity="0.5" />
-                    <rect x="10" y="0" width="100" height="10" fill="currentColor" opacity="0.4" />
-                  </svg>
+                  <Image 
+                    src="/icons/7.svg" 
+                    alt="BlackRock Reference"
+                    width={96}
+                    height={96}
+                    className="w-full h-full"
+                  />
                 </div>
               </div>
             </div>

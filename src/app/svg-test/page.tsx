@@ -12,7 +12,7 @@ export default function SVGTestPage() {
             <h2 className="text-xl font-semibold mb-4">SVG {num}</h2>
             <div className="aspect-square relative bg-gray-50 rounded-md overflow-hidden">
               <Image 
-                src={`/images/svg/${num}.svg`} 
+                src={`/icons/${num}.svg`} 
                 alt={`SVG ${num}`}
                 width={300}
                 height={300}
@@ -24,28 +24,15 @@ export default function SVGTestPage() {
             </div>
             <div 
               className="mt-2 p-4 border rounded-md bg-gray-50 h-[200px] flex items-center justify-center"
-              dangerouslySetInnerHTML={{ 
-                __html: `<svg viewBox="0 0 100 100" style="width: 100%; height: 100%; stroke: currentColor; fill: none;">
-                  ${num === 1 ? 
-                    `<circle cx="50" cy="50" r="45" stroke-width="1"></circle>
-                    <circle cx="50" cy="50" r="35" stroke-width="1"></circle>
-                    <circle cx="50" cy="50" r="25" stroke-width="1"></circle>
-                    <circle cx="50" cy="50" r="15" stroke-width="1"></circle>` 
-                  : num === 2 ? 
-                    `<path d="M20,50 Q35,20 50,50 Q65,80 80,50" stroke-width="2"></path>
-                    <path d="M20,60 Q35,30 50,60 Q65,90 80,60" stroke-width="2"></path>` 
-                  : num === 3 ? 
-                    `<path d="M20,50 L80,50" stroke-width="2"></path>
-                    <path d="M20,40 L80,40" stroke-width="2"></path>
-                    <path d="M20,60 L80,60" stroke-width="2"></path>
-                    <path d="M20,30 L80,30" stroke-width="2"></path>
-                    <path d="M20,70 L80,70" stroke-width="2"></path>` 
-                  : 
-                    `<path d="M20,80 C40,20 60,20 80,80" stroke-width="2"></path>`
-                  }
-                </svg>` 
-              }}
-            />
+            >
+              <Image 
+                src={`/icons/${num}.svg`} 
+                alt={`SVG ${num} direct`}
+                width={150}
+                height={150}
+                className="object-contain"
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -57,12 +44,13 @@ export default function SVGTestPage() {
             <h3 className="font-medium mb-3">Predictive Context</h3>
             <div className="h-24 flex items-center justify-center mb-4">
               <div className="w-16 h-16">
-                <svg viewBox="0 0 100 100" className="w-full h-full" stroke="currentColor" fill="none">
-                  <circle cx="50" cy="50" r="45" stroke-width="1"></circle>
-                  <circle cx="50" cy="50" r="35" stroke-width="1"></circle>
-                  <circle cx="50" cy="50" r="25" stroke-width="1"></circle>
-                  <circle cx="50" cy="50" r="15" stroke-width="1"></circle>
-                </svg>
+                <Image 
+                  src="/icons/1.svg" 
+                  alt="Predictive Context"
+                  width={64}
+                  height={64}
+                  className="w-full h-full"
+                />
               </div>
             </div>
             <p className="text-sm text-gray-600">Anticipates not just trends, but their causes</p>
@@ -72,10 +60,13 @@ export default function SVGTestPage() {
             <h3 className="font-medium mb-3">Pattern Recognition</h3>
             <div className="h-24 flex items-center justify-center mb-4">
               <div className="w-16 h-16">
-                <svg viewBox="0 0 100 100" className="w-full h-full" stroke="currentColor" fill="none">
-                  <path d="M20,50 Q35,20 50,50 Q65,80 80,50" stroke-width="2"></path>
-                  <path d="M20,60 Q35,30 50,60 Q65,90 80,60" stroke-width="2"></path>
-                </svg>
+                <Image 
+                  src="/icons/2.svg" 
+                  alt="Pattern Recognition"
+                  width={64}
+                  height={64}
+                  className="w-full h-full"
+                />
               </div>
             </div>
             <p className="text-sm text-gray-600">Identifies patterns invisible to humans</p>
@@ -85,13 +76,13 @@ export default function SVGTestPage() {
             <h3 className="font-medium mb-3">Enhanced Data-Driven Decisions</h3>
             <div className="h-24 flex items-center justify-center mb-4">
               <div className="w-16 h-16">
-                <svg viewBox="0 0 100 100" className="w-full h-full" stroke="currentColor" fill="none">
-                  <path d="M20,50 L80,50" stroke-width="2"></path>
-                  <path d="M20,40 L80,40" stroke-width="2"></path>
-                  <path d="M20,60 L80,60" stroke-width="2"></path>
-                  <path d="M20,30 L80,30" stroke-width="2"></path>
-                  <path d="M20,70 L80,70" stroke-width="2"></path>
-                </svg>
+                <Image 
+                  src="/icons/3.svg" 
+                  alt="Enhanced Data-Driven Decisions"
+                  width={64}
+                  height={64}
+                  className="w-full h-full"
+                />
               </div>
             </div>
             <p className="text-sm text-gray-600">Turns uncertainty into strategic advantage</p>
@@ -101,9 +92,13 @@ export default function SVGTestPage() {
             <h3 className="font-medium mb-3">Retail Optimization</h3>
             <div className="h-24 flex items-center justify-center mb-4">
               <div className="w-16 h-16">
-                <svg viewBox="0 0 100 100" className="w-full h-full" stroke="currentColor" fill="none">
-                  <path d="M20,80 C40,20 60,20 80,80" stroke-width="2"></path>
-                </svg>
+                <Image 
+                  src="/icons/4.svg" 
+                  alt="Retail Optimization"
+                  width={64}
+                  height={64}
+                  className="w-full h-full"
+                />
               </div>
             </div>
             <p className="text-sm text-gray-600">Enhances pricing, stock, conversion, and customer experience</p>
