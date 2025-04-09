@@ -15,76 +15,291 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
- 
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
- 
-    /* OLAWAVE Brand Colors */
-    --primary: 330 100% 84%; /* Pink */
-    --primary-foreground: 240 10% 3.9%;
- 
-    --secondary: 270 100% 84%; /* Purple */
-    --secondary-foreground: 240 10% 3.9%;
- 
-    --accent: 180 100% 84%; /* Teal */
-    --accent-foreground: 240 10% 3.9%;
- 
+    --primary: 169 88% 44%; /* Updated Turquoise to match #0DD3BB */
+    --primary-foreground: 0 0% 0%; /* Black text */
+    --secondary: 199 84% 58%; /* Light Blue */
+    --secondary-foreground: 240 5.9% 10%;
+    --accent: 152 84% 60%; /* Mint */
+    --accent-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
- 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
- 
+    --ring: 240 5.9% 10%;
     --radius: 0.5rem;
-
-    /* Font Family Variables */
     --font-open-sauce: 'Open Sauce Sans', sans-serif;
   }
- 
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
- 
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
- 
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
- 
-    --primary: 330 100% 84%;
-    --primary-foreground: 240 10% 3.9%;
- 
-    --secondary: 270 100% 84%;
-    --secondary-foreground: 240 10% 3.9%;
- 
-    --accent: 180 100% 84%;
-    --accent-foreground: 240 10% 3.9%;
- 
+    --primary: 169 88% 44%; /* Updated Turquoise to match #0DD3BB */
+    --primary-foreground: 0 0% 0%; /* Black text */
+    --secondary: 199 84% 58%; /* Light Blue */
+    --secondary-foreground: 0 0% 98%;
+    --accent: 152 84% 60%; /* Mint */
+    --accent-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
- 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
- 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
   }
 }
 
-/* OLAWAVE Gradient Background */
-.olawave-gradient {
-  background: linear-gradient(135deg, hsl(330, 100%, 84%) 0%, hsl(270, 100%, 84%) 50%, hsl(180, 100%, 84%) 100%);
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }
 
-/* OLAWAVE Wave Animation */
+/* OLAWAVE Custom Styles */
+
+/* Typography */
+.olawave-heading {
+  @apply font-light tracking-tight;
+  letter-spacing: -0.02em;
+  font-family: var(--font-open-sauce);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.olawave-subheading {
+  @apply font-light tracking-wide;
+  font-family: var(--font-open-sauce);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+/* Gradient Backgrounds */
+.olawave-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--secondary)) 50%,
+    hsl(var(--accent)) 100%
+  );
+}
+
+/* Pastel gradient background like the image */
+.olawave-pastel-gradient {
+  background: linear-gradient(
+    135deg,
+    #a9e9e9 0%,
+    #c5d5f5 25%,
+    #d9c2f0 50%,
+    #c5f5e9 75%,
+    #a9e9e9 100%
+  );
+  background-size: 400% 400%;
+  animation: pastelGradientShift 30s ease infinite;
+  opacity: 0.9;
+  z-index: 0;
+}
+
+.olawave-gradient-subtle {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.1) 0%,
+    hsl(var(--secondary) / 0.1) 50%,
+    hsl(var(--accent) / 0.1) 100%
+  );
+}
+
+.olawave-gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--secondary)) 50%,
+    hsl(var(--accent)) 100%
+  );
+}
+
+.olawave-pastel-gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(
+    135deg,
+    #f8c6c6 0%,
+    #d9c2f0 25%,
+    #c5d5f5 50%,
+    #a9e9e9 75%,
+    #f8d6c6 100%
+  );
+  background-size: 200% 200%;
+  animation: pastelGradientShift 15s ease infinite;
+}
+
+/* Glass Card */
+.glass-card {
+  @apply bg-background/60 backdrop-blur-md;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.glass-card:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.glass-card-dark {
+  @apply bg-background/60 backdrop-blur-md;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Gradient Border */
+.olawave-gradient-border {
+  position: relative;
+  background-clip: padding-box;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.olawave-gradient-border::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  margin: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.3) 0%,
+    hsl(var(--secondary) / 0.3) 50%,
+    hsl(var(--accent) / 0.3) 100%
+  );
+}
+
+/* Button Styles */
+.olawave-button {
+  @apply transition-all duration-300;
+  border-radius: 28px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 0 24px;
+  height: 48px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.olawave-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.olawave-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.olawave-button-primary {
+  background-color: #0DD3BB;
+  color: #000000;
+  border: none;
+}
+
+.olawave-button-secondary {
+  background-color: rgba(32, 32, 32, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+/* Animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+.pulse-animation {
+  animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pastelGradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-shift {
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* OLAWAVE Animations - Enhanced */
 @keyframes wave {
   0% {
     transform: translateX(0) translateY(0);
@@ -99,21 +314,4 @@
 
 .wave-animation {
   animation: wave 6s ease-in-out infinite;
-}
-
-/* OLAWAVE Font Styles */
-.olawave-font {
-  font-family: var(--font-open-sauce);
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
 }

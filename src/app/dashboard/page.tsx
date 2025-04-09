@@ -4,7 +4,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-10">
       <div className="space-y-4 py-4">
-        <h1 className="text-3xl font-bold tracking-tight mb-3">Fashion Trend Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-3 text-foreground">Fashion Trend Dashboard</h1>
         <p className="text-muted-foreground max-w-3xl">
           Intelligence in motion. Decoding patterns, revealing context, and transforming uncertainty into strategic insight.
         </p>
@@ -12,7 +12,7 @@ export default function DashboardPage() {
       
       {/* Overview Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border bg-card text-card-foreground shadow relative overflow-hidden group">
+        <div className="glass-card relative overflow-hidden group">
           <div className="p-6 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
@@ -24,7 +24,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        <div className="rounded-lg border bg-card text-card-foreground shadow relative overflow-hidden group">
+        <div className="glass-card relative overflow-hidden group">
           <div className="p-6 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -36,7 +36,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        <div className="rounded-lg border bg-card text-card-foreground shadow relative overflow-hidden group">
+        <div className="glass-card relative overflow-hidden group">
           <div className="p-6 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
@@ -48,7 +48,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
-        <div className="rounded-lg border bg-card text-card-foreground shadow relative overflow-hidden group">
+        <div className="glass-card relative overflow-hidden group">
           <div className="p-6 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><circle cx="12" cy="12" r="10"/><path d="m16 8-4 4-4-4"/><path d="m16 16-4-4-4 4"/></svg>

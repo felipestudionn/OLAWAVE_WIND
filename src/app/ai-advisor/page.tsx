@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Calendar, TrendingUp, ShoppingBag, ArrowRight, MessageSquare, RefreshCw, Download, ChevronRight, CheckCircle2, Plus } from 'lucide-react';
+import { Sparkles, Calendar, TrendingUp, ShoppingBag, ArrowRight, MessageSquare, RefreshCw, Download, ChevronRight, CheckCircle2, Plus, ImageIcon } from 'lucide-react';
 import { TrendEvolutionChart } from "@/components/charts/trend-evolution-chart";
 
 export default function AIAdvisorPage() {
@@ -461,6 +461,22 @@ export default function AIAdvisorPage() {
         <p className="text-muted-foreground max-w-3xl">
           Get AI-powered strategic recommendations for your fashion business based on real-time trend analysis.
         </p>
+        <div className="flex items-center justify-between">
+          <div>
+          </div>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={handleGenerate} disabled={isGenerating}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+              {isGenerating ? 'Generating...' : 'Refresh Insights'}
+            </Button>
+            <Button variant="outline" asChild>
+              <a href="/ai-advisor/svg-gallery">
+                <ImageIcon className="mr-2 h-4 w-4" />
+                SVG Gallery
+              </a>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Section Navigation */}

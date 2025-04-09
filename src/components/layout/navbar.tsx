@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 
 export function Navbar() {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 border-b bg-white dark:bg-gray-950">
+    <div className="fixed top-0 left-0 right-0 z-50 border-b bg-white/90 backdrop-blur-sm dark:bg-gray-950/90 shadow-sm">
       <div className="flex h-20 items-center px-4 md:px-6">
         <div className="flex items-center gap-3">
           {/* OLAWAVE Logo */}
@@ -21,9 +21,6 @@ export function Navbar() {
           <Link href="/" className="flex flex-col">
             <span className="olawave-font text-xl font-normal tracking-normal uppercase">
               OLAWAVE AI
-            </span>
-            <span className="text-xs text-muted-foreground">
-              FASHION TRENDS
             </span>
           </Link>
         </div>

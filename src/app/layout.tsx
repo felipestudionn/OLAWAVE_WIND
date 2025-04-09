@@ -3,7 +3,7 @@ import '@/styles/globals.css';
 
 export const metadata: Metadata = {
   title: 'OLAWAVE AI - Fashion Trend Analyzer',
-  description: 'Intelligence in motion. Decoding patterns, revealing context, and transforming uncertainty into strategic insight.',
+  description: 'Analyze fashion trends across multiple platforms with AI-powered insights.',
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen font-sans antialiased">
         <div className="relative flex min-h-screen flex-col">
-          <div className="fixed inset-0 -z-10 olawave-gradient opacity-20"></div>
+          <div className="fixed inset-0 -z-10 bg-[#f8f7f2]"></div>
           <main className="flex-1">{children}</main>
         </div>
       </body>
