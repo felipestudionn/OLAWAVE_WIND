@@ -8,6 +8,20 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Forzar HTTPS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
+# Redirección de www a dominio principal
+[[redirects]]
+  from = "https://www.olawave.ai/*"
+  to = "https://olawave.ai/:splat"
+  status = 301
+  force = true
+
+# Redirección para SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
