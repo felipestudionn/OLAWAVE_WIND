@@ -24,6 +24,15 @@ export function CreativeSpaceClient() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('pinterest_connected') === 'true') {
       setPinterestConnected(true);
+      
+      // Fetch boards after successful connection
+      fetch('/api/pinterest/boards')
+        .then(res => res.json())
+        .then(data => {
+          console.log('Pinterest boards loaded:', data);
+          alert(`✓ Connected to Pinterest! Found ${data.items?.length || 0} boards.`);
+        })
+        .catch(err => console.error('Error loading boards:', err));
     }
 
     // Save to both old format (for backward compat) and new unified format
@@ -70,22 +79,16 @@ export function CreativeSpaceClient() {
     setImages((prev) => prev.filter((img) => img.id !== id));
   };
 
-  const handlePinterestConnect = async () => {
-    try {
-      // TEMPORARY: For sandbox testing, just fetch boards directly
-      const response = await fetch('/api/pinterest/boards');
-      if (response.ok) {
-        setPinterestConnected(true);
-        const data = await response.json();
-        console.log('Pinterest boards:', data);
-        alert(`Connected! Found ${data.items?.length || 0} boards.`);
-      } else {
-        throw new Error('Failed to connect');
-      }
-    } catch (error) {
-      console.error('Pinterest connection error:', error);
-      alert('Pinterest integration is pending approval. Using sandbox mode for testing.');
-    }
+  const handlePinterestConnect = () => {
+    // Redirect to Pinterest OAuth
+    const clientId = process.env.NEXT_PUBLIC_PINTEREST_CLIENT_ID;
+    const redirectUri = process.env.NEXT_PUBLIC_PINTEREST_REDIRECT_URI || 'https://olawave.ai/api/auth/pinterest/callback';
+    const scope = 'boards:read,pins:read';
+    const state = Math.random().toString(36).substring(7);
+    
+    const authUrl = `https://www.pinterest.com/oauth/?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&state=${state}`;
+    
+    window.location.href = authUrl;
   };
 
   return (
