@@ -22,8 +22,9 @@ export function Navbar() {
   const isInJourney = currentStep > 0;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 border-b bg-white/90 backdrop-blur-sm dark:bg-gray-950/90 shadow-sm">
-      <div className="flex h-20 items-center px-4 md:px-6">
+    <div className="fixed top-4 left-0 right-0 z-50 px-4 md:px-6 animate-fade-in">
+      <div className="container mx-auto bg-white/40 backdrop-blur-2xl rounded-full shadow-[0_2px_20px_-2px_rgba(0,0,0,0.1)] border border-white/30">
+      <div className="flex h-20 items-center px-6 md:px-8">
         <div className="flex items-center gap-3">
           {/* OLAWAVE Logo */}
           <div className="relative h-20 w-20 flex items-center">
@@ -45,7 +46,7 @@ export function Navbar() {
         <div className="ml-auto flex items-center gap-4">
           {/* Journey Progress Navigation (shown when in journey) */}
           {isInJourney && (
-            <nav className="hidden lg:flex items-center gap-1 bg-gray-100/80 rounded-full px-2 py-1">
+            <nav className="hidden lg:flex items-center gap-1 bg-white/50 rounded-full px-2 py-1">
               <Link
                 href="/creative-space"
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
@@ -101,29 +102,26 @@ export function Navbar() {
           
           {/* Regular Navigation (shown on landing/other pages) */}
           {!isInJourney && (
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-8">
               <Link
                 href="/creative-space"
-                className="text-sm font-medium transition-colors hover:text-primary relative group flex items-center gap-1"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
               >
                 <Palette className="h-4 w-4" />
                 Creative Space
-                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </Link>
               <Link
                 href="/ai-advisor"
-                className="text-sm font-medium transition-colors hover:text-primary flex items-center relative group gap-1"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
               >
                 <Brain className="h-4 w-4" />
                 AI Advisor
-                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </Link>
               <Link
                 href="/dashboard"
-                className="text-sm font-medium transition-colors hover:text-primary relative group"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
               >
                 Trends
-                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </Link>
             </nav>
           )}
@@ -131,9 +129,9 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             <Link 
               href="/creative-space"
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium transition-all hover:bg-gray-800"
             >
-              <Sparkles className="mr-2 h-4 w-4" />
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               New Collection
             </Link>
           </div>
@@ -257,6 +255,7 @@ export function Navbar() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

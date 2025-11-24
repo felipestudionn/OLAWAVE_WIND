@@ -1,75 +1,66 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Palette, Brain, Calculator, CheckCircle2, Upload, Layers, TrendingUp } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { ColoredSvg } from "@/components/ui/colored-svg";
+import { AnimateOnScroll } from "@/components/ui/animate-on-scroll";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-background relative overflow-hidden">
-      {/* Main background elements that span the entire page */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 olawave-pastel-gradient"></div>
-        <div className="absolute -top-[30%] -right-[20%] h-[800px] w-[800px] rounded-full bg-white/10 blur-3xl"></div>
-        <div className="absolute -bottom-[30%] -left-[20%] h-[800px] w-[800px] rounded-full bg-white/10 blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10 blur-3xl"></div>
-        <div className="absolute top-[20%] right-[30%] h-[300px] w-[300px] rounded-full bg-white/10 blur-3xl pulse-animation"></div>
-        <div className="absolute bottom-[20%] left-[30%] h-[300px] w-[300px] rounded-full bg-white/10 blur-3xl pulse-animation"></div>
-        <div className="absolute inset-0 olawave-gradient-subtle opacity-30 gradient-shift"></div>
+      {/* Pastel pink background image */}
+      <div className="fixed inset-0 z-0">
+        <Image
+          src="/images/bg/pastel-pink-bg.png"
+          alt="Background"
+          fill
+          className="object-cover"
+          priority
+          quality={90}
+        />
+        {/* Subtle overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/20"></div>
       </div>
       
       <Navbar />
       <main className="flex-1 relative z-10">
         {/* Hero Section - Redesigned with clear value prop */}
-        <section className="relative w-full py-20 md:py-28 lg:py-32">
+        <section className="relative w-full pt-32 pb-20 md:pt-36 md:pb-28 lg:pt-40 lg:pb-32">
           <div className="container relative z-10 px-4 md:px-6">
-            <div className="grid gap-8 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_600px]">
+            <div className="max-w-3xl">
               <div className="flex flex-col justify-center space-y-6">
-                <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium text-foreground/80 w-fit">
-                    <Sparkles className="h-4 w-4" />
+                <div className="space-y-6">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/30 backdrop-blur-2xl text-sm font-medium text-gray-700 w-fit shadow-[0_2px_20px_-2px_rgba(0,0,0,0.1)] border border-white/40 animate-fade-in-up">
+                    <Sparkles className="h-4 w-4 text-pink-500" />
                     AI-Powered Collection Planning
                   </div>
-                  <h1 className="olawave-heading text-4xl font-normal tracking-normal sm:text-5xl xl:text-6xl/none">
-                    <span className="block text-white">Plan Your Fashion</span>
-                    <span className="block text-white">Collection in</span>
-                    <span className="olawave-subheading block text-2xl sm:text-3xl xl:text-4xl font-light mt-3 text-foreground/90">
+                  <h1 className="text-5xl sm:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1]">
+                    <span className="block text-gray-900 animate-fade-in-up animate-delay-100">Plan Your Fashion</span>
+                    <span className="block text-gray-900 animate-fade-in-up animate-delay-200">Collection in</span>
+                    <span className="block text-3xl sm:text-4xl xl:text-5xl font-medium mt-4 text-gray-600 animate-fade-in-up animate-delay-300">
                       3 AI-Powered Steps
                     </span>
                   </h1>
-                  <p className="olawave-subheading max-w-[600px] text-lg text-foreground/70 md:text-xl leading-relaxed mt-4">
+                  <p className="max-w-[550px] text-lg text-gray-600 md:text-xl leading-relaxed animate-fade-in-up animate-delay-400">
                     From Pinterest boards to SKU-level financial plans. Combine your creative vision with real market trends and let AI build your collection strategy.
                   </p>
                 </div>
-                <div className="flex flex-col gap-4 sm:flex-row mt-4">
+                <div className="flex flex-col gap-4 sm:flex-row pt-2 animate-fade-in-up animate-delay-500">
                   <Link
                     href="/creative-space"
-                    className="olawave-button olawave-button-primary inline-flex items-center justify-center text-sm font-medium shadow-lg transition-all hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-gray-900 text-white text-base font-semibold shadow-xl transition-all hover:bg-gray-800 hover:shadow-2xl hover:-translate-y-0.5"
                   >
                     Create Your Collection
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                   <Link
                     href="#how-it-works"
-                    className="olawave-button olawave-button-secondary inline-flex items-center justify-center backdrop-blur-sm text-sm font-medium shadow-md transition-all hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/80 backdrop-blur-sm text-gray-700 text-base font-semibold shadow-lg border border-white/50 transition-all hover:bg-white hover:shadow-xl"
                   >
                     See How It Works
                   </Link>
-                </div>
-              </div>
-              <div className="flex items-center justify-center">
-                <div className="relative h-[300px] w-[300px] md:h-[400px] md:w-[400px] lg:h-[500px] lg:w-[500px]">
-                  <div className="absolute inset-0 olawave-gradient rounded-full opacity-20 blur-3xl pulse-animation"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Image
-                      src="/images/olawave-logo.svg"
-                      alt="OLAWAVE Logo"
-                      width={400}
-                      height={200}
-                      className="h-64 w-auto md:h-80 lg:h-96 float-animation"
-                      priority
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -79,26 +70,26 @@ export default function HomePage() {
         {/* How It Works - 3 Steps Section */}
         <section id="how-it-works" className="relative w-full py-24 px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-4">
+            <AnimateOnScroll className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 text-gray-900">
                 How It Works
               </h2>
-              <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
                 Three simple steps to go from creative inspiration to a complete collection plan with budget and margins.
               </p>
-            </div>
+            </AnimateOnScroll>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Step 1 */}
-              <div className="relative">
-                <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm h-full flex flex-col">
+              <AnimateOnScroll delay={0} className="relative">
+                <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
                       1
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-primary uppercase tracking-wide">Step 1</span>
-                      <h3 className="text-xl font-semibold">Inspiration</h3>
+                      <span className="text-xs font-semibold text-pink-500 uppercase tracking-wider">Step 1</span>
+                      <h3 className="text-xl font-bold text-gray-900">Inspiration</h3>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -131,18 +122,18 @@ export default function HomePage() {
                 <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
                   <ArrowRight className="h-8 w-8 text-primary/30" />
                 </div>
-              </div>
+              </AnimateOnScroll>
               
               {/* Step 2 */}
-              <div className="relative">
-                <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm h-full flex flex-col">
+              <AnimateOnScroll delay={200} className="relative">
+                <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
                       2
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-primary uppercase tracking-wide">Step 2</span>
-                      <h3 className="text-xl font-semibold">Strategy</h3>
+                      <span className="text-xs font-semibold text-blue-500 uppercase tracking-wider">Step 2</span>
+                      <h3 className="text-xl font-bold text-gray-900">Strategy</h3>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -175,18 +166,18 @@ export default function HomePage() {
                 <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
                   <ArrowRight className="h-8 w-8 text-primary/30" />
                 </div>
-              </div>
+              </AnimateOnScroll>
               
               {/* Step 3 */}
-              <div className="relative">
-                <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm h-full flex flex-col">
+              <AnimateOnScroll delay={400} className="relative">
+                <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
                       3
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-primary uppercase tracking-wide">Step 3</span>
-                      <h3 className="text-xl font-semibold">Execution</h3>
+                      <span className="text-xs font-semibold text-green-500 uppercase tracking-wider">Step 3</span>
+                      <h3 className="text-xl font-bold text-gray-900">Execution</h3>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -215,7 +206,7 @@ export default function HomePage() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </AnimateOnScroll>
             </div>
             
             <div className="flex justify-center mt-12">
@@ -362,26 +353,26 @@ export default function HomePage() {
         </section>
 
         {/* CTA Section */}
-        <section className="relative w-full py-16 md:py-24">
+        <section className="relative w-full py-20 md:py-28">
           <div className="container relative z-10 px-4 md:px-6">
-            <div className="mx-auto max-w-3xl text-center">
-              <h2 className="olawave-heading text-3xl font-normal sm:text-4xl md:text-5xl mb-4">
+            <div className="mx-auto max-w-3xl text-center bg-white/80 backdrop-blur-xl rounded-3xl p-12 md:p-16 shadow-xl shadow-black/5 border border-white/60">
+              <h2 className="text-4xl font-bold sm:text-5xl mb-6 text-gray-900">
                 Ready to Plan Your Collection?
               </h2>
-              <p className="olawave-subheading text-lg text-foreground/70 md:text-xl mb-8">
+              <p className="text-xl text-gray-600 mb-10 leading-relaxed">
                 Go from inspiration to a complete collection plan in under 30 minutes.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row justify-center">
                 <Link
                   href="/creative-space"
-                  className="olawave-button olawave-button-primary inline-flex items-center justify-center text-sm font-medium shadow-lg transition-all hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-gray-900 text-white text-base font-semibold shadow-xl transition-all hover:bg-gray-800 hover:shadow-2xl hover:-translate-y-0.5"
                 >
                   Create Your Collection
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="olawave-button olawave-button-secondary inline-flex items-center justify-center backdrop-blur-sm text-sm font-medium shadow-md transition-all hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white text-gray-700 text-base font-semibold shadow-lg border border-gray-200 transition-all hover:shadow-xl hover:-translate-y-0.5"
                 >
                   Explore Trends
                 </Link>
@@ -391,19 +382,19 @@ export default function HomePage() {
         </section>
         
         {/* Footer */}
-        <footer className="w-full border-t border-foreground/10 py-8 md:py-12 relative z-10">
+        <footer className="w-full border-t border-white/30 py-8 md:py-12 relative z-10 bg-white/30 backdrop-blur-sm">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
               <div className="flex flex-col items-center md:items-start">
-                <p className="text-center text-sm leading-loose text-foreground/60 md:text-left">
+                <p className="text-center text-sm leading-loose text-gray-600 md:text-left">
                   © 2025 OLAWAVE AI. All rights reserved.
                 </p>
               </div>
               <div className="flex items-center gap-6">
-                <Link href="/terms" className="text-sm text-foreground/60 transition-colors hover:text-foreground">
+                <Link href="/terms" className="text-sm text-gray-600 transition-colors hover:text-gray-900">
                   Terms
                 </Link>
-                <Link href="/privacy" className="text-sm text-foreground/60 transition-colors hover:text-foreground">
+                <Link href="/privacy" className="text-sm text-gray-600 transition-colors hover:text-gray-900">
                   Privacy
                 </Link>
               </div>

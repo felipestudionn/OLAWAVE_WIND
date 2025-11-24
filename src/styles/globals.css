@@ -302,3 +302,65 @@
     padding: 1rem;
   }
 }
+
+/* Apple-style entrance animations - ultra smooth */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-60px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes fade-in-slow {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes reveal-text {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px);
+    filter: blur(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+.animate-fade-in {
+  animation: fade-in-slow 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up {
+  animation: reveal-text 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+.animate-delay-100 { animation-delay: 150ms; }
+.animate-delay-200 { animation-delay: 300ms; }
+.animate-delay-300 { animation-delay: 450ms; }
+.animate-delay-400 { animation-delay: 600ms; }
+.animate-delay-500 { animation-delay: 800ms; }
+.animate-delay-600 { animation-delay: 1000ms; }
+.animate-delay-700 { animation-delay: 1200ms; }
+.animate-delay-800 { animation-delay: 1400ms; }
