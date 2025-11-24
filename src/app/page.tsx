@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BarChart3, LineChart, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, Sparkles, Palette, Brain, Calculator, CheckCircle2, Upload, Layers, TrendingUp } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { ColoredSvg } from "@/components/ui/colored-svg";
 
@@ -20,36 +20,40 @@ export default function HomePage() {
       
       <Navbar />
       <main className="flex-1 relative z-10">
-        {/* Hero Section - Now without its own background elements */}
+        {/* Hero Section - Redesigned with clear value prop */}
         <section className="relative w-full py-20 md:py-28 lg:py-32">
           <div className="container relative z-10 px-4 md:px-6">
             <div className="grid gap-8 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-6">
                 <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium text-foreground/80 w-fit">
+                    <Sparkles className="h-4 w-4" />
+                    AI-Powered Collection Planning
+                  </div>
                   <h1 className="olawave-heading text-4xl font-normal tracking-normal sm:text-5xl xl:text-6xl/none">
-                    <span className="block text-white">OLAWAVE AI</span>
-                    <span className="olawave-subheading block text-xl sm:text-2xl xl:text-3xl font-light mt-3 text-foreground/80">
-                      ARTIFICIAL INTELLIGENCE SOLUTIONS
+                    <span className="block text-white">Plan Your Fashion</span>
+                    <span className="block text-white">Collection in</span>
+                    <span className="olawave-subheading block text-2xl sm:text-3xl xl:text-4xl font-light mt-3 text-foreground/90">
+                      3 AI-Powered Steps
                     </span>
                   </h1>
                   <p className="olawave-subheading max-w-[600px] text-lg text-foreground/70 md:text-xl leading-relaxed mt-4">
-                    Fashion in motion. Decoding patterns, revealing context, and transforming uncertainty into strategic insight.
+                    From Pinterest boards to SKU-level financial plans. Combine your creative vision with real market trends and let AI build your collection strategy.
                   </p>
                 </div>
                 <div className="flex flex-col gap-4 sm:flex-row mt-4">
                   <Link
-                    href="/dashboard"
+                    href="/creative-space"
                     className="olawave-button olawave-button-primary inline-flex items-center justify-center text-sm font-medium shadow-lg transition-all hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    Explore Dashboard
+                    Create Your Collection
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                   <Link
-                    href="/ai-advisor"
+                    href="#how-it-works"
                     className="olawave-button olawave-button-secondary inline-flex items-center justify-center backdrop-blur-sm text-sm font-medium shadow-md transition-all hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    AI Advisor
+                    See How It Works
                   </Link>
                 </div>
               </div>
@@ -71,57 +75,226 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-        
-        {/* Retail Insights Section - Inspired by Image 1 */}
-        <section className="relative w-full py-24 px-4 md:px-6 overflow-hidden">
-          <div className="w-full mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-12 items-center">
-              <div className="w-full">
-                <h2 className="text-4xl md:text-5xl font-normal tracking-tight mb-6">
-                  Retail moves fast.<br />
-                  But decisions are<br />
-                  still blind.
-                </h2>
-                <div className="h-px w-full bg-black/20 my-8"></div>
-                <div className="flex justify-end pr-8 md:pr-16">
-                  <ul className="space-y-4 max-w-xl">
-                    <li className="flex items-start">
-                      <span className="text-black/70 mr-2">&gt;</span>
-                      <p>Sales reports show what happened, but not why.</p>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-black/70 mr-2">&gt;</span>
-                      <p>Inventory decisions based on outdated forecasts.</p>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-black/70 mr-2">&gt;</span>
-                      <p>Pricing strategies that react too late.</p>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-black/70 mr-2">&gt;</span>
-                      <p>Marketing campaigns launched in the dark.</p>
-                    </li>
-                  </ul>
+
+        {/* How It Works - 3 Steps Section */}
+        <section id="how-it-works" className="relative w-full py-24 px-4 md:px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-4">
+                How It Works
+              </h2>
+              <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
+                Three simple steps to go from creative inspiration to a complete collection plan with budget and margins.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Step 1 */}
+              <div className="relative">
+                <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm h-full flex flex-col">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                      1
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-primary uppercase tracking-wide">Step 1</span>
+                      <h3 className="text-xl font-semibold">Inspiration</h3>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Palette className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Creative Space</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-foreground/70">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Upload your moodboard images</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Connect Pinterest & select boards</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Explore AI-analyzed market trends</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                      <Sparkles className="h-3 w-3" /> AI-Analyzed
+                    </span>
+                  </div>
                 </div>
-                <div className="h-px w-full bg-black/20 my-8"></div>
-                <div className="flex justify-end">
-                  <button className="bg-black text-white px-6 py-3 rounded-full font-medium flex items-center gap-2 hover:bg-black/80 transition-colors">
-                    FIND THE MISSING PIECE
-                  </button>
+                {/* Connector arrow (hidden on mobile) */}
+                <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                  <ArrowRight className="h-8 w-8 text-primary/30" />
+                </div>
+              </div>
+              
+              {/* Step 2 */}
+              <div className="relative">
+                <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm h-full flex flex-col">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold text-lg">
+                      2
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-primary uppercase tracking-wide">Step 2</span>
+                      <h3 className="text-xl font-semibold">Strategy</h3>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Brain className="h-5 w-5 text-primary" />
+                      <span className="font-medium">AI Advisor</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-foreground/70">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Define your target consumer & season</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Set SKU count & price range</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>AI generates your collection framework</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                      <Sparkles className="h-3 w-3" /> AI-Generated
+                    </span>
+                  </div>
+                </div>
+                {/* Connector arrow (hidden on mobile) */}
+                <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                  <ArrowRight className="h-8 w-8 text-primary/30" />
+                </div>
+              </div>
+              
+              {/* Step 3 */}
+              <div className="relative">
+                <div className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-sm h-full flex flex-col">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-lg">
+                      3
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-primary uppercase tracking-wide">Step 3</span>
+                      <h3 className="text-xl font-semibold">Execution</h3>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Calculator className="h-5 w-5 text-primary" />
+                      <span className="font-medium">Collection Planner</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-foreground/70">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Build SKU-level product plans</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Auto-calculate budget & margins</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Export your complete collection plan</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                      <Sparkles className="h-3 w-3" /> AI-Optimized
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+            
+            <div className="flex justify-center mt-12">
+              <Link
+                href="/creative-space"
+                className="olawave-button olawave-button-primary inline-flex items-center justify-center text-sm font-medium shadow-lg transition-all hover:shadow-xl"
+              >
+                Start Your Collection
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </section>
-
-        {/* Data-Driven Decisions Section - Inspired by Image 2 */}
-        <section className="relative w-full py-24 px-4 md:px-6">
-          <div className="max-w-5xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight mb-8">
-              Decisions should be data-driven.<br />
-              But without cutting-edge context, you're<br />
-              only seeing half the picture.
-            </h2>
+        
+        {/* Value Proposition Section */}
+        <section className="relative w-full py-24 px-4 md:px-6 overflow-hidden">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight mb-6">
+                Collection planning is complex.<br />
+                <span className="text-foreground/70">We make it simple.</span>
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+              <div className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-red-500 text-lg">✕</span>
+                  </div>
+                  Without OLAWAVE
+                </h3>
+                <ul className="space-y-3 text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">→</span>
+                    <span>Weeks building spreadsheets manually</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">→</span>
+                    <span>Guessing what trends will work</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">→</span>
+                    <span>Unbalanced collections with margin issues</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">→</span>
+                    <span>Disconnected creative and financial planning</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-200">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-500 text-lg">✓</span>
+                  </div>
+                  With OLAWAVE
+                </h3>
+                <ul className="space-y-3 text-foreground/70">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-500">→</span>
+                    <span>Complete collection plan in under 30 minutes</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-500">→</span>
+                    <span>AI-backed trend insights from real data</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-500">→</span>
+                    <span>Automatic margin and budget calculations</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-500">→</span>
+                    <span>Creative vision + financial reality, unified</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -188,107 +361,29 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How It Works Section - Inspired by Image 5 */}
-        <section className="relative w-full py-24 px-4 md:px-6">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-16 text-center">
-              How It Works?
-            </h2>
-            
-            <div className="max-w-3xl mx-auto">
-              <div className="h-0.5 w-full bg-black/10 mb-12"></div>
-              
-              <p className="text-center mb-8">
-                <span className="font-medium">Our approach combines </span>
-                <span className="font-bold">Machine Learning, Natural Language Processing (NLP), Predictive Models, and Sentiment Analysis </span>
-                <span className="font-medium">to generate deep contextual understanding.</span>
-              </p>
-              
-              <p className="text-center mb-8">
-                <span className="font-medium">Olawave AI draws from </span>
-                <span className="font-bold">best-in-class practices </span>
-                <span className="font-medium">used by leaders like BlackRock to build predictive intelligence systems.</span>
-              </p>
-              
-              <div className="h-0.5 w-full bg-black/10 mt-12"></div>
-              
-              <div className="flex justify-center mt-12 mb-12">
-                <div className="w-64 h-64">
-                  <ColoredSvg 
-                    src="/icons/5.svg" 
-                    alt="How It Works"
-                    width={256}
-                    height={256}
-                    color="#333333"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* BlackRock Reference Section - Inspired by Image 6 */}
-        <section className="relative w-full py-24 px-4 md:px-6">
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-sm p-12 rounded-3xl shadow-sm">
-              <div className="inline-block bg-gray-400/80 text-black px-4 py-1 rounded-full text-sm font-medium mb-8">
-                Benchmark Reference Model
-              </div>
-              
-              <h3 className="text-2xl font-medium mb-4">
-                BlackRock's Approach<br />
-                (AI-Powered Market & Sentiment Analysis)
-              </h3>
-              
-              <div className="h-0.5 w-full bg-black/10 my-8"></div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div className="md:col-span-2">
-                  <p className="text-black/80 mb-6">
-                    BlackRock's AI system analyzes vast financial datasets, including sentiment analysis from financial articles, social media, and economic indicators. By integrating these insights into predictive models, BlackRock identifies market shifts before they fully materialize, optimizing investment strategies in real-time.
-                  </p>
-                  <a href="#" className="text-black underline hover:no-underline">Learn more from BlackRock.</a>
-                </div>
-                
-                <div className="flex items-center justify-center">
-                  <div className="w-48 h-48">
-                    <ColoredSvg 
-                      src="/icons/6.svg" 
-                      alt="Economic Indicator"
-                      width={192}
-                      height={192}
-                      color="#333333"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* CTA Section */}
         <section className="relative w-full py-16 md:py-24">
           <div className="container relative z-10 px-4 md:px-6">
             <div className="mx-auto max-w-3xl text-center">
               <h2 className="olawave-heading text-3xl font-normal sm:text-4xl md:text-5xl mb-4">
-                Ready to Transform Your Fashion Strategy?
+                Ready to Plan Your Collection?
               </h2>
               <p className="olawave-subheading text-lg text-foreground/70 md:text-xl mb-8">
-                Start identifying emerging trends and make data-driven decisions today.
+                Go from inspiration to a complete collection plan in under 30 minutes.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row justify-center">
                 <Link
-                  href="/dashboard"
+                  href="/creative-space"
                   className="olawave-button olawave-button-primary inline-flex items-center justify-center text-sm font-medium shadow-lg transition-all hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  Get Started
+                  Create Your Collection
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
                 <Link
-                  href="/contact"
+                  href="/dashboard"
                   className="olawave-button olawave-button-secondary inline-flex items-center justify-center backdrop-blur-sm text-sm font-medium shadow-md transition-all hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  Contact Sales
+                  Explore Trends
                 </Link>
               </div>
             </div>
@@ -301,18 +396,15 @@ export default function HomePage() {
             <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
               <div className="flex flex-col items-center md:items-start">
                 <p className="text-center text-sm leading-loose text-foreground/60 md:text-left">
-                  2025 OLAWAVE AI. All rights reserved.
+                  © 2025 OLAWAVE AI. All rights reserved.
                 </p>
               </div>
               <div className="flex items-center gap-6">
-                <Link href="#" className="text-sm text-foreground/60 transition-colors hover:text-foreground">
+                <Link href="/terms" className="text-sm text-foreground/60 transition-colors hover:text-foreground">
                   Terms
                 </Link>
-                <Link href="#" className="text-sm text-foreground/60 transition-colors hover:text-foreground">
+                <Link href="/privacy" className="text-sm text-foreground/60 transition-colors hover:text-foreground">
                   Privacy
-                </Link>
-                <Link href="#" className="text-sm text-foreground/60 transition-colors hover:text-foreground">
-                  Contact
                 </Link>
               </div>
             </div>

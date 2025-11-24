@@ -2,11 +2,24 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Palette, Brain, Calculator, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Determine current step based on pathname
+  const getCurrentStep = () => {
+    if (pathname?.startsWith('/creative-space')) return 1;
+    if (pathname?.startsWith('/ai-advisor')) return 2;
+    if (pathname?.startsWith('/planner')) return 3;
+    return 0;
+  };
+
+  const currentStep = getCurrentStep();
+  const isInJourney = currentStep > 0;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 border-b bg-white/90 backdrop-blur-sm dark:bg-gray-950/90 shadow-sm">
@@ -30,44 +43,99 @@ export function Navbar() {
           </Link>
         </div>
         <div className="ml-auto flex items-center gap-4">
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
+          {/* Journey Progress Navigation (shown when in journey) */}
+          {isInJourney && (
+            <nav className="hidden lg:flex items-center gap-1 bg-gray-100/80 rounded-full px-2 py-1">
+              <Link
+                href="/creative-space"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  currentStep === 1 
+                    ? 'bg-white shadow-sm text-primary' 
+                    : currentStep > 1 
+                      ? 'text-green-600' 
+                      : 'text-gray-500'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                  currentStep > 1 ? 'bg-green-500 text-white' : currentStep === 1 ? 'bg-primary text-white' : 'bg-gray-300 text-white'
+                }`}>
+                  {currentStep > 1 ? '✓' : '1'}
+                </div>
+                <span className="hidden xl:inline">Inspiration</span>
+              </Link>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <Link
+                href="/ai-advisor"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  currentStep === 2 
+                    ? 'bg-white shadow-sm text-primary' 
+                    : currentStep > 2 
+                      ? 'text-green-600' 
+                      : 'text-gray-500'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                  currentStep > 2 ? 'bg-green-500 text-white' : currentStep === 2 ? 'bg-primary text-white' : 'bg-gray-300 text-white'
+                }`}>
+                  {currentStep > 2 ? '✓' : '2'}
+                </div>
+                <span className="hidden xl:inline">Strategy</span>
+              </Link>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <div
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                  currentStep === 3 
+                    ? 'bg-white shadow-sm text-primary' 
+                    : 'text-gray-500'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                  currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-300 text-white'
+                }`}>
+                  3
+                </div>
+                <span className="hidden xl:inline">Execution</span>
+              </div>
+            </nav>
+          )}
+          
+          {/* Regular Navigation (shown on landing/other pages) */}
+          {!isInJourney && (
+            <nav className="hidden md:flex items-center gap-6">
+              <Link
+                href="/creative-space"
+                className="text-sm font-medium transition-colors hover:text-primary relative group flex items-center gap-1"
+              >
+                <Palette className="h-4 w-4" />
+                Creative Space
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link
+                href="/ai-advisor"
+                className="text-sm font-medium transition-colors hover:text-primary flex items-center relative group gap-1"
+              >
+                <Brain className="h-4 w-4" />
+                AI Advisor
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium transition-colors hover:text-primary relative group"
+              >
+                Trends
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </Link>
+            </nav>
+          )}
+          
+          <div className="hidden md:flex items-center gap-3">
+            <Link 
               href="/creative-space"
-              className="text-sm font-medium transition-colors hover:text-primary relative group"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
             >
-              Creative Space
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              <Sparkles className="mr-2 h-4 w-4" />
+              New Collection
             </Link>
-            <Link
-              href="/ai-advisor"
-              className="text-sm font-medium transition-colors hover:text-primary flex items-center relative group"
-            >
-              <Sparkles className="mr-1 h-3 w-3" />
-              AI Advisor
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium transition-colors hover:text-primary relative group"
-            >
-              Trends
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link
-              href="/analytics"
-              className="text-sm font-medium transition-colors hover:text-primary relative group"
-            >
-              Analytics
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-          </nav>
-          <div className="hidden md:flex items-center gap-4">
-            <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
-              Sign In
-            </button>
-            <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2">
-              Get Started
-            </button>
           </div>
           <button 
             className="md:hidden inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 w-9"
@@ -117,19 +185,56 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-sm dark:bg-gray-950/95 border-b shadow-md">
           <div className="flex flex-col space-y-4 p-6">
+            {/* Journey Steps for Mobile */}
+            <div className="flex items-center justify-between gap-2 pb-4 border-b">
+              <Link
+                href="/creative-space"
+                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 1 ? 'bg-primary/10' : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                  currentStep > 1 ? 'bg-green-500 text-white' : currentStep === 1 ? 'bg-primary text-white' : 'bg-gray-200'
+                }`}>
+                  {currentStep > 1 ? '✓' : '1'}
+                </div>
+                <span className="text-xs font-medium">Inspiration</span>
+              </Link>
+              <Link
+                href="/ai-advisor"
+                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 2 ? 'bg-primary/10' : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                  currentStep > 2 ? 'bg-green-500 text-white' : currentStep === 2 ? 'bg-primary text-white' : 'bg-gray-200'
+                }`}>
+                  {currentStep > 2 ? '✓' : '2'}
+                </div>
+                <span className="text-xs font-medium">Strategy</span>
+              </Link>
+              <div className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 3 ? 'bg-primary/10' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                  currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-200'
+                }`}>
+                  3
+                </div>
+                <span className="text-xs font-medium">Execution</span>
+              </div>
+            </div>
+            
             <Link
               href="/creative-space"
-              className="text-base font-medium py-2 transition-colors hover:text-primary"
+              className="text-base font-medium py-2 transition-colors hover:text-primary flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
+              <Palette className="h-4 w-4" />
               Creative Space
             </Link>
             <Link
               href="/ai-advisor"
-              className="text-base font-medium py-2 transition-colors hover:text-primary flex items-center"
+              className="text-base font-medium py-2 transition-colors hover:text-primary flex items-center gap-2"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <Sparkles className="mr-2 h-4 w-4" />
+              <Brain className="h-4 w-4" />
               AI Advisor
             </Link>
             <Link
@@ -137,22 +242,17 @@ export function Navbar() {
               className="text-base font-medium py-2 transition-colors hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Trends
+              Trends Library
             </Link>
-            <Link
-              href="/analytics"
-              className="text-base font-medium py-2 transition-colors hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Analytics
-            </Link>
-            <div className="pt-4 flex flex-col space-y-3">
-              <button className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                Sign In
-              </button>
-              <button className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2">
-                Get Started
-              </button>
+            <div className="pt-4">
+              <Link 
+                href="/creative-space"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                New Collection
+              </Link>
             </div>
           </div>
         </div>

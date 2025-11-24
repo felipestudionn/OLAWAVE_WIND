@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { CollectionPlan } from "@/types/planner";
 import { CollectionBuilder } from './CollectionBuilder';
@@ -18,18 +19,38 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
   const setupData = plan.setup_data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-6">
+      {/* Step Indicator */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold">
+            3
+          </div>
+          <div>
+            <h3 className="font-semibold">Step 3: Execution</h3>
+            <p className="text-sm text-muted-foreground">Build your SKU-level collection plan</p>
+          </div>
+        </div>
+        <Badge variant="secondary" className="bg-green-100 text-green-700">
+          <Sparkles className="h-3 w-3 mr-1" />
+          AI-Optimized
+        </Badge>
+      </div>
+
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-slate-200">
-        <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="flex justify-between items-center py-4">
+      <div className="bg-white shadow-sm border rounded-xl mb-6">
+        <div className="px-6 py-4">
+          <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => router.back()}>
+              <Button variant="ghost" onClick={() => router.push('/ai-advisor')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
+                Back to Strategy
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">{plan.name}</h1>
+              <div className="border-l pl-4">
+                <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  {plan.name}
+                </h1>
                 {plan.description && (
                   <p className="text-slate-600 text-sm">{plan.description}</p>
                 )}
@@ -43,8 +64,7 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="builder">Constructor</TabsTrigger>
             <TabsTrigger value="strategic">Strategic Dashboard</TabsTrigger>
@@ -212,7 +232,6 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 }

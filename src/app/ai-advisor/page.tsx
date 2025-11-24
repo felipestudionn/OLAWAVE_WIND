@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Calendar, TrendingUp, ShoppingBag, ArrowRight, MessageSquare, RefreshCw, Download, ChevronRight, CheckCircle2, Plus, ImageIcon } from 'lucide-react';
-import { TrendEvolutionChart } from "@/components/charts/trend-evolution-chart";
+import { Sparkles, ArrowRight, RefreshCw, ChevronRight, CheckCircle2, Plus } from 'lucide-react';
 import { SetupData } from '@/types/planner';
 
 export default function AIAdvisorPage() {
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeSection, setActiveSection] = useState("collection");
   const [generatedPlan, setGeneratedPlan] = useState<SetupData | null>(null);
   const [moodboardContext, setMoodboardContext] = useState<string | null>(null);
   const [creativeContext, setCreativeContext] = useState<string>('');
@@ -570,65 +568,52 @@ export default function AIAdvisorPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="space-y-4 py-4">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto px-4 py-6">
+      {/* Step Indicator */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-100">
         <div className="flex items-center gap-3">
-          <Sparkles className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">AI Fashion Advisor</h1>
-        </div>
-        <p className="text-muted-foreground max-w-3xl">
-          Get AI-powered strategic recommendations for your fashion business based on real-time trend analysis.
-        </p>
-        <div className="flex items-center justify-between">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold">
+            2
+          </div>
           <div>
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleGenerate} disabled={isGenerating}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-              {isGenerating ? 'Generating...' : 'Refresh Insights'}
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="/ai-advisor/svg-gallery">
-                <ImageIcon className="mr-2 h-4 w-4" />
-                SVG Gallery
-              </a>
-            </Button>
+            <h3 className="font-semibold">Step 2: Strategy</h3>
+            <p className="text-sm text-muted-foreground">Define your collection framework</p>
           </div>
         </div>
+        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+          <Sparkles className="h-3 w-3 mr-1" />
+          AI-Generated
+        </Badge>
       </div>
 
-      {/* Section Navigation */}
-      <div className="flex space-x-2 border-b pb-4">
-        <Button 
-          variant={activeSection === "collection" ? "default" : "outline"} 
-          onClick={() => setActiveSection("collection")}
-          className="flex items-center"
-        >
-          <Calendar className="mr-2 h-4 w-4" />
-          Collection Plan
-        </Button>
-        <Button 
-          variant={activeSection === "inseason" ? "default" : "outline"} 
-          onClick={() => setActiveSection("inseason")}
-          className="flex items-center"
-        >
-          <ShoppingBag className="mr-2 h-4 w-4" />
-          In-Season Opportunities
-        </Button>
-        <Button 
-          variant={activeSection === "forecast" ? "default" : "outline"} 
-          onClick={() => setActiveSection("forecast")}
-          className="flex items-center"
-        >
-          <TrendingUp className="mr-2 h-4 w-4" />
-          Trend Forecast
-        </Button>
+      {/* Context from Block 1 */}
+      {(creativeContext || moodboardContext) && (
+        <div className="bg-gradient-to-r from-pink-50/50 to-purple-50/50 rounded-lg p-4 border border-pink-100">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-medium text-sm">Using your creative inspiration</span>
+          </div>
+          <p className="text-sm text-muted-foreground pl-8">
+            {creativeContext || moodboardContext}
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <Sparkles className="h-8 w-8 text-primary" />
+          AI Collection Advisor
+        </h1>
+        <p className="text-muted-foreground">
+          Define your collection parameters and let AI generate your strategic framework.
+        </p>
       </div>
 
       {/* Collection Plan Section */}
-      {activeSection === "collection" && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="md:col-span-2">
+      <div className="grid gap-6">
+        <Card>
             <CardHeader>
               <CardTitle>Collection Plan Proposal</CardTitle>
               <CardDescription>
@@ -852,301 +837,6 @@ export default function AIAdvisorPage() {
             </CardContent>
           </Card>
         </div>
-      )}
-
-      {/* In-Season Opportunities Section */}
-      {activeSection === "inseason" && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>In-Season Product Opportunities</CardTitle>
-              <CardDescription>
-                Identify emerging trends and product opportunities for immediate action
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Hot Right Now</h3>
-                <div className="grid gap-3">
-                  {[
-                    {
-                      name: "Oversized Linen Shirts",
-                      growth: "+42%",
-                      category: "Clothing",
-                      timeframe: "Last 2 weeks"
-                    },
-                    {
-                      name: "Platform Sandals",
-                      growth: "+38%",
-                      category: "Shoes",
-                      timeframe: "Last 2 weeks"
-                    },
-                    {
-                      name: "Crochet Bags",
-                      growth: "+35%",
-                      category: "Bags",
-                      timeframe: "Last 2 weeks"
-                    }
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-md border p-3">
-                      <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-xs text-muted-foreground">{item.category} • {item.timeframe}</div>
-                      </div>
-                      <Badge className="bg-green-600">{item.growth}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Restocking Recommendations</h3>
-                <div className="rounded-md border p-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Cropped Cardigans</span>
-                      <Badge variant="outline" className="text-amber-500 border-amber-500">Medium Priority</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Wide-Leg Jeans</span>
-                      <Badge variant="outline" className="text-red-500 border-red-500">High Priority</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Bucket Hats</span>
-                      <Badge variant="outline" className="text-green-500 border-green-500">Low Priority</Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Export Report
-              </Button>
-              <Button size="sm">
-                View All Opportunities
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Real-Time Trend Shifts</CardTitle>
-              <CardDescription>
-                Monitor how trends are evolving in real-time to make quick decisions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="h-64">
-                <TrendEvolutionChart
-                  data={[
-                    { month: "Week 1", value: 30 },
-                    { month: "Week 2", value: 35 },
-                    { month: "Week 3", value: 45 },
-                    { month: "Week 4", value: 60 },
-                    { month: "Week 5", value: 75 },
-                    { month: "Week 6", value: 82 }
-                  ]}
-                  title="Crochet Accessories Trend Growth"
-                  color="#F59E0B"
-                  height={240}
-                />
-              </div>
-
-              <div className="rounded-md border p-4 bg-muted/50">
-                <h3 className="text-sm font-medium mb-2">AI Recommendation</h3>
-                <p className="text-sm text-muted-foreground">
-                  Based on the rapid growth of crochet accessories, we recommend expediting production of crochet bags and hats. Consider a limited-edition collection to capitalize on this trend before it peaks in approximately 3-4 weeks.
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" onClick={handleGenerate} disabled={isGenerating}>
-                {isGenerating ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Updating Recommendations...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Refresh Trend Data
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-
-      {/* Trend Forecast Section */}
-      {activeSection === "forecast" && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Trends & Hero Product Forecast</CardTitle>
-              <CardDescription>
-                Long-term trend predictions and hero product recommendations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Upcoming Trends (6-12 Months)</h3>
-                <div className="grid gap-3">
-                  {[
-                    {
-                      name: "Digital Fashion Integration",
-                      confidence: "92%",
-                      impact: "High",
-                      timeframe: "Q3 2025"
-                    },
-                    {
-                      name: "Adaptive Clothing",
-                      confidence: "88%",
-                      impact: "Medium",
-                      timeframe: "Q4 2025"
-                    },
-                    {
-                      name: "Biodegradable Accessories",
-                      confidence: "85%",
-                      impact: "High",
-                      timeframe: "Q2 2025"
-                    }
-                  ].map((item, i) => (
-                    <div key={i} className="rounded-md border p-3">
-                      <div className="flex justify-between mb-1">
-                        <div className="font-medium">{item.name}</div>
-                        <Badge variant="outline">{item.timeframe}</Badge>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Confidence: {item.confidence}</span>
-                        <span>Market Impact: {item.impact}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Predicted Hero Products</h3>
-                <div className="rounded-md border p-4">
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Modular Convertible Jacket</span>
-                        <Badge className="bg-primary">Top Pick</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Versatile jacket with detachable elements that can transform into different styles
-                      </p>
-                    </div>
-                    <div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Tech-Integrated Handbag</span>
-                        <Badge className="bg-primary">Top Pick</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Smart bag with charging capabilities and digital display for customization
-                      </p>
-                    </div>
-                    <div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Climate-Adaptive Footwear</span>
-                        <Badge className="bg-primary">Top Pick</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Shoes that adjust to temperature changes with breathable/insulating materials
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Export Forecast
-              </Button>
-              <Button size="sm">
-                View Detailed Analysis
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Innovation Spotlight</CardTitle>
-              <CardDescription>
-                Disruptive concepts and technologies reshaping fashion
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-md border p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
-                <h3 className="text-base font-medium mb-2 text-primary">Virtual Fitting Room AI</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  AI-powered virtual fitting room technology that creates hyper-realistic simulations of how garments will look and move on individual customers.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-primary/10">AR/VR</Badge>
-                  <Badge variant="outline" className="bg-primary/10">AI</Badge>
-                  <Badge variant="outline" className="bg-primary/10">E-commerce</Badge>
-                </div>
-                <div className="mt-3 text-xs">
-                  <span className="text-primary font-medium">Adoption Timeline:</span> 12-18 months
-                </div>
-              </div>
-
-              <div className="rounded-md border p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-                <h3 className="text-base font-medium mb-2 text-green-600">Circular Fashion Marketplace</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Blockchain-based platform that tracks the lifecycle of garments, facilitating resale, recycling, and upcycling to extend product lifespan.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-green-600/10 text-green-600 border-green-600/20">Blockchain</Badge>
-                  <Badge variant="outline" className="bg-green-600/10 text-green-600 border-green-600/20">Sustainability</Badge>
-                  <Badge variant="outline" className="bg-green-600/10 text-green-600 border-green-600/20">Marketplace</Badge>
-                </div>
-                <div className="mt-3 text-xs">
-                  <span className="text-green-600 font-medium">Adoption Timeline:</span> 6-12 months
-                </div>
-              </div>
-
-              <div className="rounded-md border p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
-                <h3 className="text-base font-medium mb-2 text-amber-600">Mood-Responsive Textiles</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Smart fabrics that change color or pattern based on the wearer's mood, body temperature, or environmental conditions.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-amber-600/10 text-amber-600 border-amber-600/20">Smart Textiles</Badge>
-                  <Badge variant="outline" className="bg-amber-600/10 text-amber-600 border-amber-600/20">Wearable Tech</Badge>
-                  <Badge variant="outline" className="bg-amber-600/10 text-amber-600 border-amber-600/20">Innovation</Badge>
-                </div>
-                <div className="mt-3 text-xs">
-                  <span className="text-amber-600 font-medium">Adoption Timeline:</span> 18-24 months
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" onClick={handleGenerate} disabled={isGenerating}>
-                {isGenerating ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Generating Ideas...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate More Innovations
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }
