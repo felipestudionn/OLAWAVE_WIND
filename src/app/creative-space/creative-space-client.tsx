@@ -70,13 +70,21 @@ export function CreativeSpaceClient() {
     setImages((prev) => prev.filter((img) => img.id !== id));
   };
 
-  const handlePinterestConnect = () => {
+  const handlePinterestConnect = async () => {
     try {
-      const authUrl = getPinterestAuthUrl();
-      window.location.href = authUrl;
+      // TEMPORARY: For sandbox testing, just fetch boards directly
+      const response = await fetch('/api/pinterest/boards');
+      if (response.ok) {
+        setPinterestConnected(true);
+        const data = await response.json();
+        console.log('Pinterest boards:', data);
+        alert(`Connected! Found ${data.items?.length || 0} boards.`);
+      } else {
+        throw new Error('Failed to connect');
+      }
     } catch (error) {
-      console.error('Pinterest auth error:', error);
-      alert('Pinterest integration is not configured yet. Please add NEXT_PUBLIC_PINTEREST_CLIENT_ID to your environment variables.');
+      console.error('Pinterest connection error:', error);
+      alert('Pinterest integration is pending approval. Using sandbox mode for testing.');
     }
   };
 

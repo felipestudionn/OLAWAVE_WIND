@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Fetch user's Pinterest boards
+ * TEMPORARY: Using sandbox access token until Pinterest app is approved
  */
 export async function GET(req: NextRequest) {
-  const accessToken = req.cookies.get('pinterest_access_token')?.value;
+  // Try cookie first (for future OAuth), fallback to env token (sandbox)
+  let accessToken = req.cookies.get('pinterest_access_token')?.value;
+  
+  if (!accessToken) {
+    // Use sandbox token from env for testing
+    accessToken = process.env.PINTEREST_ACCESS_TOKEN;
+  }
 
   if (!accessToken) {
     return NextResponse.json(
