@@ -31,3 +31,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# merch-mind-planner reference (not part of build)
+/merch-mind-planner
+
+# IDE
+.vscode
+.idea

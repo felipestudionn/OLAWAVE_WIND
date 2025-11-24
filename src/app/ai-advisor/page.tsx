@@ -1,15 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Calendar, TrendingUp, ShoppingBag, ArrowRight, MessageSquare, RefreshCw, Download, ChevronRight, CheckCircle2, Plus, ImageIcon } from 'lucide-react';
 import { TrendEvolutionChart } from "@/components/charts/trend-evolution-chart";
+import { SetupData } from '@/types/planner';
 
 export default function AIAdvisorPage() {
+  const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSection, setActiveSection] = useState("collection");
+  const [generatedPlan, setGeneratedPlan] = useState<SetupData | null>(null);
+  const [moodboardContext, setMoodboardContext] = useState<string | null>(null);
+  const [creativeContext, setCreativeContext] = useState<string>('');
   
   // Range Plan Form State
   const [currentStep, setCurrentStep] = useState(0);
@@ -45,6 +51,54 @@ export default function AIAdvisorPage() {
     }));
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      // Try new unified format first
+      const creativeDataRaw = window.localStorage.getItem('olawave_creative_data');
+      if (creativeDataRaw) {
+        const creativeData = JSON.parse(creativeDataRaw);
+        const contextParts: string[] = [];
+        
+        if (creativeData.moodboardImages?.length > 0) {
+          contextParts.push(`User moodboard: ${creativeData.moodboardImages.length} reference images`);
+        }
+        
+        if (creativeData.pinterestBoards?.length > 0) {
+          const boardNames = creativeData.pinterestBoards.map((b: any) => b.name).join(', ');
+          contextParts.push(`Pinterest boards: ${boardNames}`);
+        }
+        
+        if (creativeData.keyColors?.length > 0) {
+          contextParts.push(`Key colors: ${creativeData.keyColors.join(', ')}`);
+        }
+        
+        if (creativeData.keyTrends?.length > 0) {
+          contextParts.push(`Key trends: ${creativeData.keyTrends.join(', ')}`);
+        }
+        
+        if (creativeData.keyItems?.length > 0) {
+          contextParts.push(`Key items: ${creativeData.keyItems.join(', ')}`);
+        }
+        
+        setCreativeContext(contextParts.join('. '));
+      } else {
+        // Fallback to old format
+        const raw = window.localStorage.getItem('olawave_moodboard_summary');
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as { count?: number; names?: string[] };
+        if (!parsed || !parsed.count) return;
+
+        const names = parsed.names?.slice(0, 10) || [];
+        const summaryText = `User moodboard contains ${parsed.count} image references. Example filenames or labels: ${names.join(", ")}.`;
+        setMoodboardContext(summaryText);
+      }
+    } catch (e) {
+      // ignore parse/storage errors
+    }
+  }, []);
+
   const handleCategoryToggle = (category: string) => {
     setFormData(prev => {
       if (prev.categories.includes(category)) {
@@ -61,16 +115,79 @@ export default function AIAdvisorPage() {
     });
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Generate range plan
+      // Generate range plan with AI
       setIsGenerating(true);
-      setTimeout(() => {
-        setIsGenerating(false);
+
+      try {
+        const response = await fetch('/api/ai/generate-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetConsumer:
+              formData.targetConsumer === 'custom'
+                ? formData.customTargetConsumer
+                : formData.targetConsumer,
+            season:
+              formData.season === 'custom'
+                ? formData.customSeason
+                : formData.season,
+            skuCount:
+              formData.skuCount === 'custom'
+                ? formData.customSkuCount
+                : formData.skuCount,
+            priceMin: formData.priceMin,
+            priceMax: formData.priceMax,
+            categories: formData.categories,
+            location: 'Shoreditch', // MVP fijo
+            userMoodboardContext: creativeContext || moodboardContext,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to generate plan');
+
+        const planData = await response.json();
+        setGeneratedPlan(planData as SetupData);
         setShowResults(true);
-      }, 2000);
+      } catch (error) {
+        console.error(error);
+        alert('Error generating plan. Please try again.');
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+  };
+
+  const handleSaveToPlanner = async () => {
+    if (!generatedPlan) return;
+
+    try {
+      const response = await fetch('/api/planner/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${
+            formData.season === 'custom'
+              ? formData.customSeason
+              : formData.season
+          } Collection`,
+          description: `Generated for ${formData.targetConsumer}`,
+          season: formData.season,
+          location: 'Shoreditch',
+          setup_data: generatedPlan,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to save plan');
+
+      const newPlan = await response.json();
+      router.push(`/planner/${newPlan.id}`);
+    } catch (error) {
+      console.error(error);
+      alert('Error saving plan');
     }
   };
 
@@ -103,6 +220,7 @@ export default function AIAdvisorPage() {
       category: false
     });
     setShowResults(false);
+    setGeneratedPlan(null);
   };
 
   const handleGenerate = () => {
@@ -614,17 +732,31 @@ export default function AIAdvisorPage() {
                       <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="bg-background p-4 rounded-md text-center">
                           <div className="text-2xl font-bold">
-                            {formData.skuCount === 'custom' ? formData.customSkuCount : formData.skuCount}
+                            {generatedPlan?.expectedSkus ||
+                              (formData.skuCount === 'custom'
+                                ? formData.customSkuCount
+                                : formData.skuCount)}
                           </div>
-                          <div className="text-xs text-muted-foreground">Total SKUs</div>
+                          <div className="text-xs text-muted-foreground">
+                            Optimized SKUs
+                          </div>
                         </div>
                         <div className="bg-background p-4 rounded-md text-center">
-                          <div className="text-2xl font-bold">${formData.priceMin}-${formData.priceMax}</div>
-                          <div className="text-xs text-muted-foreground">Price Range</div>
+                          <div className="text-2xl font-bold">
+                            €{generatedPlan?.avgPriceTarget ?? formData.priceMin}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Avg Price Target
+                          </div>
                         </div>
                         <div className="bg-background p-4 rounded-md text-center">
-                          <div className="text-2xl font-bold">{formData.categories.length}</div>
-                          <div className="text-xs text-muted-foreground">Categories</div>
+                          <div className="text-2xl font-bold">
+                            {generatedPlan?.productFamilies?.length ??
+                              formData.categories.length}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Product Families
+                          </div>
                         </div>
                       </div>
                       
@@ -637,26 +769,24 @@ export default function AIAdvisorPage() {
                       
                       {/* Category Breakdown */}
                       <div>
-                        <h4 className="text-sm font-medium mb-3">Recommended Category Distribution</h4>
+                        <h4 className="text-sm font-medium mb-3">
+                          Optimized Product Mix (AI Generated)
+                        </h4>
                         <div className="space-y-3">
-                          {formData.categories.map((category) => {
-                            // Generate random percentage for demo
-                            const percentage = Math.floor(Math.random() * 30) + 10;
-                            return (
-                              <div key={category} className="space-y-1">
-                                <div className="flex justify-between text-sm">
-                                  <span>{category}</span>
-                                  <span>{percentage}%</span>
-                                </div>
-                                <div className="w-full bg-muted rounded-full h-2">
-                                  <div 
-                                    className="bg-primary rounded-full h-2" 
-                                    style={{ width: `${percentage}%` }}
-                                  ></div>
-                                </div>
+                          {generatedPlan?.productFamilies?.map((family) => (
+                            <div key={family.name} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span>{family.name}</span>
+                                <span>{family.percentage}%</span>
                               </div>
-                            );
-                          })}
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div
+                                  className="bg-primary rounded-full h-2"
+                                  style={{ width: `${family.percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                       
@@ -712,9 +842,9 @@ export default function AIAdvisorPage() {
                     <Button variant="outline" onClick={handleReset}>
                       Start Over
                     </Button>
-                    <Button>
-                      <Download className="mr-2 h-4 w-4" />
-                      Export Range Plan
+                    <Button onClick={handleSaveToPlanner} className="gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Save & Open Planner
                     </Button>
                   </div>
                 </div>

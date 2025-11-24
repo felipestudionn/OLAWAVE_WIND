@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 // Simple auth check for future Vercel Cron integration
 function verifyCronAuth(req: NextRequest): boolean {

@@ -48,6 +48,13 @@ export function Sidebar() {
               <Sparkles className="mr-3 h-4 w-4 text-primary" />
               AI Advisor
             </Link>
+            <Link 
+              href="/creative-space" 
+              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              <Sparkles className="mr-3 h-4 w-4" />
+              Creative Space
+            </Link>
           </div>
         </div>
 
