@@ -1,12 +1,14 @@
 # 📌 Pinterest OAuth - Guía de Configuración
 
-## ✅ Estado Actual
+## ✅ ESTADO ACTUAL: OAUTH COMPLETO
 
-- [x] Páginas legales creadas (`/privacy`, `/terms`)
-- [x] Dominio `olawave.ai` funcionando
-- [ ] App de Pinterest creada
-- [ ] Credenciales obtenidas
-- [ ] Variables de entorno configuradas
+**Nota:** La app de Pinterest ha sido aprobada y está usando el flujo OAuth completo.
+
+### Configuración Activa:
+- ✅ Client ID configurado
+- ✅ Client Secret configurado
+- ✅ Redirect URIs configurados
+- ✅ OAuth flow completo implementado
 
 ---
 
