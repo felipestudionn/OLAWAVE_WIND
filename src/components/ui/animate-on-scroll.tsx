@@ -6,9 +6,10 @@ interface AnimateOnScrollProps {
   children: React.ReactNode;
   className?: string;
   delay?: number;
+  duration?: number;
 }
 
-export function AnimateOnScroll({ children, className = '', delay = 0 }: AnimateOnScrollProps) {
+export function AnimateOnScroll({ children, className = '', delay = 0, duration = 2.5 }: AnimateOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
@@ -55,9 +56,9 @@ export function AnimateOnScroll({ children, className = '', delay = 0 }: Animate
       className={className}
       style={{
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateX(0)' : 'translateX(-40px)',
-        filter: isVisible ? 'blur(0)' : 'blur(12px)',
-        transition: `all 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`,
+        transform: isVisible ? 'translateX(0)' : 'translateX(-60px)',
+        filter: isVisible ? 'blur(0)' : 'blur(15px)',
+        transition: `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`,
       }}
     >
       {children}

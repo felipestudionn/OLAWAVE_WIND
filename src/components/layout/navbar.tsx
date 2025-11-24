@@ -22,9 +22,9 @@ export function Navbar() {
   const isInJourney = currentStep > 0;
 
   return (
-    <div className="fixed top-4 left-0 right-0 z-50 px-4 md:px-6 animate-fade-in">
-      <div className="container mx-auto bg-white/40 backdrop-blur-2xl rounded-full shadow-[0_2px_20px_-2px_rgba(0,0,0,0.1)] border border-white/30">
-      <div className="flex h-20 items-center px-6 md:px-8">
+    <div className="fixed top-0 left-0 right-0 z-50 px-4 md:px-6 animate-fade-in">
+      <div className="container mx-auto">
+      <div className="flex h-24 items-center px-2 md:px-4">
         <div className="flex items-center gap-3">
           {/* OLAWAVE Logo */}
           <div className="relative h-20 w-20 flex items-center">
@@ -108,20 +108,21 @@ export function Navbar() {
                 className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
               >
                 <Palette className="h-4 w-4" />
-                Creative Space
+                Inspiration
               </Link>
               <Link
                 href="/ai-advisor"
                 className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
               >
                 <Brain className="h-4 w-4" />
-                AI Advisor
+                Strategy
               </Link>
               <Link
-                href="/dashboard"
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                href="/planner"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
               >
-                Trends
+                <Calculator className="h-4 w-4" />
+                Execution
               </Link>
             </nav>
           )}

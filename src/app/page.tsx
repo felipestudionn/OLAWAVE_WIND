@@ -70,7 +70,7 @@ export default function HomePage() {
         {/* How It Works - 3 Steps Section */}
         <section id="how-it-works" className="relative w-full py-24 px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
-            <AnimateOnScroll className="text-center mb-16">
+            <AnimateOnScroll delay={800} duration={3} className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 text-gray-900">
                 How It Works
               </h2>
@@ -81,7 +81,7 @@ export default function HomePage() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Step 1 */}
-              <AnimateOnScroll delay={0} className="relative">
+              <AnimateOnScroll delay={1200} duration={2.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -125,7 +125,7 @@ export default function HomePage() {
               </AnimateOnScroll>
               
               {/* Step 2 */}
-              <AnimateOnScroll delay={200} className="relative">
+              <AnimateOnScroll delay={1600} duration={2.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -169,7 +169,7 @@ export default function HomePage() {
               </AnimateOnScroll>
               
               {/* Step 3 */}
-              <AnimateOnScroll delay={400} className="relative">
+              <AnimateOnScroll delay={2000} duration={2.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
