@@ -1,12 +1,54 @@
 import Link from "next/link";
+import { supabaseAdmin } from "@/lib/supabase";
+import type { Signal } from "@/types";
 
-export default function DashboardPage() {
+async function getSignals(): Promise<Signal[]> {
+  const { data, error } = await supabaseAdmin
+    .from("signals")
+    .select("*")
+    .eq("location", "Shoreditch")
+    .order("composite_score", { ascending: false })
+    .limit(10);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data as Signal[];
+}
+
+export default async function DashboardPage() {
+  const signals = await getSignals();
+
+  const totalSignals = signals.length;
+  const totalRedditMentions = signals.reduce(
+    (sum, s) => sum + (s.reddit_mentions || 0),
+    0,
+  );
+  const totalPinterestPins = signals.reduce(
+    (sum, s) => sum + (s.pinterest_pin_count || 0),
+    0,
+  );
+  const totalYoutubeViews = signals.reduce(
+    (sum, s) => sum + (s.youtube_total_views || 0),
+    0,
+  );
+  const avgAcceleration =
+    signals.length > 0
+      ?
+          signals.reduce(
+            (sum, s) => sum + (s.acceleration_factor || 1),
+            0,
+          ) / signals.length
+      : 1;
+  const growthPercent = Math.round((avgAcceleration - 1) * 100);
+
   return (
     <div className="flex flex-col gap-8 px-4 md:px-6 py-6 md:py-10 max-w-7xl mx-auto">
       <div className="space-y-3">
         <h1 className="olawave-heading text-3xl md:text-4xl font-bold tracking-tight mb-2 text-foreground">Fashion Trend Dashboard</h1>
         <p className="text-muted-foreground max-w-3xl text-base md:text-lg">
-          Intelligence in motion. Decoding patterns, revealing context, and transforming uncertainty into strategic insight.
+          Intelligence in motion. Live signals from Shoreditch aggregated across Reddit, YouTube and Pinterest.
         </p>
       </div>
       
@@ -16,10 +58,10 @@ export default function DashboardPage() {
           <div className="p-5 md:p-6 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
-              <h3 className="font-semibold">Instagram</h3>
+              <h3 className="font-semibold">Signals</h3>
             </div>
-            <div className="text-2xl font-bold mt-1">+28.4%</div>
-            <p className="text-xs text-muted-foreground">Growth in sustainable fashion trends</p>
+            <div className="text-2xl font-bold mt-1">{totalSignals}</div>
+            <p className="text-xs text-muted-foreground">Active emerging signals in Shoreditch (last 30 days)</p>
             <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-primary/20 transition-all duration-300 group-hover:scale-150"></div>
           </div>
         </div>
@@ -30,8 +72,8 @@ export default function DashboardPage() {
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               <h3 className="font-semibold">Pinterest</h3>
             </div>
-            <div className="text-2xl font-bold mt-1">1.2M</div>
-            <p className="text-xs text-muted-foreground">Pins related to minimalist fashion</p>
+            <div className="text-2xl font-bold mt-1">{totalPinterestPins}</div>
+            <p className="text-xs text-muted-foreground">Pins linked to emerging Shoreditch fashion signals</p>
             <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-secondary/20 transition-all duration-300 group-hover:scale-150"></div>
           </div>
         </div>
@@ -40,10 +82,10 @@ export default function DashboardPage() {
           <div className="p-5 md:p-6 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
-              <h3 className="font-semibold">TikTok</h3>
+              <h3 className="font-semibold">YouTube</h3>
             </div>
-            <div className="text-2xl font-bold mt-1">42.7M</div>
-            <p className="text-xs text-muted-foreground">Views on #fashiontrends hashtag</p>
+            <div className="text-2xl font-bold mt-1">{totalYoutubeViews.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Total views across YouTube content tied to signals</p>
             <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-accent/20 transition-all duration-300 group-hover:scale-150"></div>
           </div>
         </div>
@@ -52,10 +94,10 @@ export default function DashboardPage() {
           <div className="p-5 md:p-6 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><circle cx="12" cy="12" r="10"/><path d="m16 8-4 4-4-4"/><path d="m16 16-4-4-4 4"/></svg>
-              <h3 className="font-semibold">Google</h3>
+              <h3 className="font-semibold">Momentum</h3>
             </div>
-            <div className="text-2xl font-bold mt-1">+64%</div>
-            <p className="text-xs text-muted-foreground">Increase in searches for "ethical fashion"</p>
+            <div className="text-2xl font-bold mt-1">{growthPercent > 0 ? `+${growthPercent}%` : 'Stable'}</div>
+            <p className="text-xs text-muted-foreground">Average trend acceleration vs. prior period proxy</p>
             <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-primary/20 transition-all duration-300 group-hover:scale-150"></div>
           </div>
         </div>
@@ -66,7 +108,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Trending Categories</h2>
-            <p className="text-muted-foreground text-sm md:text-base">Top fashion categories gaining momentum across platforms</p>
+            <p className="text-muted-foreground text-sm md:text-base">Top signals by score, grouped as items, brands and styles</p>
           </div>
           <div className="mt-3 sm:mt-0 flex items-center gap-2">
             <select className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -87,65 +129,48 @@ export default function DashboardPage() {
         </div>
         
         <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div className="absolute top-0 right-0 w-full h-1 olawave-gradient"></div>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Sustainable Fashion</h3>
-                <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20 text-primary">+42%</span>
+          {signals.slice(0, 4).map((signal) => {
+            const accel =
+              typeof signal.acceleration_factor === "number"
+                ? Math.round((signal.acceleration_factor - 1) * 100)
+                : null;
+            const platformsLabel =
+              signal.platforms_present === 3
+                ? "Reddit, YouTube, Pinterest"
+                : signal.platforms_present === 2
+                ? "Multi-platform"
+                : "Single platform";
+
+            return (
+              <div
+                key={signal.id}
+                className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="absolute top-0 right-0 w-full h-1 olawave-gradient"></div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">{signal.signal_name}</h3>
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20 text-primary">
+                      {accel !== null ? `+${accel}%` : "Signal"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {signal.signal_type
+                      ? `${signal.signal_type} signal with composite score ${Math.round(
+                          signal.composite_score || 0,
+                        )}`
+                      : `Composite score ${Math.round(
+                          signal.composite_score || 0,
+                        )} across platforms.`}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-medium">Top platforms:</span>
+                    <span className="text-muted-foreground">{platformsLabel}</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">Eco-friendly materials, ethical production, and circular fashion concepts gaining significant traction.</p>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">Top platforms:</span>
-                <span className="text-muted-foreground">Instagram, Pinterest</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div className="absolute top-0 right-0 w-full h-1 olawave-gradient"></div>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Y2K Revival</h3>
-                <span className="text-xs font-medium px-2 py-1 rounded-full bg-secondary/20 text-secondary">+38%</span>
-              </div>
-              <p className="text-sm text-muted-foreground">Early 2000s fashion making a strong comeback with low-rise jeans, baby tees, and butterfly motifs.</p>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">Top platforms:</span>
-                <span className="text-muted-foreground">TikTok, Instagram</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div className="absolute top-0 right-0 w-full h-1 olawave-gradient"></div>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Oversized Silhouettes</h3>
-                <span className="text-xs font-medium px-2 py-1 rounded-full bg-accent/20 text-accent">+27%</span>
-              </div>
-              <p className="text-sm text-muted-foreground">Loose-fitting garments and exaggerated proportions continue to dominate casual and formal wear.</p>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">Top platforms:</span>
-                <span className="text-muted-foreground">Pinterest, TikTok</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div className="absolute top-0 right-0 w-full h-1 olawave-gradient"></div>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">Dopamine Dressing</h3>
-                <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20 text-primary">+24%</span>
-              </div>
-              <p className="text-sm text-muted-foreground">Vibrant colors and mood-enhancing clothing choices that prioritize joy and self-expression.</p>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">Top platforms:</span>
-                <span className="text-muted-foreground">Instagram, Pinterest</span>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
       
@@ -170,34 +195,52 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b transition-colors hover:bg-muted/50">
-                <td className="p-4 font-medium">Genderless Fashion</td>
-                <td className="p-4 text-primary">+19.2%</td>
-                <td className="p-4">TikTok, Instagram</td>
-                <td className="p-4">18-34, Urban</td>
-                <td className="p-4 text-right">92% Positive</td>
-              </tr>
-              <tr className="border-b transition-colors hover:bg-muted/50">
-                <td className="p-4 font-medium">Craftcore</td>
-                <td className="p-4 text-primary">+17.8%</td>
-                <td className="p-4">Pinterest, Instagram</td>
-                <td className="p-4">25-45, Suburban</td>
-                <td className="p-4 text-right">88% Positive</td>
-              </tr>
-              <tr className="border-b transition-colors hover:bg-muted/50">
-                <td className="p-4 font-medium">Digital Fashion</td>
-                <td className="p-4 text-primary">+15.3%</td>
-                <td className="p-4">TikTok, Twitter</td>
-                <td className="p-4">18-29, Tech-savvy</td>
-                <td className="p-4 text-right">76% Positive</td>
-              </tr>
-              <tr className="transition-colors hover:bg-muted/50">
-                <td className="p-4 font-medium">Regencycore</td>
-                <td className="p-4 text-primary">+12.7%</td>
-                <td className="p-4">Pinterest, Instagram</td>
-                <td className="p-4">22-38, Urban</td>
-                <td className="p-4 text-right">84% Positive</td>
-              </tr>
+              {signals.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="p-4 text-center text-muted-foreground"
+                  >
+                    No signals available yet. Once data is ingested into Supabase,
+                    emerging trends will appear here.
+                  </td>
+                </tr>
+              )}
+
+              {signals.map((signal) => {
+                const growthPercent =
+                  typeof signal.acceleration_factor === "number"
+                    ? Math.round((signal.acceleration_factor - 1) * 100)
+                    : null;
+
+                const growthLabel =
+                  growthPercent !== null ? `+${growthPercent}%` : "N/A";
+
+                const sentimentLabel =
+                  typeof signal.composite_score === "number"
+                    ? `${Math.round(signal.composite_score)} Score`
+                    : "N/A";
+
+                const platformsLabel =
+                  signal.platforms_present === 3
+                    ? "Reddit, YouTube, Pinterest"
+                    : signal.platforms_present === 2
+                    ? "Multi-platform"
+                    : "Single platform";
+
+                return (
+                  <tr
+                    key={signal.id}
+                    className="border-b transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 font-medium">{signal.signal_name}</td>
+                    <td className="p-4 text-primary">{growthLabel}</td>
+                    <td className="p-4">{platformsLabel}</td>
+                    <td className="p-4">Shoreditch, Urban</td>
+                    <td className="p-4 text-right">{sentimentLabel}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

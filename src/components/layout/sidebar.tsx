@@ -3,13 +3,14 @@ import {
   LayoutDashboard, 
   TrendingUp, 
   BarChart3, 
-  Instagram, 
-  Search, 
   Settings,
   ShoppingBag,
   Shirt,
   Footprints,
-  Sparkles
+  Sparkles,
+  MessageSquare,
+  Youtube,
+  Search
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -81,11 +82,11 @@ export function Sidebar() {
           <h2 className="mb-5 px-4 text-lg font-semibold">Data Sources</h2>
           <div className="space-y-3">
             <Link 
-              href="/sources/instagram" 
+              href="/sources/reddit" 
               className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
             >
-              <Instagram className="mr-3 h-4 w-4" />
-              Instagram
+              <MessageSquare className="mr-3 h-4 w-4" />
+              Reddit
             </Link>
             <Link 
               href="/sources/pinterest" 
@@ -95,18 +96,11 @@ export function Sidebar() {
               Pinterest
             </Link>
             <Link 
-              href="/sources/tiktok" 
+              href="/sources/youtube" 
               className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
             >
-              <Search className="mr-3 h-4 w-4" />
-              TikTok
-            </Link>
-            <Link 
-              href="/sources/google" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <Search className="mr-3 h-4 w-4" />
-              Google Trends
+              <Youtube className="mr-3 h-4 w-4" />
+              YouTube
             </Link>
           </div>
         </div>
