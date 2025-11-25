@@ -72,19 +72,19 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* How It Works - 3 Steps Section */}
+        {/* How It Works - 4 AI Power Steps */}
         <section id="how-it-works" className="relative w-full py-24 px-4 md:px-6">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <AnimateOnScroll delay={800} duration={3} className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 text-gray-900">
                 How It Works
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                Three simple steps to go from creative inspiration to a complete collection plan with budget and margins.
+                Four AI Power Steps to go from creative inspiration to a complete go-to-market plan.
               </p>
             </AnimateOnScroll>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Step 1 */}
               <AnimateOnScroll delay={1200} duration={2.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
@@ -182,7 +182,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <span className="text-xs font-semibold text-green-500 uppercase tracking-wider">Step 3</span>
-                      <h3 className="text-xl font-bold text-gray-900">Execution</h3>
+                      <h3 className="text-xl font-bold text-gray-900">Planning</h3>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -201,13 +201,57 @@ export default function HomePage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span>Export your complete collection plan</span>
+                        <span>AI generates SKUs to hit your target</span>
                       </li>
                     </ul>
                   </div>
                   <div className="mt-6 pt-4 border-t border-gray-200">
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
                       <Sparkles className="h-3 w-3" /> AI-Optimized
+                    </span>
+                  </div>
+                </div>
+                {/* Connector arrow (hidden on mobile) */}
+                <div className="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
+                  <ArrowRight className="h-8 w-8 text-primary/30" />
+                </div>
+              </AnimateOnScroll>
+
+              {/* Step 4 */}
+              <AnimateOnScroll delay={2400} duration={2.5} className="relative">
+                <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                      4
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-orange-500 uppercase tracking-wider">Step 4</span>
+                      <h3 className="text-xl font-bold text-gray-900">Go to Market</h3>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <span className="font-medium">GTM Planning</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-foreground/70">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Organize drops & launch timeline</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>Plan commercial actions & collabs</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>AI validates vs market demand</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                      <Sparkles className="h-3 w-3" /> AI-Validated
                     </span>
                   </div>
                 </div>

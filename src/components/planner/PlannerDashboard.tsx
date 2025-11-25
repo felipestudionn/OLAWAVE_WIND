@@ -114,7 +114,7 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
             3
           </div>
           <div>
-            <h3 className="font-semibold">Step 3 of 4: Execution</h3>
+            <h3 className="font-semibold">Step 3 of 4: Planning</h3>
             <p className="text-sm text-muted-foreground">Build your SKU-level collection plan</p>
           </div>
         </div>
@@ -122,7 +122,7 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
           <div className="flex gap-1">
             <div className="w-2 h-2 rounded-full bg-green-500" title="Inspiration" />
             <div className="w-2 h-2 rounded-full bg-green-500" title="Strategy" />
-            <div className="w-2 h-2 rounded-full bg-green-500" title="Execution" />
+            <div className="w-2 h-2 rounded-full bg-green-500" title="Planning" />
             <div className="w-2 h-2 rounded-full bg-gray-300" title="Go to Market" />
           </div>
           <Badge variant="secondary" className="bg-green-100 text-green-700 ml-2">
