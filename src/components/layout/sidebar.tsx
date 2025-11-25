@@ -1,123 +1,100 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  BarChart3, 
+  Lightbulb,
+  Brain,
+  CalendarDays,
+  Rocket,
+  FolderOpen,
   Settings,
-  ShoppingBag,
-  Shirt,
-  Footprints,
-  Sparkles,
-  MessageSquare,
-  Youtube,
-  Search
 } from 'lucide-react';
 
 export function Sidebar() {
+  const pathname = usePathname();
+
+  const journeySteps = [
+    { name: 'Inspiration', href: '/creative-space', icon: Lightbulb, step: 1 },
+    { name: 'Strategy', href: '/ai-advisor', icon: Brain, step: 2 },
+    { name: 'Planning', href: '/planner', icon: CalendarDays, step: 3 },
+    { name: 'Go to Market', href: '/go-to-market', icon: Rocket, step: 4 },
+  ];
+
+  const getCurrentStep = () => {
+    if (pathname?.startsWith('/creative-space')) return 1;
+    if (pathname?.startsWith('/ai-advisor')) return 2;
+    if (pathname?.startsWith('/planner')) return 3;
+    if (pathname?.startsWith('/go-to-market')) return 4;
+    return 0;
+  };
+
+  const currentStep = getCurrentStep();
+
   return (
     <div className="min-h-screen w-64 border-r bg-background p-6 pt-8">
       <div className="space-y-8">
+        {/* Journey Steps */}
         <div className="py-2">
-          <h2 className="mb-5 px-4 text-lg font-semibold">Main</h2>
-          <div className="space-y-3">
-            <Link 
-              href="/dashboard" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <LayoutDashboard className="mr-3 h-4 w-4" />
-              Dashboard
-            </Link>
-            <Link 
-              href="/trends" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <TrendingUp className="mr-3 h-4 w-4" />
-              Trends
-            </Link>
-            <Link 
-              href="/analytics" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <BarChart3 className="mr-3 h-4 w-4" />
-              Analytics
-            </Link>
-            <Link 
-              href="/ai-advisor" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground"
-            >
-              <Sparkles className="mr-3 h-4 w-4 text-primary" />
-              AI Advisor
-            </Link>
-            <Link 
-              href="/creative-space" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <Sparkles className="mr-3 h-4 w-4" />
-              Creative Space
-            </Link>
+          <h2 className="mb-5 px-4 text-lg font-semibold">Collection Journey</h2>
+          <div className="space-y-2">
+            {journeySteps.map((item) => {
+              const isActive = pathname?.startsWith(item.href);
+              const isCompleted = currentStep > item.step;
+              const Icon = item.icon;
+              
+              return (
+                <Link 
+                  key={item.href}
+                  href={item.href} 
+                  className={`flex items-center rounded-md px-4 py-2.5 text-sm font-medium transition-all ${
+                    isActive 
+                      ? 'bg-primary/10 text-primary' 
+                      : isCompleted
+                        ? 'text-green-600 hover:bg-accent'
+                        : 'hover:bg-accent hover:text-accent-foreground'
+                  }`}
+                >
+                  <div className={`mr-3 w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                    isCompleted 
+                      ? 'bg-green-500 text-white' 
+                      : isActive 
+                        ? 'bg-primary text-white' 
+                        : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {isCompleted ? '✓' : item.step}
+                  </div>
+                  {item.name}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
+        {/* Divider */}
+        <div className="border-t" />
+
+        {/* Collections & Settings */}
         <div className="py-2">
-          <h2 className="mb-5 px-4 text-lg font-semibold">Categories</h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Link 
-              href="/categories/clothing" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+              href="/my-collections" 
+              className={`flex items-center rounded-md px-4 py-2.5 text-sm font-medium transition-all ${
+                pathname?.startsWith('/my-collections')
+                  ? 'bg-primary/10 text-primary'
+                  : 'hover:bg-accent hover:text-accent-foreground'
+              }`}
             >
-              <Shirt className="mr-3 h-4 w-4" />
-              Clothing
+              <FolderOpen className="mr-3 h-4 w-4" />
+              My Collections
             </Link>
-            <Link 
-              href="/categories/shoes" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <Footprints className="mr-3 h-4 w-4" />
-              Shoes
-            </Link>
-            <Link 
-              href="/categories/bags" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <ShoppingBag className="mr-3 h-4 w-4" />
-              Bags
-            </Link>
-          </div>
-        </div>
-        
-        <div className="py-2">
-          <h2 className="mb-5 px-4 text-lg font-semibold">Data Sources</h2>
-          <div className="space-y-3">
-            <Link 
-              href="/sources/reddit" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <MessageSquare className="mr-3 h-4 w-4" />
-              Reddit
-            </Link>
-            <Link 
-              href="/sources/pinterest" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <Search className="mr-3 h-4 w-4" />
-              Pinterest
-            </Link>
-            <Link 
-              href="/sources/youtube" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              <Youtube className="mr-3 h-4 w-4" />
-              YouTube
-            </Link>
-          </div>
-        </div>
-        
-        <div className="py-2">
-          <h2 className="mb-5 px-4 text-lg font-semibold">Settings</h2>
-          <div className="space-y-3">
             <Link 
               href="/settings" 
-              className="flex items-center rounded-md px-4 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+              className={`flex items-center rounded-md px-4 py-2.5 text-sm font-medium transition-all ${
+                pathname?.startsWith('/settings')
+                  ? 'bg-primary/10 text-primary'
+                  : 'hover:bg-accent hover:text-accent-foreground'
+              }`}
             >
               <Settings className="mr-3 h-4 w-4" />
               Preferences
