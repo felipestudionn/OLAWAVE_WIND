@@ -62,7 +62,7 @@ export function AuthModal({ isOpen, onClose, onSuccess, defaultMode = 'signin' }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -70,7 +70,7 @@ export function AuthModal({ isOpen, onClose, onSuccess, defaultMode = 'signin' }
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto my-auto overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-8 text-white">
           <button
