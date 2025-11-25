@@ -444,7 +444,7 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
                   </h4>
                   
                   {/* Chart */}
-                  <div className="relative h-64 mt-4">
+                  <div className="relative h-80 mt-4">
                     {(() => {
                       // Aggregate predictions by month
                       const predictionsByMonth: Record<string, number> = {};
@@ -488,30 +488,57 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
                             </div>
                             
                             {/* SVG Lines */}
-                            <svg className="absolute inset-0 w-full h-[calc(100%-2rem)]" preserveAspectRatio="none">
-                              {/* Predicted line (AI/Market) */}
+                            <svg className="absolute inset-0 w-full h-[calc(100%-2rem)]" viewBox="0 0 100 100" preserveAspectRatio="none">
+                              {/* Area fill for Your Plan */}
+                              <polygon
+                                fill="url(#blueGradient)"
+                                opacity="0.15"
+                                points={`0,100 ${chartData.map((d, i) => {
+                                  const x = (i / (chartData.length - 1)) * 100;
+                                  const y = 100 - (d.planned / maxValue) * 100;
+                                  return `${x},${y}`;
+                                }).join(' ')} 100,100`}
+                              />
+                              <defs>
+                                <linearGradient id="blueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                  <stop offset="0%" stopColor="#3b82f6" />
+                                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                                </linearGradient>
+                                <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                  <stop offset="0%" stopColor="#f97316" />
+                                  <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
+                                </linearGradient>
+                              </defs>
+                              {/* Predicted line (AI/Market) - dashed */}
                               <polyline
                                 fill="none"
                                 stroke="#f97316"
-                                strokeWidth="3"
-                                strokeDasharray="8,4"
+                                strokeWidth="0.8"
+                                strokeDasharray="2,1"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                                 points={chartData.map((d, i) => {
                                   const x = (i / (chartData.length - 1)) * 100;
                                   const y = 100 - (d.predicted / maxValue) * 100;
-                                  return `${x}%,${y}%`;
+                                  return `${x},${y}`;
                                 }).join(' ')}
                               />
-                              {/* Planned line (Your Plan) */}
+                              {/* Planned line (Your Plan) - solid */}
                               <polyline
                                 fill="none"
                                 stroke="#3b82f6"
-                                strokeWidth="3"
+                                strokeWidth="0.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                                 points={chartData.map((d, i) => {
                                   const x = (i / (chartData.length - 1)) * 100;
                                   const y = 100 - (d.planned / maxValue) * 100;
-                                  return `${x}%,${y}%`;
+                                  return `${x},${y}`;
                                 }).join(' ')}
                               />
+                            </svg>
+                            {/* Data points overlay (separate SVG to maintain aspect ratio for circles) */}
+                            <svg className="absolute inset-0 w-full h-[calc(100%-2rem)]">
                               {/* Data points - Predicted */}
                               {chartData.map((d, i) => {
                                 const x = (i / (chartData.length - 1)) * 100;
@@ -521,10 +548,11 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
                                     key={`pred-${i}`}
                                     cx={`${x}%`}
                                     cy={`${y}%`}
-                                    r="5"
+                                    r="6"
                                     fill="#f97316"
                                     stroke="white"
                                     strokeWidth="2"
+                                    className="drop-shadow-sm"
                                   />
                                 );
                               })}
@@ -537,10 +565,11 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
                                     key={`plan-${i}`}
                                     cx={`${x}%`}
                                     cy={`${y}%`}
-                                    r="5"
+                                    r="6"
                                     fill="#3b82f6"
                                     stroke="white"
                                     strokeWidth="2"
+                                    className="drop-shadow-sm"
                                   />
                                 );
                               })}
