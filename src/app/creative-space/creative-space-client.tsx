@@ -32,6 +32,7 @@ interface PinterestBoard {
 }
 
 interface MoodboardAnalysis {
+  collectionName?: string;
   keyColors: string[];
   keyTrends: string[];
   keyBrands?: string[];

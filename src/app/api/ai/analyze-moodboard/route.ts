@@ -64,8 +64,14 @@ Look at EACH IMAGE carefully and identify:
 9. **TARGET AUDIENCE**
    - Demographics, psychographics, lifestyle of the ideal customer
 
+10. **COLLECTION NAME**
+   - Propose a creative, evocative name for this collection
+   - Should capture the essence and mood of the moodboard
+   - Examples: "Urban Nomad", "Coastal Reverie", "New Minimalism", "Quiet Elegance"
+
 Return ONLY valid JSON with this exact structure:
 {
+  "collectionName": "Creative collection name",
   "keyColors": ["Color 1", "Color 2", "Color 3", "Color 4", "Color 5"],
   "keyTrends": ["Trend 1", "Trend 2", "Trend 3"],
   "keyBrands": ["Brand 1", "Brand 2", "Brand 3", "Brand 4"],
@@ -181,7 +187,11 @@ async function analyzeBatch(imageBatch: ImageData[]): Promise<AnalysisResult | n
         contents: [{ role: 'user', parts }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 8192,
+          // Disable thinking to get direct response
+          thinkingConfig: {
+            thinkingBudget: 0
+          }
         }
       }),
     });
@@ -193,9 +203,24 @@ async function analyzeBatch(imageBatch: ImageData[]): Promise<AnalysisResult | n
     }
 
     const data = await response.json();
-    let textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
-    console.log('Raw Gemini response:', textResponse.substring(0, 200));
+    // Log full response for debugging
+    console.log('Full Gemini response:', JSON.stringify(data, null, 2).substring(0, 1000));
+    
+    // Check for blocked content or other issues
+    if (data?.candidates?.[0]?.finishReason === 'SAFETY') {
+      console.error('Content blocked by safety filters');
+      return null;
+    }
+    
+    if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.error('No text in response. Candidates:', JSON.stringify(data?.candidates));
+      return null;
+    }
+    
+    let textResponse = data.candidates[0].content.parts[0].text;
+    
+    console.log('Raw Gemini response:', textResponse.substring(0, 500));
 
     // Remove markdown code blocks if present (```json ... ```)
     textResponse = textResponse.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
@@ -273,7 +298,10 @@ Return ONLY valid JSON:
         contents: [{ role: 'user', parts: [{ text: MERGE_PROMPT }] }],
         generationConfig: {
           temperature: 0.5,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
+          thinkingConfig: {
+            thinkingBudget: 0
+          }
         }
       }),
     });
