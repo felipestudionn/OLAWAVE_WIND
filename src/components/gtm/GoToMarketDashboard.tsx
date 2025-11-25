@@ -7,11 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Plus, Trash2, GripVertical, Sparkles, Loader2, Filter, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Calendar, Plus, Trash2, GripVertical, Sparkles, Loader2, Filter, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 import { useDrops, type Drop } from '@/hooks/useDrops';
 import { useCommercialActions, type CommercialAction } from '@/hooks/useCommercialActions';
 import { useSkus, type SKU } from '@/hooks/useSkus';
 import type { SetupData } from '@/types/planner';
+
+// Month names for timeline
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 interface GoToMarketDashboardProps {
   plan: { id: string; name: string; setup_data: SetupData };
@@ -132,6 +135,73 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
 
   const totalPlannedSales = skus.reduce((sum, sku) => sum + sku.expected_sales, 0);
 
+  // Calculate timeline range (6 months from first drop)
+  const timelineData = useMemo(() => {
+    if (drops.length === 0) return { months: [], startDate: new Date(), endDate: new Date() };
+    
+    const sortedDrops = [...drops].sort((a, b) => new Date(a.launch_date).getTime() - new Date(b.launch_date).getTime());
+    const startDate = new Date(sortedDrops[0].launch_date);
+    startDate.setDate(1); // Start of month
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 6);
+    
+    const months: { date: Date; label: string; year: number }[] = [];
+    const current = new Date(startDate);
+    while (current < endDate) {
+      months.push({
+        date: new Date(current),
+        label: MONTH_NAMES[current.getMonth()],
+        year: current.getFullYear()
+      });
+      current.setMonth(current.getMonth() + 1);
+    }
+    return { months, startDate, endDate };
+  }, [drops]);
+
+  // Calculate planned sales curve by month based on drops
+  const plannedSalesByMonth = useMemo(() => {
+    if (drops.length === 0 || timelineData.months.length === 0) return [];
+    
+    return timelineData.months.map(month => {
+      let monthlySales = 0;
+      const monthStart = month.date;
+      const monthEnd = new Date(monthStart);
+      monthEnd.setMonth(monthEnd.getMonth() + 1);
+      
+      drops.forEach(drop => {
+        const dropStart = new Date(drop.launch_date);
+        const dropEnd = new Date(dropStart);
+        dropEnd.setDate(dropEnd.getDate() + (drop.weeks_active || 8) * 7);
+        
+        // Check if drop is active during this month
+        if (dropStart < monthEnd && dropEnd > monthStart) {
+          const dropSkus = skus.filter(s => s.drop_number === drop.drop_number);
+          const dropTotalSales = dropSkus.reduce((sum, s) => sum + (s.expected_sales || 0), 0);
+          const weeksActive = drop.weeks_active || 8;
+          const weeklyRate = dropTotalSales / weeksActive;
+          
+          // Calculate weeks overlap with this month
+          const overlapStart = new Date(Math.max(dropStart.getTime(), monthStart.getTime()));
+          const overlapEnd = new Date(Math.min(dropEnd.getTime(), monthEnd.getTime()));
+          const overlapWeeks = Math.max(0, (overlapEnd.getTime() - overlapStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
+          
+          monthlySales += weeklyRate * overlapWeeks;
+        }
+      });
+      
+      return { month: month.label, year: month.year, sales: Math.round(monthlySales) };
+    });
+  }, [drops, skus, timelineData]);
+
+  // Get position percentage for a date on the timeline
+  const getTimelinePosition = (dateStr: string) => {
+    if (!timelineData.startDate || !timelineData.endDate) return 0;
+    const date = new Date(dateStr);
+    const totalRange = timelineData.endDate.getTime() - timelineData.startDate.getTime();
+    const position = date.getTime() - timelineData.startDate.getTime();
+    return Math.max(0, Math.min(100, (position / totalRange) * 100));
+  };
+
   return (
     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
@@ -160,6 +230,112 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
           </Button>
         ))}
       </div>
+
+      {/* Visual Timeline */}
+      {drops.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Launch Timeline</CardTitle>
+            <CardDescription>Drops and commercial actions over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              {/* Month labels */}
+              <div className="flex border-b border-gray-200 mb-4">
+                {timelineData.months.map((month, i) => (
+                  <div key={i} className="flex-1 text-center pb-2">
+                    <span className="text-sm font-medium text-gray-700">{month.label}</span>
+                    <span className="text-xs text-gray-400 ml-1">{month.year}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Timeline track */}
+              <div className="relative h-24 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
+                {/* Grid lines for months */}
+                <div className="absolute inset-0 flex">
+                  {timelineData.months.map((_, i) => (
+                    <div key={i} className="flex-1 border-r border-gray-200 last:border-r-0" />
+                  ))}
+                </div>
+                
+                {/* Drops as circles on timeline */}
+                <div className="absolute top-4 left-0 right-0 h-8">
+                  {drops.map((drop, i) => {
+                    const position = getTimelinePosition(drop.launch_date);
+                    const dropSkus = skusByDrop[drop.drop_number] || [];
+                    const dropSales = dropSkus.reduce((sum, s) => sum + s.expected_sales, 0);
+                    const colors = ['bg-orange-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500'];
+                    return (
+                      <div
+                        key={drop.id}
+                        className="absolute transform -translate-x-1/2 group cursor-pointer"
+                        style={{ left: `${position}%` }}
+                      >
+                        <div className={`w-10 h-10 rounded-full ${colors[i % colors.length]} text-white flex items-center justify-center font-bold text-sm shadow-lg border-2 border-white`}>
+                          D{drop.drop_number}
+                        </div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                          <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-xl">
+                            <p className="font-semibold">{drop.name}</p>
+                            <p>{new Date(drop.launch_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p>
+                            <p className="text-green-400">€{Math.round(dropSales).toLocaleString()}</p>
+                          </div>
+                        </div>
+                        {/* Drop duration bar */}
+                        <div 
+                          className={`absolute top-1/2 left-5 h-2 ${colors[i % colors.length]} opacity-30 rounded-r`}
+                          style={{ width: `${(drop.weeks_active || 8) * 2}px` }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Commercial actions as smaller dots below */}
+                <div className="absolute bottom-3 left-0 right-0 h-6">
+                  {actions.map((action) => {
+                    const position = getTimelinePosition(action.start_date);
+                    return (
+                      <div
+                        key={action.id}
+                        className="absolute transform -translate-x-1/2 group cursor-pointer"
+                        style={{ left: `${position}%` }}
+                      >
+                        <div className={`w-4 h-4 rounded-full ${ACTION_COLORS[action.action_type]} border-2 border-white shadow`} />
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover:block z-10">
+                          <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                            <p className="font-medium">{action.name}</p>
+                            <p className="text-gray-300">{action.action_type}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Legend */}
+              <div className="flex items-center gap-6 mt-4 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-bold">D</div>
+                  <span className="text-gray-600">Drops</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  {Object.entries(ACTION_COLORS).slice(0, 4).map(([type, color]) => (
+                    <div key={type} className="flex items-center gap-1">
+                      <div className={`w-3 h-3 rounded-full ${color}`} />
+                      <span className="text-gray-500 capitalize">{type.toLowerCase()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Drops Section */}
       <Card className="mb-6">
@@ -258,13 +434,182 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
         </CardHeader>
         <CardContent>
           {prediction ? (
-            <div className="space-y-4">
-              <div className="p-4 bg-blue-50 rounded-lg"><h4 className="font-semibold text-blue-900 mb-2">Insights</h4><p className="text-sm text-blue-800">{prediction.insights}</p></div>
-              {prediction.gaps?.length > 0 && (
-                <div className="p-4 bg-orange-50 rounded-lg"><h4 className="font-semibold text-orange-900 mb-2 flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Gaps Detected</h4><ul className="text-sm text-orange-800 list-disc list-inside">{prediction.gaps.map((gap: string, i: number) => <li key={i}>{gap}</li>)}</ul></div>
+            <div className="space-y-6">
+              {/* Sales Comparison Chart */}
+              {prediction.weeklyPredictions && prediction.weeklyPredictions.length > 0 && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Sales Forecast: Your Plan vs Market Demand
+                  </h4>
+                  
+                  {/* Chart */}
+                  <div className="relative h-64 mt-4">
+                    {(() => {
+                      // Aggregate predictions by month
+                      const predictionsByMonth: Record<string, number> = {};
+                      prediction.weeklyPredictions.forEach((wp: any) => {
+                        const [year, weekStr] = wp.week.split('-W');
+                        const weekNum = parseInt(weekStr);
+                        // Approximate month from week number
+                        const monthIndex = Math.min(11, Math.floor((weekNum - 1) / 4.33));
+                        const monthKey = `${MONTH_NAMES[monthIndex]} ${year}`;
+                        predictionsByMonth[monthKey] = (predictionsByMonth[monthKey] || 0) + (wp.predictedSales || 0);
+                      });
+                      
+                      // Combine with planned sales
+                      const chartData = plannedSalesByMonth.map(p => ({
+                        label: `${p.month}`,
+                        planned: p.sales,
+                        predicted: predictionsByMonth[`${p.month} ${p.year}`] || 0
+                      }));
+                      
+                      const maxValue = Math.max(
+                        ...chartData.map(d => Math.max(d.planned, d.predicted)),
+                        1
+                      );
+                      
+                      return (
+                        <>
+                          {/* Y-axis labels */}
+                          <div className="absolute left-0 top-0 bottom-8 w-16 flex flex-col justify-between text-xs text-gray-500">
+                            <span>€{Math.round(maxValue / 1000)}k</span>
+                            <span>€{Math.round(maxValue / 2000)}k</span>
+                            <span>€0</span>
+                          </div>
+                          
+                          {/* Chart area */}
+                          <div className="ml-16 h-full relative">
+                            {/* Grid lines */}
+                            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                              {[0, 1, 2].map(i => (
+                                <div key={i} className="border-t border-gray-200 w-full" />
+                              ))}
+                            </div>
+                            
+                            {/* SVG Lines */}
+                            <svg className="absolute inset-0 w-full h-[calc(100%-2rem)]" preserveAspectRatio="none">
+                              {/* Predicted line (AI/Market) */}
+                              <polyline
+                                fill="none"
+                                stroke="#f97316"
+                                strokeWidth="3"
+                                strokeDasharray="8,4"
+                                points={chartData.map((d, i) => {
+                                  const x = (i / (chartData.length - 1)) * 100;
+                                  const y = 100 - (d.predicted / maxValue) * 100;
+                                  return `${x}%,${y}%`;
+                                }).join(' ')}
+                              />
+                              {/* Planned line (Your Plan) */}
+                              <polyline
+                                fill="none"
+                                stroke="#3b82f6"
+                                strokeWidth="3"
+                                points={chartData.map((d, i) => {
+                                  const x = (i / (chartData.length - 1)) * 100;
+                                  const y = 100 - (d.planned / maxValue) * 100;
+                                  return `${x}%,${y}%`;
+                                }).join(' ')}
+                              />
+                              {/* Data points - Predicted */}
+                              {chartData.map((d, i) => {
+                                const x = (i / (chartData.length - 1)) * 100;
+                                const y = 100 - (d.predicted / maxValue) * 100;
+                                return (
+                                  <circle
+                                    key={`pred-${i}`}
+                                    cx={`${x}%`}
+                                    cy={`${y}%`}
+                                    r="5"
+                                    fill="#f97316"
+                                    stroke="white"
+                                    strokeWidth="2"
+                                  />
+                                );
+                              })}
+                              {/* Data points - Planned */}
+                              {chartData.map((d, i) => {
+                                const x = (i / (chartData.length - 1)) * 100;
+                                const y = 100 - (d.planned / maxValue) * 100;
+                                return (
+                                  <circle
+                                    key={`plan-${i}`}
+                                    cx={`${x}%`}
+                                    cy={`${y}%`}
+                                    r="5"
+                                    fill="#3b82f6"
+                                    stroke="white"
+                                    strokeWidth="2"
+                                  />
+                                );
+                              })}
+                            </svg>
+                            
+                            {/* X-axis labels */}
+                            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 h-8 items-end">
+                              {chartData.map((d, i) => (
+                                <span key={i} className="text-center">{d.label}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  
+                  {/* Legend */}
+                  <div className="flex items-center justify-center gap-8 mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-1 bg-blue-500 rounded" />
+                      <span className="text-sm text-gray-600">Your Plan</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-1 bg-orange-500 rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f97316 0, #f97316 8px, transparent 8px, transparent 12px)' }} />
+                      <span className="text-sm text-gray-600">AI Market Prediction</span>
+                    </div>
+                  </div>
+                </div>
               )}
+              
+              {/* Insights */}
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">Insights</h4>
+                <p className="text-sm text-blue-800">{prediction.insights}</p>
+              </div>
+              
+              {/* Gaps */}
+              {prediction.gaps?.length > 0 && (
+                <div className="p-4 bg-orange-50 rounded-lg">
+                  <h4 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />Gaps Detected
+                  </h4>
+                  <ul className="text-sm text-orange-800 space-y-1">
+                    {prediction.gaps.map((gap: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-orange-500 mt-1">•</span>
+                        <span>{gap}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Recommendations */}
               {prediction.recommendations?.length > 0 && (
-                <div className="p-4 bg-green-50 rounded-lg"><h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2"><CheckCircle className="h-4 w-4" />Recommendations</h4><ul className="text-sm text-green-800 list-disc list-inside">{prediction.recommendations.map((rec: string, i: number) => <li key={i}>{rec}</li>)}</ul></div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />Recommendations
+                  </h4>
+                  <ul className="text-sm text-green-800 space-y-1">
+                    {prediction.recommendations.map((rec: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-green-500 mt-1">✓</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
           ) : (
