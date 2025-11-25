@@ -11,50 +11,58 @@ interface TrendExplorationResult {
   description: string;
 }
 
-const EXPLORE_PROMPT = (query: string) => `You are a fashion market analyst. The user wants to explore: "${query}"
+const EXPLORE_PROMPT = (query: string) => `You are a senior fashion trend analyst doing a DEEP DIVE analysis on: "${query}"
 
 TODAY'S DATE: November 2025
 
 THE MOST RECENT FASHION WEEK SEASONS ARE:
-- **Spring/Summer 2026 (SS26)** - Shown September-October 2025
+- **Spring/Summer 2026 (SS26)** - Shown September-October 2025 in New York, London, Milan, Paris
 - **Pre-Fall 2026 (PF26)** - Currently showing November 2025
 - **Resort 2026** - Shown earlier in 2025
 
-Research this trend based on:
-- How it appeared on SS26 and PF26 runways
-- Which designers featured it in their recent collections
-- How celebrities are wearing it NOW
-- Social media momentum (TikTok, Instagram)
+Conduct an IN-DEPTH analysis of "${query}" covering:
+- Runway presence: Which specific designers showed this? What looks stood out?
+- Celebrity adoption: Who's wearing it? Red carpet, street style, social media
+- Social media momentum: TikTok trends, Instagram aesthetics, Pinterest searches
+- Retail availability: Which brands are producing it? Price points?
+- Historical context: Where did this trend originate? How has it evolved?
 
-Provide:
+Provide DETAILED analysis with specific references:
 
-1. **KEY COLORS** (4-6 colors)
-   - Colors associated with this trend on SS26/PF26 runways
-   - Use professional Pantone TCX fashion names
-   - Reference specific designers if relevant
+1. **KEY COLORS** (6-8 colors with context)
+   FORMAT: "Color Name (Pantone code if known) - Where it was seen and why it matters"
+   - Colors specifically associated with "${query}" on SS26/PF26 runways
+   - Reference specific designers and looks
+   - Example: "Burgundy (19-1617) - Dominant at Bottega Veneta SS26, seen in leather goods and tailoring"
 
-2. **KEY TRENDS** (3-5 related trends)
-   - Related aesthetics from recent runway shows
-   - Which designers are championing this?
-   - How is it being interpreted on social media?
+2. **KEY TRENDS** (5-7 related trends with deep context)
+   FORMAT: "Trend Name: Detailed explanation of how it connects to ${query}, which designers champion it, and how it's being interpreted"
+   - Related aesthetics and movements
+   - Specific designer references
+   - Social media interpretations
+   - Example: "Quiet Luxury Evolution: The trend toward understated elegance connects directly to ${query} through..."
 
-3. **KEY ITEMS** (5-7 items)
-   - Specific pieces seen on SS26/PF26 runways
-   - What items are celebrities already wearing?
-   - Be very specific with descriptions
+3. **KEY ITEMS** (6-8 specific items with details)
+   FORMAT: "Item Name - Detailed description including silhouette, materials, styling, and where seen"
+   - Specific pieces from SS26/PF26 runways
+   - Celebrity-worn pieces
+   - Retail bestsellers
+   - Example: "The Leather Trench - Oversized silhouette in butter-soft leather, seen at Bottega Veneta and already worn by Hailey Bieber"
 
 4. **DESCRIPTION**
-   - 2-3 sentences on how this trend appeared on recent runways
-   - Which designers showed it? Who's wearing it?
-   - Why is it relevant for the next 6 months?
+   - 4-5 sentences providing comprehensive context
+   - Origin and evolution of this trend
+   - Key designers and celebrities driving it
+   - Why it's relevant NOW and for the next 6 months
+   - Commercial viability and target audience
 
 Return ONLY valid JSON:
 {
   "query": "${query}",
-  "keyColors": ["Color 1", "Color 2", "Color 3", "Color 4"],
-  "keyTrends": ["Trend 1", "Trend 2", "Trend 3"],
-  "keyItems": ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-  "description": "Description of the trend from recent runways..."
+  "keyColors": ["Color (code) - Context and where seen", "..."],
+  "keyTrends": ["Trend Name: Detailed explanation with designer references", "..."],
+  "keyItems": ["Item Name - Detailed description with styling and references", "..."],
+  "description": "Comprehensive 4-5 sentence analysis of the trend..."
 }`;
 
 export async function POST(req: NextRequest) {
@@ -87,7 +95,7 @@ export async function POST(req: NextRequest) {
         contents: [{ role: 'user', parts: [{ text: EXPLORE_PROMPT(query) }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
           thinkingConfig: {
             thinkingBudget: 0
           }

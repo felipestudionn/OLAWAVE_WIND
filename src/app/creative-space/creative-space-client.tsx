@@ -1188,29 +1188,60 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {marketTrends.keyColors.map((color, i) => {
-                    const bgColor = getColorValue(color);
+                    // Parse color: "Name (code) - description" or "Name - description"
+                    let colorName = color;
+                    let colorCode = '';
+                    let colorDescription = '';
+                    
+                    // Extract description after " - "
+                    if (color.includes(' - ')) {
+                      const [namePart, ...descParts] = color.split(' - ');
+                      colorName = namePart.trim();
+                      colorDescription = descParts.join(' - ').trim();
+                    }
+                    
+                    // Extract code from parentheses
+                    const codeMatch = colorName.match(/\(([^)]+)\)/);
+                    if (codeMatch) {
+                      colorCode = codeMatch[1];
+                      colorName = colorName.replace(/\s*\([^)]+\)/, '').trim();
+                    }
+                    
+                    const bgColor = getColorValue(colorName);
                     const textColor = bgColor ? getContrastColor(bgColor) : undefined;
                     const isSelected = selectedTrends.colors.includes(color);
+                    
                     return (
                       <div 
                         key={i}
                         onClick={() => toggleTrendSelection('colors', color)}
-                        className={`group cursor-pointer rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
+                        className={`group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
                           isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
                         }`}
-                        style={{ backgroundColor: bgColor || '#f5f5f5' }}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <p className="font-semibold text-sm" style={{ color: textColor || '#333' }}>{color}</p>
-                            {bgColor && (
-                              <p className="text-[10px] font-mono opacity-70" style={{ color: textColor || '#666' }}>{bgColor.toUpperCase()}</p>
-                            )}
-                          </div>
+                        {/* Color swatch header */}
+                        <div 
+                          className="h-20 relative"
+                          style={{ backgroundColor: bgColor || '#f5f5f5' }}
+                        >
                           {isSelected && (
-                            <div className="p-1 rounded-full bg-white/30">
+                            <div className="absolute top-2 right-2 p-1 rounded-full bg-white/30">
                               <Check className="h-3 w-3" style={{ color: textColor || '#333' }} />
                             </div>
+                          )}
+                          {colorCode && (
+                            <div className="absolute bottom-2 left-3">
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/20" style={{ color: textColor || '#333' }}>
+                                {colorCode}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {/* Color info */}
+                        <div className="p-3 bg-white border-t">
+                          <h5 className="font-semibold text-sm text-slate-900">{colorName}</h5>
+                          {colorDescription && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{colorDescription}</p>
                           )}
                         </div>
                       </div>
@@ -1228,9 +1259,18 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {marketTrends.keyTrends.map((trend, i) => {
                     const isSelected = selectedTrends.trends.includes(trend);
-                    // Split trend into title and description if it contains a colon
-                    const [title, ...descParts] = trend.split(':');
-                    const description = descParts.join(':').trim();
+                    // Split trend into title and description - try colon first, then dash
+                    let title = trend;
+                    let description = '';
+                    if (trend.includes(':')) {
+                      const [t, ...descParts] = trend.split(':');
+                      title = t.trim();
+                      description = descParts.join(':').trim();
+                    } else if (trend.includes(' - ')) {
+                      const [t, ...descParts] = trend.split(' - ');
+                      title = t.trim();
+                      description = descParts.join(' - ').trim();
+                    }
                     return (
                       <div 
                         key={i}
@@ -1242,10 +1282,10 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="space-y-2 flex-1">
-                            <p className={`font-bold text-base leading-tight ${isSelected ? '' : 'text-slate-900'}`}>
-                              {description ? title : trend}
-                            </p>
+                          <div className="space-y-3 flex-1">
+                            <h5 className={`font-bold text-base leading-tight ${isSelected ? '' : 'text-slate-900'}`}>
+                              {title}
+                            </h5>
                             {description && (
                               <p className={`text-sm leading-relaxed ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                                 {description}
@@ -1253,7 +1293,7 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                             )}
                           </div>
                           {isSelected && (
-                            <div className="p-1 rounded-full bg-white/20 flex-shrink-0">
+                            <div className="p-1 rounded-full bg-white/20 flex-shrink-0 mt-1">
                               <Check className="h-4 w-4" />
                             </div>
                           )}
@@ -1264,7 +1304,7 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                 </div>
               </div>
 
-              {/* KEY ITEMS - Pill Style */}
+              {/* KEY ITEMS - Card Style */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Items</h4>
@@ -1273,24 +1313,33 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {marketTrends.keyItems.map((item, i) => {
                     const isSelected = selectedTrends.items.includes(item);
-                    // Split item into title and description if it contains a colon
-                    const [title, ...descParts] = item.split(':');
-                    const description = descParts.join(':').trim();
+                    // Split item into title and description - try colon first, then dash
+                    let title = item;
+                    let description = '';
+                    if (item.includes(':')) {
+                      const [t, ...descParts] = item.split(':');
+                      title = t.trim();
+                      description = descParts.join(':').trim();
+                    } else if (item.includes(' - ')) {
+                      const [t, ...descParts] = item.split(' - ');
+                      title = t.trim();
+                      description = descParts.join(' - ').trim();
+                    }
                     return (
                       <div 
                         key={i}
                         onClick={() => toggleTrendSelection('items', item)}
-                        className={`group cursor-pointer rounded-xl p-4 transition-all duration-300 hover:shadow-md border ${
+                        className={`group cursor-pointer rounded-xl p-5 transition-all duration-300 hover:shadow-md border ${
                           isSelected 
                             ? 'bg-slate-900 text-white border-slate-900' 
                             : 'bg-white hover:bg-slate-50 border-slate-200'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="space-y-1 flex-1">
-                            <p className={`font-semibold text-sm ${isSelected ? '' : 'text-slate-900'}`}>
-                              {description ? title : item}
-                            </p>
+                          <div className="space-y-2 flex-1">
+                            <h5 className={`font-semibold text-sm ${isSelected ? '' : 'text-slate-900'}`}>
+                              {title}
+                            </h5>
                             {description && (
                               <p className={`text-xs leading-relaxed ${isSelected ? 'text-white/70' : 'text-muted-foreground'}`}>
                                 {description}
@@ -1298,7 +1347,7 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                             )}
                           </div>
                           {isSelected && (
-                            <Check className="h-4 w-4 flex-shrink-0" />
+                            <Check className="h-4 w-4 flex-shrink-0 mt-0.5" />
                           )}
                         </div>
                       </div>
@@ -1320,68 +1369,217 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
         </div>
 
         {/* BLOCK 2: Explore Specific Trends */}
-        <div className="rounded-lg border bg-card p-6 space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Search className="h-5 w-5 text-primary" />
-              Explore Specific Trends
-            </h3>
-            <p className="text-sm text-muted-foreground">Search for a specific aesthetic or trend to explore</p>
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-slate-50 to-white p-8 space-y-6 shadow-sm">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Search className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight">Explore Trends</h3>
+                  <p className="text-sm text-muted-foreground">Deep dive into any aesthetic or trend</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
+          
+          {/* Search Input */}
+          <div className="flex gap-3">
             <Input
-              placeholder="e.g., Quiet Luxury, Gorpcore, Y2K, Coquette..."
+              placeholder="e.g., Quiet Luxury, Gorpcore, Y2K, Coquette, Boho..."
               value={trendQuery}
               onChange={(e) => setTrendQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && exploreTrend()}
-              className="flex-1"
+              className="flex-1 h-12 text-base rounded-xl border-slate-200"
             />
-            <Button onClick={exploreTrend} disabled={exploringTrend || !trendQuery.trim()}>
-              {exploringTrend ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            <Button onClick={exploreTrend} disabled={exploringTrend || !trendQuery.trim()} className="h-12 px-6 rounded-xl">
+              {exploringTrend ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Search className="h-5 w-5 mr-2" />Explore</>}
             </Button>
           </div>
           
           {/* Exploration Results */}
           {trendExploration && (
-            <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <h5 className="font-semibold">Results for "{trendExploration.query}"</h5>
-                <Button size="sm" variant="outline" onClick={addExplorationToSelection}>
-                  <Plus className="h-4 w-4 mr-1" />Add All
+            <div className="space-y-8 pt-4">
+              {/* Results Header */}
+              <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                  <h4 className="text-xl font-bold text-slate-900">Deep Dive: {trendExploration.query}</h4>
+                  <p className="text-sm text-muted-foreground mt-2 max-w-3xl">{trendExploration.description}</p>
+                </div>
+                <Button variant="outline" onClick={addExplorationToSelection} className="rounded-full px-6">
+                  <Plus className="h-4 w-4 mr-2" />Add All to Selection
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">{trendExploration.description}</p>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div>
-                  <span className="text-xs font-medium text-primary">Colors</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {trendExploration.keyColors.map((color, i) => {
-                      const bgColor = getColorValue(color);
-                      const textColor = bgColor ? getContrastColor(bgColor) : undefined;
-                      return (
-                        <Badge key={i} variant={selectedTrends.colors.includes(color) ? "default" : "outline"} 
-                          className="cursor-pointer text-xs border" 
-                          style={bgColor ? { backgroundColor: bgColor, color: textColor, borderColor: bgColor } : undefined}
-                          onClick={() => toggleTrendSelection('colors', color)}>{color}</Badge>
-                      );
-                    })}
-                  </div>
+
+              {/* KEY COLORS - Same format as Macro Trends */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Colors</h4>
+                  <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
                 </div>
-                <div>
-                  <span className="text-xs font-medium text-primary">Trends</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {trendExploration.keyTrends.map((trend, i) => (
-                      <Badge key={i} variant={selectedTrends.trends.includes(trend) ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => toggleTrendSelection('trends', trend)}>{trend}</Badge>
-                    ))}
-                  </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {trendExploration.keyColors.map((color, i) => {
+                    // Parse color: "Name (code) - description" or "Name - description"
+                    let colorName = color;
+                    let colorCode = '';
+                    let colorDescription = '';
+                    
+                    if (color.includes(' - ')) {
+                      const [namePart, ...descParts] = color.split(' - ');
+                      colorName = namePart.trim();
+                      colorDescription = descParts.join(' - ').trim();
+                    }
+                    
+                    const codeMatch = colorName.match(/\(([^)]+)\)/);
+                    if (codeMatch) {
+                      colorCode = codeMatch[1];
+                      colorName = colorName.replace(/\s*\([^)]+\)/, '').trim();
+                    }
+                    
+                    const bgColor = getColorValue(colorName);
+                    const textColor = bgColor ? getContrastColor(bgColor) : undefined;
+                    const isSelected = selectedTrends.colors.includes(color);
+                    
+                    return (
+                      <div 
+                        key={i}
+                        onClick={() => toggleTrendSelection('colors', color)}
+                        className={`group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
+                          isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
+                        }`}
+                      >
+                        <div 
+                          className="h-20 relative"
+                          style={{ backgroundColor: bgColor || '#f5f5f5' }}
+                        >
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 p-1 rounded-full bg-white/30">
+                              <Check className="h-3 w-3" style={{ color: textColor || '#333' }} />
+                            </div>
+                          )}
+                          {colorCode && (
+                            <div className="absolute bottom-2 left-3">
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/20" style={{ color: textColor || '#333' }}>
+                                {colorCode}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3 bg-white border-t">
+                          <h5 className="font-semibold text-sm text-slate-900">{colorName}</h5>
+                          {colorDescription && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{colorDescription}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div>
-                  <span className="text-xs font-medium text-primary">Items</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {trendExploration.keyItems.map((item, i) => (
-                      <Badge key={i} variant={selectedTrends.items.includes(item) ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => toggleTrendSelection('items', item)}>{item}</Badge>
-                    ))}
-                  </div>
+              </div>
+
+              {/* KEY TRENDS - Same format as Macro Trends */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Trends</h4>
+                  <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {trendExploration.keyTrends.map((trend, i) => {
+                    const isSelected = selectedTrends.trends.includes(trend);
+                    let title = trend;
+                    let description = '';
+                    if (trend.includes(':')) {
+                      const [t, ...descParts] = trend.split(':');
+                      title = t.trim();
+                      description = descParts.join(':').trim();
+                    } else if (trend.includes(' - ')) {
+                      const [t, ...descParts] = trend.split(' - ');
+                      title = t.trim();
+                      description = descParts.join(' - ').trim();
+                    }
+                    return (
+                      <div 
+                        key={i}
+                        onClick={() => toggleTrendSelection('trends', trend)}
+                        className={`group cursor-pointer rounded-xl p-5 transition-all duration-300 hover:shadow-lg border ${
+                          isSelected 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-white hover:bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-3 flex-1">
+                            <h5 className={`font-bold text-base leading-tight ${isSelected ? '' : 'text-slate-900'}`}>
+                              {title}
+                            </h5>
+                            {description && (
+                              <p className={`text-sm leading-relaxed ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                                {description}
+                              </p>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <div className="p-1 rounded-full bg-white/20 flex-shrink-0 mt-1">
+                              <Check className="h-4 w-4" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* KEY ITEMS - Same format as Macro Trends */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Items</h4>
+                  <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {trendExploration.keyItems.map((item, i) => {
+                    const isSelected = selectedTrends.items.includes(item);
+                    let title = item;
+                    let description = '';
+                    if (item.includes(':')) {
+                      const [t, ...descParts] = item.split(':');
+                      title = t.trim();
+                      description = descParts.join(':').trim();
+                    } else if (item.includes(' - ')) {
+                      const [t, ...descParts] = item.split(' - ');
+                      title = t.trim();
+                      description = descParts.join(' - ').trim();
+                    }
+                    return (
+                      <div 
+                        key={i}
+                        onClick={() => toggleTrendSelection('items', item)}
+                        className={`group cursor-pointer rounded-xl p-5 transition-all duration-300 hover:shadow-md border ${
+                          isSelected 
+                            ? 'bg-slate-900 text-white border-slate-900' 
+                            : 'bg-white hover:bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-2 flex-1">
+                            <h5 className={`font-semibold text-sm ${isSelected ? '' : 'text-slate-900'}`}>
+                              {title}
+                            </h5>
+                            {description && (
+                              <p className={`text-xs leading-relaxed ${isSelected ? 'text-white/70' : 'text-muted-foreground'}`}>
+                                {description}
+                              </p>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <Check className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1437,58 +1635,150 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
         )}
 
         {/* BLOCK 3: Live Signals from Key Neighborhoods */}
-        <div className="rounded-lg border bg-card p-6 space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Live Signals from Key Neighborhoods
-            </h3>
-            <p className="text-sm text-muted-foreground">Real-time emerging trends from Shoreditch aggregated across Reddit, YouTube & Pinterest</p>
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-slate-50 to-white p-8 space-y-8 shadow-sm">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight">Live Signals</h3>
+                  <p className="text-sm text-muted-foreground">Real-time trends from Shoreditch · Reddit, YouTube & Pinterest</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Key Outputs from Neighborhoods */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-lg bg-muted/50 p-4">
-              <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Colors</h4>
-              <div className="flex flex-wrap gap-2">
-                {['Warm Beige', 'Olive Green', 'Electric Blue', 'Camel'].map((color, i) => {
-                  const bgColor = getColorValue(color);
-                  const textColor = bgColor ? getContrastColor(bgColor) : undefined;
-                  const isSelected = selectedTrends.colors.includes(color);
-                  return (
-                    <Badge key={i} variant={isSelected ? "default" : "secondary"}
-                      className="cursor-pointer transition-all border"
-                      style={bgColor ? { backgroundColor: bgColor, color: textColor, borderColor: bgColor } : undefined}
-                      onClick={() => toggleTrendSelection('colors', color)}>
-                      {isSelected && <Check className="h-3 w-3 mr-1" />}{color}
-                    </Badge>
-                  );
-                })}
-              </div>
+          {/* Key Colors - Same format as Macro Trends */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Colors</h4>
+              <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
             </div>
-            <div className="rounded-lg bg-muted/50 p-4">
-              <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Trends</h4>
-              <div className="flex flex-wrap gap-2">
-                {['Oversized Tailoring', 'Gorpcore', 'Y2K Revival'].map((trend, i) => (
-                  <Badge key={i} variant={selectedTrends.trends.includes(trend) ? "default" : "secondary"}
-                    className={`cursor-pointer transition-all ${selectedTrends.trends.includes(trend) ? 'bg-primary' : 'hover:bg-primary/20'}`}
-                    onClick={() => toggleTrendSelection('trends', trend)}>
-                    {selectedTrends.trends.includes(trend) && <Check className="h-3 w-3 mr-1" />}{trend}
-                  </Badge>
-                ))}
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { name: 'Warm Beige', description: 'Earthy neutral dominating street style in East London' },
+                { name: 'Olive Green', description: 'Military-inspired tones trending on TikTok' },
+                { name: 'Electric Blue', description: 'Bold accent color seen in Shoreditch creative scene' },
+                { name: 'Camel', description: 'Classic neutral gaining momentum for layering pieces' }
+              ].map((colorData, i) => {
+                const bgColor = getColorValue(colorData.name);
+                const textColor = bgColor ? getContrastColor(bgColor) : undefined;
+                const isSelected = selectedTrends.colors.includes(colorData.name);
+                return (
+                  <div 
+                    key={i}
+                    onClick={() => toggleTrendSelection('colors', colorData.name)}
+                    className={`group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
+                      isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
+                    }`}
+                  >
+                    <div 
+                      className="h-20 relative"
+                      style={{ backgroundColor: bgColor || '#f5f5f5' }}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 p-1 rounded-full bg-white/30">
+                          <Check className="h-3 w-3" style={{ color: textColor || '#333' }} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 bg-white border-t">
+                      <h5 className="font-semibold text-sm text-slate-900">{colorData.name}</h5>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{colorData.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="rounded-lg bg-muted/50 p-4">
-              <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Items</h4>
-              <div className="flex flex-wrap gap-2">
-                {['Utility vests', 'Cargo pants', 'Bomber jackets', 'Platform sandals'].map((item, i) => (
-                  <Badge key={i} variant={selectedTrends.items.includes(item) ? "default" : "secondary"}
-                    className={`cursor-pointer transition-all ${selectedTrends.items.includes(item) ? 'bg-primary' : 'hover:bg-primary/20'}`}
-                    onClick={() => toggleTrendSelection('items', item)}>
-                    {selectedTrends.items.includes(item) && <Check className="h-3 w-3 mr-1" />}{item}
-                  </Badge>
-                ))}
-              </div>
+          </div>
+
+          {/* Key Trends - Same format as Macro Trends */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Trends</h4>
+              <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { title: 'Oversized Tailoring', description: 'Relaxed blazers and wide-leg trousers dominating Reddit fashion discussions' },
+                { title: 'Gorpcore Evolution', description: 'Technical outdoor wear meets urban style, trending across YouTube fashion channels' },
+                { title: 'Y2K Revival', description: 'Low-rise, butterfly clips, and metallic fabrics resurging on Pinterest boards' }
+              ].map((trendData, i) => {
+                const isSelected = selectedTrends.trends.includes(trendData.title);
+                return (
+                  <div 
+                    key={i}
+                    onClick={() => toggleTrendSelection('trends', trendData.title)}
+                    className={`group cursor-pointer rounded-xl p-5 transition-all duration-300 hover:shadow-lg border ${
+                      isSelected 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-white hover:bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-3 flex-1">
+                        <h5 className={`font-bold text-base leading-tight ${isSelected ? '' : 'text-slate-900'}`}>
+                          {trendData.title}
+                        </h5>
+                        <p className={`text-sm leading-relaxed ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                          {trendData.description}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <div className="p-1 rounded-full bg-white/20 flex-shrink-0 mt-1">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Key Items - Same format as Macro Trends */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Items</h4>
+              <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { title: 'Utility Vests', description: 'Functional layering piece trending in street style' },
+                { title: 'Cargo Pants', description: 'Relaxed fit with multiple pockets, Reddit favorite' },
+                { title: 'Bomber Jackets', description: 'Classic silhouette with modern updates' },
+                { title: 'Platform Sandals', description: 'Chunky soles dominating Pinterest searches' }
+              ].map((itemData, i) => {
+                const isSelected = selectedTrends.items.includes(itemData.title);
+                return (
+                  <div 
+                    key={i}
+                    onClick={() => toggleTrendSelection('items', itemData.title)}
+                    className={`group cursor-pointer rounded-xl p-5 transition-all duration-300 hover:shadow-md border ${
+                      isSelected 
+                        ? 'bg-slate-900 text-white border-slate-900' 
+                        : 'bg-white hover:bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-2 flex-1">
+                        <h5 className={`font-semibold text-sm ${isSelected ? '' : 'text-slate-900'}`}>
+                          {itemData.title}
+                        </h5>
+                        <p className={`text-xs leading-relaxed ${isSelected ? 'text-white/70' : 'text-muted-foreground'}`}>
+                          {itemData.description}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <Check className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         
