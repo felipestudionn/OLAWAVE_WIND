@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles, Calculator } from "lucide-react";
+import { ArrowLeft, Sparkles, Calculator, Loader2, Target, TrendingUp, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { CollectionPlan } from "@/types/planner";
+import type { CollectionPlan, SetupData } from "@/types/planner";
 import { CollectionBuilder } from './CollectionBuilder';
 
 interface PlannerDashboardProps {
@@ -16,7 +19,91 @@ interface PlannerDashboardProps {
 export function PlannerDashboard({ plan }: PlannerDashboardProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("builder");
-  const setupData = plan.setup_data;
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Budget setup state - initialize with AI suggestions
+  const [budgetData, setBudgetData] = useState({
+    totalSalesTarget: plan.setup_data.totalSalesTarget,
+    targetMargin: plan.setup_data.targetMargin,
+  });
+  
+  // Modified setup data with user's budget
+  const [setupData, setSetupData] = useState<SetupData>(plan.setup_data);
+
+  // Handle budget confirmation and auto-generate SKUs
+  const handleConfirmBudget = async () => {
+    setIsGenerating(true);
+    
+    // Update setup data with user's budget
+    const updatedSetupData: SetupData = {
+      ...plan.setup_data,
+      totalSalesTarget: budgetData.totalSalesTarget,
+      targetMargin: budgetData.targetMargin,
+    };
+    setSetupData(updatedSetupData);
+
+    try {
+      // Generate SKUs automatically based on the budget
+      const response = await fetch('/api/ai/generate-skus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setupData: updatedSetupData,
+          count: Math.min(updatedSetupData.expectedSkus, 15), // Generate up to 15 SKUs
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate SKUs');
+      }
+
+      const { skus: suggestedSkus } = await response.json();
+
+      // Add each suggested SKU to the collection
+      for (const suggested of suggestedSkus) {
+        const finalPrice = suggested.pvp * (1 - (suggested.discount || 0) / 100);
+        const expectedSales = (suggested.suggestedUnits * 0.6) * finalPrice;
+        const margin = ((suggested.pvp - suggested.cost) / suggested.pvp) * 100;
+
+        await fetch('/api/skus', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            collection_plan_id: plan.id,
+            name: suggested.name,
+            family: suggested.family || updatedSetupData.productFamilies[0]?.name || 'General',
+            category: updatedSetupData.productCategory || 'ROPA',
+            type: suggested.type || 'REVENUE',
+            channel: 'DTC',
+            drop_number: suggested.drop || 1,
+            pvp: suggested.pvp,
+            cost: suggested.cost,
+            discount: 0,
+            final_price: finalPrice,
+            buy_units: suggested.suggestedUnits || 50,
+            sale_percentage: 60,
+            expected_sales: expectedSales,
+            margin,
+            launch_date: new Date().toISOString().split('T')[0],
+          }),
+        });
+      }
+
+      setSetupComplete(true);
+    } catch (error) {
+      console.error('Error generating SKUs:', error);
+      // Still allow to continue even if generation fails
+      setSetupComplete(true);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Skip budget setup and go directly to builder
+  const handleSkipSetup = () => {
+    setSetupComplete(true);
+  };
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-6">
@@ -63,7 +150,108 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Budget Setup Step */}
+      {!setupComplete && (
+        <Card className="mb-6 border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-900">
+              <Target className="h-5 w-5" />
+              Define Your Budget
+            </CardTitle>
+            <CardDescription>
+              Set your sales target and margin before we generate your collection SKUs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {/* Total Sales Target */}
+              <div className="space-y-2">
+                <Label htmlFor="salesTarget" className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                  Total Sales Target (€)
+                </Label>
+                <Input
+                  id="salesTarget"
+                  type="number"
+                  value={budgetData.totalSalesTarget}
+                  onChange={(e) => setBudgetData(prev => ({ ...prev, totalSalesTarget: Number(e.target.value) }))}
+                  className="text-lg font-semibold"
+                  placeholder="e.g., 500000"
+                />
+                <p className="text-xs text-muted-foreground">
+                  AI suggested: €{plan.setup_data.totalSalesTarget.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Target Margin */}
+              <div className="space-y-2">
+                <Label htmlFor="targetMargin" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  Target Margin (%)
+                </Label>
+                <Input
+                  id="targetMargin"
+                  type="number"
+                  value={budgetData.targetMargin}
+                  onChange={(e) => setBudgetData(prev => ({ ...prev, targetMargin: Number(e.target.value) }))}
+                  className="text-lg font-semibold"
+                  min={0}
+                  max={100}
+                  placeholder="e.g., 65"
+                />
+                <p className="text-xs text-muted-foreground">
+                  AI suggested: {plan.setup_data.targetMargin}%
+                </p>
+              </div>
+
+              {/* Summary from Strategy */}
+              <div className="space-y-2 lg:col-span-2">
+                <Label className="text-sm font-medium">Strategy Summary</Label>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="bg-white/80 rounded-lg p-3 border">
+                    <p className="text-xs text-muted-foreground">Expected SKUs</p>
+                    <p className="text-lg font-semibold">{plan.setup_data.expectedSkus}</p>
+                  </div>
+                  <div className="bg-white/80 rounded-lg p-3 border">
+                    <p className="text-xs text-muted-foreground">Avg Price</p>
+                    <p className="text-lg font-semibold">€{plan.setup_data.avgPriceTarget}</p>
+                  </div>
+                  <div className="bg-white/80 rounded-lg p-3 border">
+                    <p className="text-xs text-muted-foreground">Drops</p>
+                    <p className="text-lg font-semibold">{plan.setup_data.dropsCount}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mt-6 pt-6 border-t border-green-200">
+              <Button variant="ghost" onClick={handleSkipSetup}>
+                Skip & Build Manually
+              </Button>
+              <Button 
+                onClick={handleConfirmBudget}
+                disabled={isGenerating || budgetData.totalSalesTarget <= 0}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating SKUs...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Confirm & Generate SKUs
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Content - Only show after setup */}
+      {setupComplete && (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="builder">Constructor</TabsTrigger>
@@ -232,6 +420,7 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
             </div>
           </TabsContent>
         </Tabs>
+      )}
     </div>
   );
 }
