@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft, Pencil, Search, TrendingUp, Send } from 'lucide-react';
+import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft, Pencil, Search, TrendingUp, Send, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { saveCreativeSpaceData, type CreativeSpaceData } from '@/lib/data-sync';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 // Professional Pantone TCX Fashion Color Mapping
 // Based on Pantone Fashion, Home + Interiors Color System
@@ -234,6 +236,8 @@ interface CreativeSpaceClientProps {
 
 export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [images, setImages] = useState<MoodImage[]>([]);
   const [pinterestConnected, setPinterestConnected] = useState(false);
   const [pinterestBoards, setPinterestBoards] = useState<PinterestBoard[]>([]);
@@ -705,6 +709,47 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
         : [...prev, signalName]
     );
   };
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show sign-in required screen if not authenticated
+  if (!user) {
+    return (
+      <>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center mb-6">
+            <Lock className="h-10 w-10 text-primary" />
+          </div>
+          <h2 className="text-3xl font-bold tracking-tight mb-3">Sign in to Create</h2>
+          <p className="text-muted-foreground max-w-md mb-8">
+            Create an account or sign in to start building your collection with AI-powered trend insights and moodboard analysis.
+          </p>
+          <Button 
+            size="lg" 
+            onClick={() => setShowAuthModal(true)}
+            className="rounded-full px-8"
+          >
+            <Sparkles className="h-5 w-5 mr-2" />
+            Sign In to Get Started
+          </Button>
+          <p className="text-sm text-muted-foreground mt-4">
+            Free to use · No credit card required
+          </p>
+        </div>
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+        />
+      </>
+    );
+  }
 
   return (
     <div className="space-y-6">
