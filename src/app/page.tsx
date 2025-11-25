@@ -31,11 +31,11 @@ export default function HomePage() {
                       <span className="block text-gray-900 animate-fade-in-up animate-delay-100">Plan Your Fashion</span>
                       <span className="block text-gray-900 animate-fade-in-up animate-delay-200">Collection in</span>
                       <span className="block text-3xl sm:text-4xl xl:text-5xl font-medium mt-4 text-gray-600 animate-fade-in-up animate-delay-300">
-                        3 AI-Powered Steps
+                        4 AI-Powered Steps
                       </span>
                     </h1>
                     <p className="max-w-[550px] text-lg text-gray-600 md:text-xl leading-relaxed animate-fade-in-up animate-delay-400">
-                      From Pinterest boards to SKU-level financial plans. Combine your creative vision with real market trends and let AI build your collection strategy.
+                      From Pinterest Board to SKU Level Financial Plan and GTM. Combine your creative vision with real market trends and let AI build your collection strategy.
                     </p>
                   </div>
                   <div className="flex flex-col gap-4 sm:flex-row pt-2 animate-fade-in-up animate-delay-500">
@@ -80,7 +80,7 @@ export default function HomePage() {
                 How It Works
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                <span className="font-semibold text-gray-900">4 AI Powered Steps.</span> From Pinterest Board to SKU Level Financial Plan and GTM.
+                AI-powered context that elevates every decision. From inspiration to execution, always aligned with the market.
               </p>
             </AnimateOnScroll>
             
