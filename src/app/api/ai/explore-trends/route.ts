@@ -11,24 +11,31 @@ interface TrendExplorationResult {
   description: string;
 }
 
-const EXPLORE_PROMPT = (query: string) => `You are a fashion trend analyst. The user wants to explore the trend: "${query}"
+const EXPLORE_PROMPT = (query: string) => `You are a forward-thinking fashion trend forecaster specializing in 2025-2027 seasons. The user wants to explore the trend: "${query}"
 
-Research this trend and provide:
+Research this trend with a FUTURE-FOCUSED perspective for Fall/Winter 2025, Spring/Summer 2026, and beyond.
+
+Provide:
 
 1. **KEY COLORS** (4-6 colors)
-   - Colors associated with this trend
-   - Use professional fashion/Pantone-style names
+   - Colors associated with this trend for 2025-2027
+   - Use professional Pantone TCX fashion names
+   - Consider how this trend will evolve color-wise
 
 2. **KEY TRENDS** (3-5 related trends)
    - Related fashion movements and aesthetics
-   - Current 2024-2025 interpretations
+   - Focus on 2025-2027 interpretations and evolutions
+   - How will this trend merge with emerging aesthetics?
 
 3. **KEY ITEMS** (5-7 items)
-   - Specific garments and accessories typical of this trend
-   - Be precise with descriptions
+   - Specific garments and accessories for 2025-2027
+   - Be precise with forward-thinking descriptions
+   - Include innovative materials and silhouettes
 
 4. **DESCRIPTION**
-   - 2-3 sentences explaining this trend, its origins, and current relevance
+   - 2-3 sentences explaining this trend's FUTURE direction
+   - How will it evolve in 2025-2027?
+   - What new interpretations are emerging?
 
 Return ONLY valid JSON:
 {
@@ -36,7 +43,7 @@ Return ONLY valid JSON:
   "keyColors": ["Color 1", "Color 2", "Color 3", "Color 4"],
   "keyTrends": ["Trend 1", "Trend 2", "Trend 3"],
   "keyItems": ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-  "description": "Description of the trend..."
+  "description": "Description of the trend's future direction..."
 }`;
 
 export async function POST(req: NextRequest) {

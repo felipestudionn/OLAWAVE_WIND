@@ -3,32 +3,43 @@ import { NextRequest, NextResponse } from 'next/server';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = 'models/gemini-2.5-flash';
 
-const MARKET_TRENDS_PROMPT = `You are a fashion trend analyst with access to current market data from social media, fashion weeks, and retail trends.
+const MARKET_TRENDS_PROMPT = `You are a cutting-edge fashion trend forecaster specializing in FUTURE trends for Fall/Winter 2025, Spring/Summer 2026, and Fall/Winter 2026-2027 seasons.
 
-Generate current market trends for fashion collection planning (2024-2025 season).
+Your role is to predict EMERGING and UPCOMING trends that will dominate fashion in the next 12-24 months. Focus on:
+- Trends shown at recent Fashion Weeks (Milan, Paris, London, New York)
+- Emerging aesthetics from Gen Z and Gen Alpha
+- Sustainability and tech-fashion innovations
+- Cultural shifts influencing future fashion
+- Colors predicted by Pantone and WGSN for 2025-2027
+
+Generate FORWARD-LOOKING macro trends for fashion collection planning targeting 2025-2027 seasons.
 
 Provide:
 
-1. **KEY COLORS** (6-8 trending colors)
-   - Colors currently trending in fashion
-   - Use professional fashion/Pantone-style names
-   - Mix of neutrals and accent colors
+1. **KEY COLORS** (6-8 colors for 2025-2027)
+   - Predicted trending colors for upcoming seasons
+   - Use professional Pantone TCX fashion names
+   - Include Pantone Color of the Year 2025 (Mocha Mousse) and predicted 2026 colors
+   - Mix of emerging neutrals, bold statements, and accent colors
 
-2. **KEY TRENDS** (5-7 current trends)
-   - Major fashion movements right now
-   - Include both mainstream and emerging trends
-   - Reference specific aesthetics: Quiet Luxury, Mob Wife, Coquette, Gorpcore, etc.
+2. **KEY TRENDS** (5-7 FUTURE trends)
+   - Emerging fashion movements for 2025-2027
+   - Focus on what's NEXT, not what's current
+   - Include: post-Quiet Luxury evolutions, tech-wear innovations, sustainable fashion movements
+   - Reference emerging aesthetics: Eclectic Grandpa, Indie Sleaze revival, Cyber Y2K, Romantic Minimalism, etc.
 
-3. **KEY ITEMS** (6-8 trending items)
-   - Specific garments and accessories trending now
-   - Be precise: "Barrel leg jeans", "Ballet flats", "Oversized blazers"
+3. **KEY ITEMS** (6-8 items trending for 2025-2027)
+   - Specific garments and accessories predicted to trend
+   - Be precise and forward-thinking: "Deconstructed tailoring", "Tech-infused outerwear", "Sculptural accessories"
+   - Include innovative silhouettes and materials
 
 Return ONLY valid JSON:
 {
   "keyColors": ["Color 1", "Color 2", "Color 3", "Color 4", "Color 5", "Color 6"],
   "keyTrends": ["Trend 1", "Trend 2", "Trend 3", "Trend 4", "Trend 5"],
   "keyItems": ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"],
-  "lastUpdated": "2024-XX-XX"
+  "seasonFocus": "Fall/Winter 2025 - Fall/Winter 2026",
+  "lastUpdated": "2025-XX-XX"
 }`;
 
 export async function GET(req: NextRequest) {
