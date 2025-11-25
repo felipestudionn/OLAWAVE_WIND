@@ -2,14 +2,41 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+type AnimationType = 'fade-up' | 'fade-down' | 'fade-left' | 'fade-right' | 'scale' | 'blur';
+
 interface AnimateOnScrollProps {
   children: React.ReactNode;
   className?: string;
   delay?: number;
   duration?: number;
+  animation?: AnimationType;
 }
 
-export function AnimateOnScroll({ children, className = '', delay = 0, duration = 2.5 }: AnimateOnScrollProps) {
+const getInitialTransform = (animation: AnimationType): string => {
+  switch (animation) {
+    case 'fade-up':
+      return 'translateY(40px)';
+    case 'fade-down':
+      return 'translateY(-40px)';
+    case 'fade-left':
+      return 'translateX(-60px)';
+    case 'fade-right':
+      return 'translateX(60px)';
+    case 'scale':
+      return 'scale(0.95)';
+    case 'blur':
+    default:
+      return 'translateX(-60px)';
+  }
+};
+
+export function AnimateOnScroll({ 
+  children, 
+  className = '', 
+  delay = 0, 
+  duration = 0.8,
+  animation = 'fade-up'
+}: AnimateOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
@@ -29,11 +56,11 @@ export function AnimateOnScroll({ children, className = '', delay = 0, duration 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          setTimeout(() => setIsVisible(true), delay);
           observer.disconnect();
         }
       },
-      { threshold: 0.01, rootMargin: '100px 0px 100px 0px' }
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
     );
 
     observer.observe(element);
@@ -50,15 +77,16 @@ export function AnimateOnScroll({ children, className = '', delay = 0, duration 
     );
   }
 
+  const initialTransform = getInitialTransform(animation);
+
   return (
     <div
       ref={ref}
       className={className}
       style={{
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateX(0)' : 'translateX(-60px)',
-        filter: isVisible ? 'blur(0)' : 'blur(15px)',
-        transition: `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}ms`,
+        transform: isVisible ? 'translate(0) scale(1)' : initialTransform,
+        transition: `opacity ${duration}s ease-out, transform ${duration}s ease-out`,
       }}
     >
       {children}

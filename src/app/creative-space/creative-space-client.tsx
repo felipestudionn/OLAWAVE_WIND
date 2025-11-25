@@ -137,7 +137,7 @@ export function CreativeSpaceClient() {
   // Convert image URL to base64
   const imageToBase64 = async (imageUrl: string): Promise<{ base64: string; mimeType: string } | null> => {
     try {
-      // For blob URLs (uploaded files)
+      // For blob URLs (uploaded files) - can fetch directly
       if (imageUrl.startsWith('blob:')) {
         const response = await fetch(imageUrl);
         const blob = await response.blob();
@@ -152,19 +152,19 @@ export function CreativeSpaceClient() {
         });
       }
       
-      // For external URLs (Pinterest), fetch and convert
+      // For external URLs (Pinterest, etc.) - use server proxy to avoid CORS
       if (imageUrl.startsWith('http')) {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = (reader.result as string).split(',')[1];
-            resolve({ base64, mimeType: blob.type || 'image/jpeg' });
-          };
-          reader.onerror = () => resolve(null);
-          reader.readAsDataURL(blob);
+        const response = await fetch('/api/proxy-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl }),
         });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return { base64: data.base64, mimeType: data.mimeType };
+        }
+        return null;
       }
       
       return null;

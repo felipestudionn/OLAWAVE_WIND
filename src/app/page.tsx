@@ -269,15 +269,15 @@ export default function HomePage() {
         {/* Value Proposition Section */}
         <section className="relative w-full py-24 px-4 md:px-6 overflow-hidden">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
+            <AnimateOnScroll animation="fade-up" className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight mb-6">
                 Collection planning is complex.<br />
                 <span className="text-foreground/70">We make it simple.</span>
               </h2>
-            </div>
+            </AnimateOnScroll>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-              <div className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl">
+              <AnimateOnScroll animation="fade-right" delay={200} className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl">
                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                     <span className="text-red-500 text-lg">✕</span>
@@ -302,9 +302,9 @@ export default function HomePage() {
                     <span>Disconnected creative and financial planning</span>
                   </li>
                 </ul>
-              </div>
+              </AnimateOnScroll>
               
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-200">
+              <AnimateOnScroll animation="fade-left" delay={400} className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-200">
                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                     <span className="text-green-500 text-lg">✓</span>
@@ -329,7 +329,7 @@ export default function HomePage() {
                     <span>Creative vision + financial reality, unified</span>
                   </li>
                 </ul>
-              </div>
+              </AnimateOnScroll>
             </div>
           </div>
         </section>
@@ -338,7 +338,7 @@ export default function HomePage() {
         <section className="relative w-full py-24 px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll animation="fade-up" delay={0} className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Predictive<br/>Context</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -350,9 +350,9 @@ export default function HomePage() {
                   />
                 </div>
                 <p className="text-sm text-black/70">Anticipates not just trends, but their causes</p>
-              </div>
+              </AnimateOnScroll>
               
-              <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll animation="fade-up" delay={150} className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Pattern<br/>Recognition</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -364,9 +364,9 @@ export default function HomePage() {
                   />
                 </div>
                 <p className="text-sm text-black/70">Identifies patterns invisible to humans</p>
-              </div>
+              </AnimateOnScroll>
               
-              <div className="bg-gradient-to-br from-pink-50 via-blue-50 to-purple-50 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll animation="fade-up" delay={300} className="bg-gradient-to-br from-pink-50 via-blue-50 to-purple-50 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Enhanced Data-Driven<br/>Decisions</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -378,9 +378,9 @@ export default function HomePage() {
                   />
                 </div>
                 <p className="text-sm text-black/70">Turns uncertainty into strategic advantage</p>
-              </div>
+              </AnimateOnScroll>
               
-              <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll animation="fade-up" delay={450} className="bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Retail<br/>Optimization</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -392,7 +392,7 @@ export default function HomePage() {
                   />
                 </div>
                 <p className="text-sm text-black/70">Enhances pricing, stock, conversion, and customer experience</p>
-              </div>
+              </AnimateOnScroll>
             </div>
           </div>
         </section>
@@ -400,7 +400,7 @@ export default function HomePage() {
         {/* CTA Section */}
         <section className="relative w-full py-20 md:py-28">
           <div className="container relative z-10 px-4 md:px-6">
-            <div className="mx-auto max-w-3xl text-center bg-white/80 backdrop-blur-xl rounded-3xl p-12 md:p-16 shadow-xl shadow-black/5 border border-white/60">
+            <AnimateOnScroll animation="scale" className="mx-auto max-w-3xl text-center bg-white/80 backdrop-blur-xl rounded-3xl p-12 md:p-16 shadow-xl shadow-black/5 border border-white/60">
               <h2 className="text-4xl font-bold sm:text-5xl mb-6 text-gray-900">
                 Ready to Plan Your Collection?
               </h2>
@@ -422,7 +422,7 @@ export default function HomePage() {
                   Explore Trends
                 </Link>
               </div>
-            </div>
+            </AnimateOnScroll>
           </div>
         </section>
         
