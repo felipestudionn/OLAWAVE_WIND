@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen } from 'lucide-react';
+import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw } from 'lucide-react';
 import { saveCreativeSpaceData, type CreativeSpaceData } from '@/lib/data-sync';
 
 interface MoodImage {
@@ -43,6 +43,8 @@ export function CreativeSpaceClient() {
   const [showBoardSelector, setShowBoardSelector] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<MoodboardAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [pinterestError, setPinterestError] = useState<string | null>(null);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -52,6 +54,12 @@ export function CreativeSpaceClient() {
     if (urlParams.get('pinterest_connected') === 'true') {
       setPinterestConnected(true);
       loadPinterestBoards();
+      // Clean up URL
+      window.history.replaceState({}, '', '/creative-space');
+    }
+
+    // Check if Pinterest was disconnected
+    if (urlParams.get('pinterest_disconnected') === 'true') {
       // Clean up URL
       window.history.replaceState({}, '', '/creative-space');
     }
@@ -140,20 +148,59 @@ export function CreativeSpaceClient() {
 
   const loadPinterestBoards = async () => {
     setLoadingBoards(true);
+    setPinterestError(null);
     try {
       const res = await fetch('/api/pinterest/boards');
       const data = await res.json();
+      
+      if (!res.ok) {
+        // Handle specific error codes
+        if (data.code === 'TOKEN_EXPIRED' || data.code === 'NO_TOKEN') {
+          setPinterestError('Tu sesión de Pinterest ha expirado. Por favor, reconecta tu cuenta.');
+          // Auto-disconnect on token expiry
+          handlePinterestDisconnect();
+          return;
+        }
+        setPinterestError(data.error || 'Error al cargar los boards de Pinterest');
+        return;
+      }
       
       if (data.items && Array.isArray(data.items)) {
         setPinterestBoards(data.items);
         localStorage.setItem('olawave_pinterest_boards', JSON.stringify(data.items));
         localStorage.setItem('olawave_pinterest_connected', 'true');
         setShowBoardSelector(true);
+        setPinterestError(null);
+      } else {
+        setPinterestError('No se encontraron boards en tu cuenta de Pinterest');
       }
     } catch (err) {
       console.error('Error loading boards:', err);
+      setPinterestError('Error de conexión. Por favor, inténtalo de nuevo.');
     } finally {
       setLoadingBoards(false);
+    }
+  };
+
+  const handlePinterestDisconnect = async () => {
+    setIsDisconnecting(true);
+    try {
+      await fetch('/api/auth/pinterest/signout', { method: 'POST' });
+      
+      // Clear local state
+      setPinterestConnected(false);
+      setPinterestBoards([]);
+      setSelectedBoards([]);
+      setPinterestError(null);
+      
+      // Clear localStorage
+      localStorage.removeItem('olawave_pinterest_connected');
+      localStorage.removeItem('olawave_pinterest_boards');
+      localStorage.removeItem('olawave_pinterest_selected');
+    } catch (err) {
+      console.error('Error disconnecting Pinterest:', err);
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -407,14 +454,48 @@ export function CreativeSpaceClient() {
                 Connect Pinterest
               </Button>
             ) : (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                <Check className="h-3 w-3 mr-1" />
-                Connected
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Check className="h-3 w-3 mr-1" />
+                  Connected
+                </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handlePinterestDisconnect}
+                  disabled={isDisconnecting}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  {isDisconnecting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogOut className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
         <CardContent>
+          {/* Pinterest Error Message */}
+          {pinterestError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-red-700">{pinterestError}</p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={loadPinterestBoards}
+                  className="mt-2 text-red-600 hover:text-red-700 p-0 h-auto"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Reintentar
+                </Button>
+              </div>
+            </div>
+          )}
+
           {!pinterestConnected ? (
             <div className="text-center py-6 text-muted-foreground">
               <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -431,11 +512,22 @@ export function CreativeSpaceClient() {
                 <p className="text-sm text-muted-foreground">
                   Select boards to use as inspiration ({selectedBoards.length} selected)
                 </p>
-                {selectedBoards.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedBoards([])}>
-                    Clear selection
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={loadPinterestBoards}
+                    disabled={loadingBoards}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-1 ${loadingBoards ? 'animate-spin' : ''}`} />
+                    Refresh
                   </Button>
-                )}
+                  {selectedBoards.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedBoards([])}>
+                      Clear selection
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {pinterestBoards.map((board) => (
