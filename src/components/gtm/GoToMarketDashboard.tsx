@@ -107,12 +107,15 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
   const handleGeneratePrediction = async () => {
     setIsGeneratingPrediction(true);
     try {
+      // Calculate total sales target from SKUs (source of truth)
+      const calculatedSalesTarget = skus.reduce((sum, sku) => sum + (sku.expected_sales || 0), 0);
+      
       const response = await fetch('/api/ai/market-prediction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           collectionPlanId: plan.id, drops, commercialActions: actions, skus,
-          totalSalesTarget: setupData.totalSalesTarget, season: (setupData as any).season || 'AW',
+          totalSalesTarget: calculatedSalesTarget, season: (setupData as any).season || 'AW',
           productCategory: setupData.productCategory, location: (setupData as any).location || 'Europe',
         }),
       });
@@ -127,8 +130,7 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
     }
   };
 
-  const totalPlannedSales = filteredSkus.reduce((sum, sku) => sum + sku.expected_sales, 0);
-  const totalBudget = setupData.totalSalesTarget || 0;
+  const totalPlannedSales = skus.reduce((sum, sku) => sum + sku.expected_sales, 0);
 
   return (
     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -143,7 +145,7 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
         <div className="flex items-center gap-4">
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Total Sales Target</p>
-            <p className="text-2xl font-bold text-green-600">€{totalBudget.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-green-600">€{totalPlannedSales.toLocaleString()}</p>
           </div>
         </div>
       </div>
