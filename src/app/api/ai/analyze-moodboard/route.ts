@@ -37,7 +37,8 @@ Look at EACH IMAGE carefully and identify:
 
 2. **KEY TRENDS** (3-5 trends)
    - What current fashion movements do these images represent?
-   - Reference actual 2024-2025 trends: Quiet Luxury, Mob Wife Aesthetic, Coastal Grandmother, Gorpcore, Coquette, Old Money, Blokecore, etc.
+   - Reference trends from SS26 and Pre-Fall 2026 runways (shown September-November 2025)
+   - Include current aesthetics: Quiet Luxury evolution, Boho Redux, Sheer layering, Romantic Minimalism, etc.
    - Be specific about silhouettes, proportions, styling approaches
 
 3. **KEY BRANDS** (4-6 brands)
@@ -56,7 +57,7 @@ Look at EACH IMAGE carefully and identify:
    - Fabrics and textures visible: "Bouclé wool", "Soft leather", "Organic cotton", "Cashmere blend", "Raw denim"
 
 7. **SEASONAL FIT**
-   - Which season does this moodboard best suit? SS25, AW25, Resort, Pre-Fall
+   - Which season does this moodboard best suit? SS26, Pre-Fall 2026, Resort 2026, or FW26
 
 8. **MOOD DESCRIPTION**
    - 2-3 sentences capturing the overall aesthetic, feeling, and lifestyle this represents
@@ -78,7 +79,7 @@ Return ONLY valid JSON with this exact structure:
   "keyItems": ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
   "keyStyles": ["Style 1", "Style 2"],
   "keyMaterials": ["Material 1", "Material 2", "Material 3"],
-  "seasonalFit": "SS25 or AW25 or Resort or Pre-Fall",
+  "seasonalFit": "SS26 or Pre-Fall 2026 or Resort 2026 or FW26",
   "moodDescription": "Descriptive paragraph about the mood and aesthetic...",
   "targetAudience": "Description of target customer..."
 }
@@ -331,7 +332,7 @@ Return ONLY valid JSON:
     keyItems: allItems.slice(0, 8),
     keyStyles: allStyles.slice(0, 3),
     keyMaterials: allMaterials.slice(0, 5),
-    seasonalFit: allSeasons[0] || 'AW25',
+    seasonalFit: allSeasons[0] || 'SS26',
     moodDescription: allMoods[0] || 'A cohesive collection direction based on the moodboard analysis.',
     targetAudience: allAudiences[0] || 'Style-conscious consumers seeking contemporary fashion.'
   };

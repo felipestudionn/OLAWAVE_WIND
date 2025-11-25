@@ -1165,7 +1165,7 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                 <Sparkles className="h-5 w-5 text-primary" />
                 Macro Trends
               </h3>
-              <p className="text-sm text-muted-foreground">AI-generated global fashion trends for 2024-2025</p>
+              <p className="text-sm text-muted-foreground">AI-generated trends from SS26 & Pre-Fall 2026 runways</p>
             </div>
             <Button onClick={loadMarketTrends} disabled={loadingMarketTrends} variant="outline" className="gap-2">
               {loadingMarketTrends ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
