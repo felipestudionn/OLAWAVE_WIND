@@ -4,14 +4,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Exclude merch-mind-planner reference folder from compilation
-  webpack: (config) => {
-    config.watchOptions = {
-      ...config.watchOptions,
-      ignored: ['**/merch-mind-planner/**', '**/node_modules/**'],
-    };
-    return config;
-  },
+  // Enable Turbopack (default in Next.js 16)
+  turbopack: {},
 }
 
 module.exports = nextConfig;
