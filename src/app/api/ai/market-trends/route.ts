@@ -3,43 +3,50 @@ import { NextRequest, NextResponse } from 'next/server';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = 'models/gemini-2.5-flash';
 
-const MARKET_TRENDS_PROMPT = `You are a cutting-edge fashion trend forecaster specializing in FUTURE trends for Fall/Winter 2025, Spring/Summer 2026, and Fall/Winter 2026-2027 seasons.
+const MARKET_TRENDS_PROMPT = `You are a fashion market analyst reporting on the LATEST runway trends from the most recent fashion weeks.
 
-Your role is to predict EMERGING and UPCOMING trends that will dominate fashion in the next 12-24 months. Focus on:
-- Trends shown at recent Fashion Weeks (Milan, Paris, London, New York)
-- Emerging aesthetics from Gen Z and Gen Alpha
-- Sustainability and tech-fashion innovations
-- Cultural shifts influencing future fashion
-- Colors predicted by Pantone and WGSN for 2025-2027
+TODAY'S DATE: November 2025
 
-Generate FORWARD-LOOKING macro trends for fashion collection planning targeting 2025-2027 seasons.
+THE MOST RECENT FASHION WEEK SEASONS ARE:
+- **Spring/Summer 2026 Ready-to-Wear (SS26)** - Shown September-October 2025 in New York, London, Milan, Paris
+- **Pre-Fall 2026 (PF26)** - Currently showing November 2025
+- **Resort 2026 / Cruise 2026** - Shown earlier in 2025
+
+Your analysis must be based on:
+- SS26 collections from the Big Four fashion weeks (September-October 2025)
+- Pre-Fall 2026 collections currently being shown
+- What celebrities are already wearing from SS26 collections
+- Current social media trends (TikTok, Instagram)
+- Street style from Paris, Milan, London, New York Fashion Weeks September-October 2025
+
+Focus on the NEXT 6 MONTHS - what will be in stores and what people will be wearing.
 
 Provide:
 
-1. **KEY COLORS** (6-8 colors for 2025-2027)
-   - Predicted trending colors for upcoming seasons
+1. **KEY COLORS** (6-8 colors)
+   - Colors dominant on SS26 and PF26 runways
    - Use professional Pantone TCX fashion names
-   - Include Pantone Color of the Year 2025 (Mocha Mousse) and predicted 2026 colors
-   - Mix of emerging neutrals, bold statements, and accent colors
+   - Include Pantone Color of the Year 2025: Mocha Mousse (17-1230)
+   - Reference specific designers: "Burgundy at Bottega", "Butter yellow at Prada"
 
-2. **KEY TRENDS** (5-7 FUTURE trends)
-   - Emerging fashion movements for 2025-2027
-   - Focus on what's NEXT, not what's current
-   - Include: post-Quiet Luxury evolutions, tech-wear innovations, sustainable fashion movements
-   - Reference emerging aesthetics: Eclectic Grandpa, Indie Sleaze revival, Cyber Y2K, Romantic Minimalism, etc.
+2. **KEY TRENDS** (5-7 trends)
+   - Major trends from SS26 runway shows
+   - Reference specific designers and collections
+   - What aesthetics dominated the September 2025 shows?
+   - Be concrete: "Sheer everything", "Quiet Luxury evolution", "Boho redux"
 
-3. **KEY ITEMS** (6-8 items trending for 2025-2027)
-   - Specific garments and accessories predicted to trend
-   - Be precise and forward-thinking: "Deconstructed tailoring", "Tech-infused outerwear", "Sculptural accessories"
-   - Include innovative silhouettes and materials
+3. **KEY ITEMS** (6-8 items)
+   - Specific pieces seen repeatedly on SS26 runways
+   - What items are celebrities already wearing from new collections?
+   - Be very specific: "Leather trenches", "Maxi skirts", "Ballet flats"
 
 Return ONLY valid JSON:
 {
   "keyColors": ["Color 1", "Color 2", "Color 3", "Color 4", "Color 5", "Color 6"],
   "keyTrends": ["Trend 1", "Trend 2", "Trend 3", "Trend 4", "Trend 5"],
   "keyItems": ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6"],
-  "seasonFocus": "Fall/Winter 2025 - Fall/Winter 2026",
-  "lastUpdated": "2025-XX-XX"
+  "seasonFocus": "SS26 & Pre-Fall 2026",
+  "lastUpdated": "2025-11-25"
 }`;
 
 export async function GET(req: NextRequest) {
