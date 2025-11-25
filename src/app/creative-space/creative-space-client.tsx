@@ -1157,72 +1157,164 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
           </p>
         </div>
 
-        {/* BLOCK 1: Macro Trends */}
-        <div className="rounded-lg border bg-card p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Macro Trends
-              </h3>
-              <p className="text-sm text-muted-foreground">AI-generated trends from SS26 & Pre-Fall 2026 runways</p>
+        {/* BLOCK 1: Macro Trends - Editorial Style */}
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-slate-50 to-white p-8 space-y-8 shadow-sm">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight">Macro Trends</h3>
+                  <p className="text-sm text-muted-foreground">SS26 & Pre-Fall 2026 Runway Intelligence</p>
+                </div>
+              </div>
             </div>
-            <Button onClick={loadMarketTrends} disabled={loadingMarketTrends} variant="outline" className="gap-2">
+            <Button onClick={loadMarketTrends} disabled={loadingMarketTrends} variant="outline" className="gap-2 rounded-full px-6">
               {loadingMarketTrends ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {marketTrends ? 'Refresh' : 'Load Macro Trends'}
+              {marketTrends ? 'Refresh' : 'Load Trends'}
             </Button>
           </div>
           
           {marketTrends && (
-            <div className="grid gap-4 md:grid-cols-3 pt-2">
-              <div>
-                <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Colors</h4>
-                <div className="flex flex-wrap gap-2">
+            <div className="space-y-8">
+              {/* KEY COLORS - Visual Swatches */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Colors</h4>
+                  <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {marketTrends.keyColors.map((color, i) => {
                     const bgColor = getColorValue(color);
                     const textColor = bgColor ? getContrastColor(bgColor) : undefined;
                     const isSelected = selectedTrends.colors.includes(color);
                     return (
-                      <Badge key={i} variant={isSelected ? "default" : "secondary"}
-                        className="cursor-pointer transition-all border"
-                        style={bgColor ? { backgroundColor: bgColor, color: textColor, borderColor: bgColor } : undefined}
-                        onClick={() => toggleTrendSelection('colors', color)}>
-                        {isSelected && <Check className="h-3 w-3 mr-1" />}{color}
-                      </Badge>
+                      <div 
+                        key={i}
+                        onClick={() => toggleTrendSelection('colors', color)}
+                        className={`group cursor-pointer rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${
+                          isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
+                        }`}
+                        style={{ backgroundColor: bgColor || '#f5f5f5' }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <p className="font-semibold text-sm" style={{ color: textColor || '#333' }}>{color}</p>
+                            {bgColor && (
+                              <p className="text-[10px] font-mono opacity-70" style={{ color: textColor || '#666' }}>{bgColor.toUpperCase()}</p>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <div className="p-1 rounded-full bg-white/30">
+                              <Check className="h-3 w-3" style={{ color: textColor || '#333' }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
               </div>
-              <div>
-                <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Trends</h4>
-                <div className="flex flex-wrap gap-2">
-                  {marketTrends.keyTrends.map((trend, i) => (
-                    <Badge key={i} variant={selectedTrends.trends.includes(trend) ? "default" : "secondary"}
-                      className={`cursor-pointer transition-all ${selectedTrends.trends.includes(trend) ? 'bg-primary' : 'hover:bg-primary/20'}`}
-                      onClick={() => toggleTrendSelection('trends', trend)}>
-                      {selectedTrends.trends.includes(trend) && <Check className="h-3 w-3 mr-1" />}{trend}
-                    </Badge>
-                  ))}
+
+              {/* KEY TRENDS - Card Style */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Trends</h4>
+                  <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {marketTrends.keyTrends.map((trend, i) => {
+                    const isSelected = selectedTrends.trends.includes(trend);
+                    // Split trend into title and description if it contains a colon
+                    const [title, ...descParts] = trend.split(':');
+                    const description = descParts.join(':').trim();
+                    return (
+                      <div 
+                        key={i}
+                        onClick={() => toggleTrendSelection('trends', trend)}
+                        className={`group cursor-pointer rounded-xl p-5 transition-all duration-300 hover:shadow-lg border ${
+                          isSelected 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-white hover:bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-2 flex-1">
+                            <p className={`font-bold text-base leading-tight ${isSelected ? '' : 'text-slate-900'}`}>
+                              {description ? title : trend}
+                            </p>
+                            {description && (
+                              <p className={`text-sm leading-relaxed ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                                {description}
+                              </p>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <div className="p-1 rounded-full bg-white/20 flex-shrink-0">
+                              <Check className="h-4 w-4" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div>
-                <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Items</h4>
-                <div className="flex flex-wrap gap-2">
-                  {marketTrends.keyItems.map((item, i) => (
-                    <Badge key={i} variant={selectedTrends.items.includes(item) ? "default" : "secondary"}
-                      className={`cursor-pointer transition-all ${selectedTrends.items.includes(item) ? 'bg-primary' : 'hover:bg-primary/20'}`}
-                      onClick={() => toggleTrendSelection('items', item)}>
-                      {selectedTrends.items.includes(item) && <Check className="h-3 w-3 mr-1" />}{item}
-                    </Badge>
-                  ))}
+
+              {/* KEY ITEMS - Pill Style */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Key Items</h4>
+                  <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {marketTrends.keyItems.map((item, i) => {
+                    const isSelected = selectedTrends.items.includes(item);
+                    // Split item into title and description if it contains a colon
+                    const [title, ...descParts] = item.split(':');
+                    const description = descParts.join(':').trim();
+                    return (
+                      <div 
+                        key={i}
+                        onClick={() => toggleTrendSelection('items', item)}
+                        className={`group cursor-pointer rounded-xl p-4 transition-all duration-300 hover:shadow-md border ${
+                          isSelected 
+                            ? 'bg-slate-900 text-white border-slate-900' 
+                            : 'bg-white hover:bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1 flex-1">
+                            <p className={`font-semibold text-sm ${isSelected ? '' : 'text-slate-900'}`}>
+                              {description ? title : item}
+                            </p>
+                            {description && (
+                              <p className={`text-xs leading-relaxed ${isSelected ? 'text-white/70' : 'text-muted-foreground'}`}>
+                                {description}
+                              </p>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <Check className="h-4 w-4 flex-shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           )}
           
           {!marketTrends && (
-            <div className="text-center py-6 text-muted-foreground">
-              <p>Click "Load Macro Trends" to get AI-generated global fashion trends</p>
+            <div className="text-center py-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-muted/50 mb-4">
+                <TrendingUp className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">Load the latest runway trends from SS26 & Pre-Fall 2026</p>
             </div>
           )}
         </div>
