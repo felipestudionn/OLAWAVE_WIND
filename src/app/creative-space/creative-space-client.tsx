@@ -22,6 +22,17 @@ interface PinterestBoard {
   image_thumbnail_url?: string;
 }
 
+interface MoodboardAnalysis {
+  keyColors: string[];
+  keyTrends: string[];
+  keyItems: string[];
+  keyStyles?: string[];
+  keyMaterials?: string[];
+  seasonalFit?: string;
+  moodDescription?: string;
+  targetAudience?: string;
+}
+
 export function CreativeSpaceClient() {
   const router = useRouter();
   const [images, setImages] = useState<MoodImage[]>([]);
@@ -30,6 +41,8 @@ export function CreativeSpaceClient() {
   const [selectedBoards, setSelectedBoards] = useState<string[]>([]);
   const [loadingBoards, setLoadingBoards] = useState(false);
   const [showBoardSelector, setShowBoardSelector] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<MoodboardAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -58,7 +71,7 @@ export function CreativeSpaceClient() {
     }
   }, []);
 
-  // Save data whenever images or selected boards change
+  // Save data whenever images, selected boards, or AI analysis change
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
@@ -70,7 +83,7 @@ export function CreativeSpaceClient() {
       };
       window.localStorage.setItem('olawave_moodboard_summary', JSON.stringify(summary));
 
-      // New unified format
+      // New unified format - use AI analysis if available
       const selectedBoardsData = pinterestBoards.filter(b => selectedBoards.includes(b.id));
       const creativeData: CreativeSpaceData = {
         moodboardImages: images.map(img => ({
@@ -83,9 +96,10 @@ export function CreativeSpaceClient() {
           name: b.name,
           pinCount: b.pin_count
         })),
-        keyColors: ['Warm Beige', 'Olive Green', 'Electric Blue', 'Camel'],
-        keyTrends: ['Oversized Tailoring', 'Gorpcore', 'Y2K Revival'],
-        keyItems: ['Utility vests', 'Oversized bomber jackets', 'Platform sandals', 'Crochet bags']
+        keyColors: aiAnalysis?.keyColors || [],
+        keyTrends: aiAnalysis?.keyTrends || [],
+        keyItems: aiAnalysis?.keyItems || [],
+        keyStyles: aiAnalysis?.keyStyles || [],
       };
       saveCreativeSpaceData(creativeData);
       
@@ -96,7 +110,33 @@ export function CreativeSpaceClient() {
     } catch (e) {
       // ignore storage errors
     }
-  }, [images, selectedBoards, pinterestBoards]);
+  }, [images, selectedBoards, pinterestBoards, aiAnalysis]);
+
+  // Analyze moodboard with AI when images change
+  const analyzeMoodboard = async () => {
+    if (images.length === 0) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch('/api/ai/analyze-moodboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrls: images.map(img => img.src),
+          imageNames: images.map(img => img.name),
+        }),
+      });
+
+      if (response.ok) {
+        const analysis = await response.json();
+        setAiAnalysis(analysis);
+      }
+    } catch (error) {
+      console.error('Error analyzing moodboard:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const loadPinterestBoards = async () => {
     setLoadingBoards(true);
@@ -222,6 +262,24 @@ export function CreativeSpaceClient() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-sm">Uploaded Images ({images.length})</h4>
+                  <Button 
+                    onClick={analyzeMoodboard} 
+                    disabled={isAnalyzing}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Analyze with AI
+                      </>
+                    )}
+                  </Button>
                 </div>
                 <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
                   {images.map((img) => (
@@ -248,6 +306,85 @@ export function CreativeSpaceClient() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Analysis Results */}
+      {aiAnalysis && (
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-purple-900">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              AI Moodboard Analysis
+            </CardTitle>
+            <CardDescription>
+              {aiAnalysis.moodDescription || 'Insights extracted from your creative direction'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {/* Colors */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-purple-900">Key Colors</h4>
+                <div className="flex flex-wrap gap-1">
+                  {aiAnalysis.keyColors.map((color, i) => (
+                    <Badge key={i} variant="secondary" className="bg-white/80">
+                      {color}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Trends */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-purple-900">Key Trends</h4>
+                <div className="flex flex-wrap gap-1">
+                  {aiAnalysis.keyTrends.map((trend, i) => (
+                    <Badge key={i} variant="secondary" className="bg-white/80">
+                      {trend}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Items */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-purple-900">Key Items</h4>
+                <div className="flex flex-wrap gap-1">
+                  {aiAnalysis.keyItems.map((item, i) => (
+                    <Badge key={i} variant="secondary" className="bg-white/80">
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Styles & Season */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-purple-900">Style & Season</h4>
+                <div className="flex flex-wrap gap-1">
+                  {aiAnalysis.keyStyles?.map((style, i) => (
+                    <Badge key={i} variant="secondary" className="bg-white/80">
+                      {style}
+                    </Badge>
+                  ))}
+                  {aiAnalysis.seasonalFit && (
+                    <Badge variant="outline" className="border-purple-300 text-purple-700">
+                      {aiAnalysis.seasonalFit}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {aiAnalysis.targetAudience && (
+              <div className="mt-4 pt-4 border-t border-purple-200">
+                <p className="text-sm text-purple-800">
+                  <span className="font-semibold">Target Audience:</span> {aiAnalysis.targetAudience}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Pinterest Integration Card */}
       <Card>

@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface SKU {
   id: string;
@@ -30,41 +29,49 @@ export const useSkus = (collectionPlanId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSkus = async () => {
+  const fetchSkus = useCallback(async () => {
     if (!collectionPlanId) return;
     
     try {
       setLoading(true);
-      const { data, error } = await supabaseAdmin
-        .from('collection_skus')
-        .select('*')
-        .eq('collection_plan_id', collectionPlanId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setSkus(data as SKU[] || []);
+      setError(null);
+      
+      const response = await fetch(`/api/skus?planId=${collectionPlanId}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch SKUs');
+      }
+      
+      const data = await response.json();
+      setSkus(data as SKU[]);
     } catch (err: any) {
       setError(err.message);
       console.error('Error fetching SKUs:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [collectionPlanId]);
 
   const addSku = async (sku: Omit<SKU, 'id' | 'created_at' | 'updated_at'>) => {
     if (!collectionPlanId) return null;
     
     try {
-      const { data, error } = await supabaseAdmin
-        .from('collection_skus')
-        .insert([{
+      const response = await fetch('/api/skus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           ...sku,
           collection_plan_id: collectionPlanId,
-        }])
-        .select()
-        .single();
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add SKU');
+      }
+
+      const data = await response.json();
       setSkus(prev => [data as SKU, ...prev]);
       return data as SKU;
     } catch (err: any) {
@@ -76,14 +83,18 @@ export const useSkus = (collectionPlanId: string) => {
 
   const updateSku = async (id: string, updates: Partial<SKU>) => {
     try {
-      const { data, error } = await supabaseAdmin
-        .from('collection_skus')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      const response = await fetch(`/api/skus/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update SKU');
+      }
+
+      const data = await response.json();
       setSkus(prev => prev.map(sku => sku.id === id ? data as SKU : sku));
       return data as SKU;
     } catch (err: any) {
@@ -95,12 +106,15 @@ export const useSkus = (collectionPlanId: string) => {
 
   const deleteSku = async (id: string) => {
     try {
-      const { error } = await supabaseAdmin
-        .from('collection_skus')
-        .delete()
-        .eq('id', id);
+      const response = await fetch(`/api/skus/${id}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete SKU');
+      }
+
       setSkus(prev => prev.filter(sku => sku.id !== id));
       return true;
     } catch (err: any) {
@@ -114,7 +128,7 @@ export const useSkus = (collectionPlanId: string) => {
     if (collectionPlanId) {
       fetchSkus();
     }
-  }, [collectionPlanId]);
+  }, [collectionPlanId, fetchSkus]);
 
   return {
     skus,

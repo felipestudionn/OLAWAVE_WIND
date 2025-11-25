@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Sparkles, Loader2 } from 'lucide-react';
 import { useSkus, type SKU } from '@/hooks/useSkus';
 import type { SetupData } from '@/types/planner';
 
@@ -27,6 +27,7 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
   const [buyUnits, setBuyUnits] = useState(0);
   const [salePercentage, setSalePercentage] = useState(60);
   const [discount, setDiscount] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { skus, addSku, updateSku, deleteSku, loading } = useSkus(collectionPlanId);
 
@@ -85,6 +86,104 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
 
   const availableFamilies = setupData.productFamilies?.map(f => f.name) || [];
 
+  // Calculate framework validation metrics
+  const frameworkValidation = useMemo(() => {
+    // Family distribution
+    const familyDistribution = availableFamilies.map(familyName => {
+      const familySkus = skus.filter(s => s.family === familyName);
+      const actual = skus.length > 0 ? (familySkus.length / skus.length) * 100 : 0;
+      const target = setupData.productFamilies.find(f => f.name === familyName)?.percentage || 0;
+      return { name: familyName, actual: Math.round(actual), target };
+    });
+
+    // Type distribution
+    const typeDistribution = (['REVENUE', 'IMAGEN', 'ENTRY'] as const).map(typeName => {
+      const typeSkus = skus.filter(s => s.type === typeName);
+      const actual = skus.length > 0 ? (typeSkus.length / skus.length) * 100 : 0;
+      const target = setupData.productTypeSegments.find(t => t.type === typeName)?.percentage || 0;
+      return { name: typeName, actual: Math.round(actual), target };
+    });
+
+    // Average price
+    const avgPrice = skus.length > 0 
+      ? skus.reduce((sum, s) => sum + s.pvp, 0) / skus.length 
+      : 0;
+    const avgPriceTarget = setupData.avgPriceTarget;
+    const avgPriceDiff = avgPriceTarget > 0 ? ((avgPrice - avgPriceTarget) / avgPriceTarget) * 100 : 0;
+
+    // Margin check
+    const marginTarget = setupData.targetMargin;
+    const marginDiff = marginTarget > 0 ? marginPercentage - marginTarget : 0;
+
+    return {
+      familyDistribution,
+      typeDistribution,
+      avgPrice: Math.round(avgPrice),
+      avgPriceTarget,
+      avgPriceDiff: Math.round(avgPriceDiff),
+      marginTarget,
+      marginDiff: Math.round(marginDiff * 10) / 10,
+    };
+  }, [skus, availableFamilies, setupData, marginPercentage]);
+
+  // Generate AI-suggested SKUs
+  const handleGenerateSkus = async () => {
+    const remaining = setupData.expectedSkus - skus.length;
+    if (remaining <= 0) {
+      alert('You have already reached the expected SKU count');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/ai/generate-skus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setupData,
+          count: Math.min(remaining, 10), // Generate up to 10 at a time
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate SKUs');
+      }
+
+      const { skus: suggestedSkus } = await response.json();
+
+      // Add each suggested SKU
+      for (const suggested of suggestedSkus) {
+        const finalPrice = suggested.pvp * (1 - (suggested.discount || 0) / 100);
+        const expectedSales = (suggested.suggestedUnits * 0.6) * finalPrice; // Assume 60% sell-through
+        const margin = ((suggested.pvp - suggested.cost) / suggested.pvp) * 100;
+
+        await addSku({
+          collection_plan_id: collectionPlanId,
+          name: suggested.name,
+          family: suggested.family || availableFamilies[0] || 'General',
+          category: (setupData.productCategory || 'ROPA') as 'CALZADO' | 'ROPA' | 'ACCESORIOS',
+          type: suggested.type || 'REVENUE',
+          channel: 'DTC',
+          drop_number: suggested.drop || 1,
+          pvp: suggested.pvp,
+          cost: suggested.cost,
+          discount: 0,
+          final_price: finalPrice,
+          buy_units: suggested.suggestedUnits || 50,
+          sale_percentage: 60,
+          expected_sales: expectedSales,
+          margin,
+          launch_date: new Date().toISOString().split('T')[0],
+        });
+      }
+    } catch (error) {
+      console.error('Error generating SKUs:', error);
+      alert('Error generating SKUs. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Financial Overview */}
@@ -113,13 +212,118 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
             </div>
           </div>
           <div className="mt-4 pt-4 border-t">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">SKUs Created</span>
-              <Badge variant="secondary">{skus.length} / {setupData.expectedSkus}</Badge>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">SKUs Created</span>
+                <Badge variant="secondary">{skus.length} / {setupData.expectedSkus}</Badge>
+              </div>
+              <Button
+                onClick={handleGenerateSkus}
+                disabled={isGenerating || skus.length >= setupData.expectedSkus}
+                variant="outline"
+                size="sm"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate with AI
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Framework Validation */}
+      {skus.length > 0 && (
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-blue-900">Framework Validation</CardTitle>
+            <CardDescription>How your collection aligns with the AI-generated strategy</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {/* Family Distribution */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-blue-900">Family Mix</h4>
+                <div className="space-y-1">
+                  {frameworkValidation.familyDistribution.map((fam) => (
+                    <div key={fam.name} className="flex items-center justify-between text-xs">
+                      <span className="truncate max-w-[100px]">{fam.name}</span>
+                      <span className={`font-medium ${Math.abs(fam.actual - fam.target) <= 10 ? 'text-green-600' : 'text-orange-600'}`}>
+                        {fam.actual}% / {fam.target}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Type Distribution */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-blue-900">Type Mix</h4>
+                <div className="space-y-1">
+                  {frameworkValidation.typeDistribution.map((t) => (
+                    <div key={t.name} className="flex items-center justify-between text-xs">
+                      <span>{t.name}</span>
+                      <span className={`font-medium ${Math.abs(t.actual - t.target) <= 10 ? 'text-green-600' : 'text-orange-600'}`}>
+                        {t.actual}% / {t.target}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Average Price */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-blue-900">Avg Price</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Current</span>
+                    <span className="font-medium">€{frameworkValidation.avgPrice}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Target</span>
+                    <span className="font-medium">€{frameworkValidation.avgPriceTarget}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Diff</span>
+                    <span className={`font-medium ${Math.abs(frameworkValidation.avgPriceDiff) <= 15 ? 'text-green-600' : 'text-orange-600'}`}>
+                      {frameworkValidation.avgPriceDiff > 0 ? '+' : ''}{frameworkValidation.avgPriceDiff}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Margin */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-blue-900">Margin</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Current</span>
+                    <span className="font-medium">{marginPercentage.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Target</span>
+                    <span className="font-medium">{frameworkValidation.marginTarget}%</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Diff</span>
+                    <span className={`font-medium ${frameworkValidation.marginDiff >= -5 ? 'text-green-600' : 'text-orange-600'}`}>
+                      {frameworkValidation.marginDiff > 0 ? '+' : ''}{frameworkValidation.marginDiff}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Add SKU Form */}
       <Card>

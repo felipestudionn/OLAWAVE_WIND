@@ -10,58 +10,63 @@ import { AnimateOnScroll } from "@/components/ui/animate-on-scroll";
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-background relative overflow-hidden">
-      {/* Pastel pink background image */}
-      <div className="fixed inset-0 z-0">
-        <Image
-          src="/images/bg/pastel-pink-bg.png"
-          alt="Background"
-          fill
-          className="object-cover"
-          priority
-          quality={90}
-        />
-        {/* Subtle overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/20"></div>
-      </div>
+      {/* Background */}
+      <div className="fixed inset-0 z-0 bg-[#fff6dc]"></div>
       
       <Navbar />
       <main className="flex-1 relative z-10">
         {/* Hero Section - Redesigned with clear value prop */}
         <section className="relative w-full pt-32 pb-20 md:pt-36 md:pb-28 lg:pt-40 lg:pb-32">
           <div className="container relative z-10 px-4 md:px-6">
-            <div className="max-w-3xl">
-              <div className="flex flex-col justify-center space-y-6">
-                <div className="space-y-6">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/30 backdrop-blur-2xl text-sm font-medium text-gray-700 w-fit shadow-[0_2px_20px_-2px_rgba(0,0,0,0.1)] border border-white/40 animate-fade-in-up">
-                    <Sparkles className="h-4 w-4 text-pink-500" />
-                    AI-Powered Collection Planning
+            <div className="flex items-center justify-between gap-8">
+              {/* Hero Content */}
+              <div className="max-w-3xl flex-1">
+                <div className="flex flex-col justify-center space-y-6">
+                  <div className="space-y-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/30 backdrop-blur-2xl text-sm font-medium text-gray-700 w-fit shadow-[0_2px_20px_-2px_rgba(0,0,0,0.1)] border border-white/40 animate-fade-in-up">
+                      <Sparkles className="h-4 w-4 text-pink-500" />
+                      AI-Powered Collection Planning
+                    </div>
+                    <h1 className="text-5xl sm:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1]">
+                      <span className="block text-gray-900 animate-fade-in-up animate-delay-100">Plan Your Fashion</span>
+                      <span className="block text-gray-900 animate-fade-in-up animate-delay-200">Collection in</span>
+                      <span className="block text-3xl sm:text-4xl xl:text-5xl font-medium mt-4 text-gray-600 animate-fade-in-up animate-delay-300">
+                        3 AI-Powered Steps
+                      </span>
+                    </h1>
+                    <p className="max-w-[550px] text-lg text-gray-600 md:text-xl leading-relaxed animate-fade-in-up animate-delay-400">
+                      From Pinterest boards to SKU-level financial plans. Combine your creative vision with real market trends and let AI build your collection strategy.
+                    </p>
                   </div>
-                  <h1 className="text-5xl sm:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1]">
-                    <span className="block text-gray-900 animate-fade-in-up animate-delay-100">Plan Your Fashion</span>
-                    <span className="block text-gray-900 animate-fade-in-up animate-delay-200">Collection in</span>
-                    <span className="block text-3xl sm:text-4xl xl:text-5xl font-medium mt-4 text-gray-600 animate-fade-in-up animate-delay-300">
-                      3 AI-Powered Steps
-                    </span>
-                  </h1>
-                  <p className="max-w-[550px] text-lg text-gray-600 md:text-xl leading-relaxed animate-fade-in-up animate-delay-400">
-                    From Pinterest boards to SKU-level financial plans. Combine your creative vision with real market trends and let AI build your collection strategy.
-                  </p>
+                  <div className="flex flex-col gap-4 sm:flex-row pt-2 animate-fade-in-up animate-delay-500">
+                    <Link
+                      href="/creative-space"
+                      className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-gray-900 text-white text-base font-semibold shadow-xl transition-all hover:bg-gray-800 hover:shadow-2xl hover:-translate-y-0.5"
+                    >
+                      Create Your Collection
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                    <Link
+                      href="#how-it-works"
+                      className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/80 backdrop-blur-sm text-gray-700 text-base font-semibold shadow-lg border border-white/50 transition-all hover:bg-white hover:shadow-xl"
+                    >
+                      See How It Works
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-4 sm:flex-row pt-2 animate-fade-in-up animate-delay-500">
-                  <Link
-                    href="/creative-space"
-                    className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-gray-900 text-white text-base font-semibold shadow-xl transition-all hover:bg-gray-800 hover:shadow-2xl hover:-translate-y-0.5"
-                  >
-                    Create Your Collection
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                  <Link
-                    href="#how-it-works"
-                    className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/80 backdrop-blur-sm text-gray-700 text-base font-semibold shadow-lg border border-white/50 transition-all hover:bg-white hover:shadow-xl"
-                  >
-                    See How It Works
-                  </Link>
-                </div>
+              </div>
+              {/* Logo */}
+              <div className="hidden lg:flex flex-1 justify-end items-center">
+                <Image
+                  src="/images/olawave-logo.png"
+                  alt="OLAWAVE Logo"
+                  width={450}
+                  height={450}
+                  className="object-contain animate-logo-fade"
+                  priority
+                  quality={100}
+                  unoptimized
+                />
               </div>
             </div>
           </div>
