@@ -79,8 +79,8 @@ export default function HomePage() {
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 text-gray-900">
                 How It Works
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                Four AI Power Steps to go from creative inspiration to a complete go-to-market plan.
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                <span className="font-semibold text-gray-900">4 AI Powered Steps.</span> From Pinterest Board to SKU Level Financial Plan and GTM.
               </p>
             </AnimateOnScroll>
             
@@ -144,7 +144,7 @@ export default function HomePage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
                       <Brain className="h-5 w-5 text-primary" />
-                      <span className="font-medium">AI Advisor</span>
+                      <span className="font-medium">Range Framework</span>
                     </div>
                     <ul className="space-y-2 text-sm text-foreground/70">
                       <li className="flex items-start gap-2">
