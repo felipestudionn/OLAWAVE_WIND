@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft, Pencil, Search, TrendingUp, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { saveCreativeSpaceData, type CreativeSpaceData } from '@/lib/data-sync';
 
 interface MoodImage {
@@ -67,7 +66,24 @@ interface SelectedTrends {
   items: string[];
 }
 
-export function CreativeSpaceClient() {
+interface Signal {
+  id: string;
+  signal_name: string;
+  signal_type?: string;
+  composite_score?: number;
+  acceleration_factor?: number;
+  platforms_present?: number;
+  reddit_mentions?: number;
+  pinterest_pin_count?: number;
+  youtube_total_views?: number;
+  location?: string;
+}
+
+interface CreativeSpaceClientProps {
+  signals?: Signal[];
+}
+
+export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) {
   const router = useRouter();
   const [images, setImages] = useState<MoodImage[]>([]);
   const [pinterestConnected, setPinterestConnected] = useState(false);
@@ -95,6 +111,17 @@ export function CreativeSpaceClient() {
     trends: [],
     items: []
   });
+  const [selectedSignals, setSelectedSignals] = useState<string[]>([]);
+
+  // Computed values from signals
+  const totalSignals = signals.length;
+  const totalRedditMentions = signals.reduce((sum, s) => sum + (s.reddit_mentions || 0), 0);
+  const totalPinterestPins = signals.reduce((sum, s) => sum + (s.pinterest_pin_count || 0), 0);
+  const totalYoutubeViews = signals.reduce((sum, s) => sum + (s.youtube_total_views || 0), 0);
+  const avgAcceleration = signals.length > 0
+    ? signals.reduce((sum, s) => sum + (s.acceleration_factor || 1), 0) / signals.length
+    : 1;
+  const growthPercent = Math.round((avgAcceleration - 1) * 100);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -519,6 +546,15 @@ export function CreativeSpaceClient() {
       trends: Array.from(new Set([...prev.trends, ...trendExploration.keyTrends])),
       items: Array.from(new Set([...prev.items, ...trendExploration.keyItems]))
     }));
+  };
+
+  // Toggle signal selection
+  const toggleSignalSelection = (signalName: string) => {
+    setSelectedSignals(prev => 
+      prev.includes(signalName)
+        ? prev.filter(s => s !== signalName)
+        : [...prev, signalName]
+    );
   };
 
   return (
@@ -959,266 +995,351 @@ export function CreativeSpaceClient() {
       </Card>
 
       {/* AI Trend Insights */}
-      <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
-        <CardHeader>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight">AI Trend Insights</h2>
+          <p className="text-muted-foreground">
+            Discover trends from multiple sources to inform your collection direction.
+          </p>
+        </div>
+
+        {/* BLOCK 1: Macro Trends */}
+        <div className="rounded-lg border bg-card p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-blue-900">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                AI Trend Insights
-              </CardTitle>
-              <CardDescription>
-                Discover market trends and explore specific aesthetics
-              </CardDescription>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Macro Trends
+              </h3>
+              <p className="text-sm text-muted-foreground">AI-generated global fashion trends for 2024-2025</p>
             </div>
-            <Button 
-              onClick={loadMarketTrends}
-              disabled={loadingMarketTrends}
-              variant="outline"
-              size="sm"
-            >
-              {loadingMarketTrends ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  {marketTrends ? 'Refresh' : 'Load Market Trends'}
-                </>
-              )}
+            <Button onClick={loadMarketTrends} disabled={loadingMarketTrends} variant="outline" className="gap-2">
+              {loadingMarketTrends ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {marketTrends ? 'Refresh' : 'Load Macro Trends'}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Market Trends Section */}
+          
           {marketTrends && (
-            <div className="space-y-4">
-              <h4 className="font-semibold text-blue-900 flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Current Market Trends
-                <span className="text-xs font-normal text-muted-foreground">
-                  (Click to select for your collection)
-                </span>
-              </h4>
-              
-              <div className="grid gap-4 md:grid-cols-3">
-                {/* Colors */}
-                <div className="space-y-2">
-                  <h5 className="text-sm font-medium text-blue-800">Trending Colors</h5>
-                  <div className="flex flex-wrap gap-1">
-                    {marketTrends.keyColors.map((color, i) => (
-                      <Badge 
-                        key={i} 
-                        variant={selectedTrends.colors.includes(color) ? "default" : "secondary"}
-                        className={`cursor-pointer transition-all ${selectedTrends.colors.includes(color) ? 'bg-blue-600' : 'bg-white/80 hover:bg-blue-100'}`}
-                        onClick={() => toggleTrendSelection('colors', color)}
-                      >
-                        {selectedTrends.colors.includes(color) && <Check className="h-3 w-3 mr-1" />}
-                        {color}
-                      </Badge>
-                    ))}
-                  </div>
+            <div className="grid gap-4 md:grid-cols-3 pt-2">
+              <div>
+                <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Colors</h4>
+                <div className="flex flex-wrap gap-2">
+                  {marketTrends.keyColors.map((color, i) => (
+                    <Badge key={i} variant={selectedTrends.colors.includes(color) ? "default" : "secondary"}
+                      className={`cursor-pointer transition-all ${selectedTrends.colors.includes(color) ? 'bg-primary' : 'hover:bg-primary/20'}`}
+                      onClick={() => toggleTrendSelection('colors', color)}>
+                      {selectedTrends.colors.includes(color) && <Check className="h-3 w-3 mr-1" />}{color}
+                    </Badge>
+                  ))}
                 </div>
-                
-                {/* Trends */}
-                <div className="space-y-2">
-                  <h5 className="text-sm font-medium text-blue-800">Trending Aesthetics</h5>
-                  <div className="flex flex-wrap gap-1">
-                    {marketTrends.keyTrends.map((trend, i) => (
-                      <Badge 
-                        key={i} 
-                        variant={selectedTrends.trends.includes(trend) ? "default" : "secondary"}
-                        className={`cursor-pointer transition-all ${selectedTrends.trends.includes(trend) ? 'bg-blue-600' : 'bg-white/80 hover:bg-blue-100'}`}
-                        onClick={() => toggleTrendSelection('trends', trend)}
-                      >
-                        {selectedTrends.trends.includes(trend) && <Check className="h-3 w-3 mr-1" />}
-                        {trend}
-                      </Badge>
-                    ))}
-                  </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Trends</h4>
+                <div className="flex flex-wrap gap-2">
+                  {marketTrends.keyTrends.map((trend, i) => (
+                    <Badge key={i} variant={selectedTrends.trends.includes(trend) ? "default" : "secondary"}
+                      className={`cursor-pointer transition-all ${selectedTrends.trends.includes(trend) ? 'bg-primary' : 'hover:bg-primary/20'}`}
+                      onClick={() => toggleTrendSelection('trends', trend)}>
+                      {selectedTrends.trends.includes(trend) && <Check className="h-3 w-3 mr-1" />}{trend}
+                    </Badge>
+                  ))}
                 </div>
-                
-                {/* Items */}
-                <div className="space-y-2">
-                  <h5 className="text-sm font-medium text-blue-800">Trending Items</h5>
-                  <div className="flex flex-wrap gap-1">
-                    {marketTrends.keyItems.map((item, i) => (
-                      <Badge 
-                        key={i} 
-                        variant={selectedTrends.items.includes(item) ? "default" : "secondary"}
-                        className={`cursor-pointer transition-all ${selectedTrends.items.includes(item) ? 'bg-blue-600' : 'bg-white/80 hover:bg-blue-100'}`}
-                        onClick={() => toggleTrendSelection('items', item)}
-                      >
-                        {selectedTrends.items.includes(item) && <Check className="h-3 w-3 mr-1" />}
-                        {item}
-                      </Badge>
-                    ))}
-                  </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Items</h4>
+                <div className="flex flex-wrap gap-2">
+                  {marketTrends.keyItems.map((item, i) => (
+                    <Badge key={i} variant={selectedTrends.items.includes(item) ? "default" : "secondary"}
+                      className={`cursor-pointer transition-all ${selectedTrends.items.includes(item) ? 'bg-primary' : 'hover:bg-primary/20'}`}
+                      onClick={() => toggleTrendSelection('items', item)}>
+                      {selectedTrends.items.includes(item) && <Check className="h-3 w-3 mr-1" />}{item}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             </div>
           )}
-
-          {/* Explore Trends Section */}
-          <div className="border-t border-blue-200 pt-4">
-            <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
-              <Search className="h-4 w-4" />
-              Explore a Specific Trend
-            </h4>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., Quiet Luxury, Gorpcore, Y2K, Coquette..."
-                value={trendQuery}
-                onChange={(e) => setTrendQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && exploreTrend()}
-                className="flex-1"
-              />
-              <Button 
-                onClick={exploreTrend}
-                disabled={exploringTrend || !trendQuery.trim()}
-              >
-                {exploringTrend ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
+          
+          {!marketTrends && (
+            <div className="text-center py-6 text-muted-foreground">
+              <p>Click "Load Macro Trends" to get AI-generated global fashion trends</p>
             </div>
-          </div>
+          )}
+        </div>
 
+        {/* BLOCK 2: Explore Specific Trends */}
+        <div className="rounded-lg border bg-card p-6 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Search className="h-5 w-5 text-primary" />
+              Explore Specific Trends
+            </h3>
+            <p className="text-sm text-muted-foreground">Search for a specific aesthetic or trend to explore</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g., Quiet Luxury, Gorpcore, Y2K, Coquette..."
+              value={trendQuery}
+              onChange={(e) => setTrendQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && exploreTrend()}
+              className="flex-1"
+            />
+            <Button onClick={exploreTrend} disabled={exploringTrend || !trendQuery.trim()}>
+              {exploringTrend ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
+          
           {/* Exploration Results */}
           {trendExploration && (
-            <div className="bg-white/60 rounded-lg p-4 space-y-3">
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-3">
               <div className="flex items-center justify-between">
-                <h5 className="font-semibold text-blue-900">
-                  Results for "{trendExploration.query}"
-                </h5>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={addExplorationToSelection}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add All to Selection
+                <h5 className="font-semibold">Results for "{trendExploration.query}"</h5>
+                <Button size="sm" variant="outline" onClick={addExplorationToSelection}>
+                  <Plus className="h-4 w-4 mr-1" />Add All
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">{trendExploration.description}</p>
-              
               <div className="grid gap-3 md:grid-cols-3">
                 <div>
-                  <span className="text-xs font-medium text-blue-700">Colors</span>
+                  <span className="text-xs font-medium text-primary">Colors</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {trendExploration.keyColors.map((color, i) => (
-                      <Badge 
-                        key={i} 
-                        variant={selectedTrends.colors.includes(color) ? "default" : "outline"}
-                        className={`cursor-pointer text-xs ${selectedTrends.colors.includes(color) ? 'bg-blue-600' : ''}`}
-                        onClick={() => toggleTrendSelection('colors', color)}
-                      >
-                        {color}
-                      </Badge>
+                      <Badge key={i} variant={selectedTrends.colors.includes(color) ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => toggleTrendSelection('colors', color)}>{color}</Badge>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-medium text-blue-700">Trends</span>
+                  <span className="text-xs font-medium text-primary">Trends</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {trendExploration.keyTrends.map((trend, i) => (
-                      <Badge 
-                        key={i} 
-                        variant={selectedTrends.trends.includes(trend) ? "default" : "outline"}
-                        className={`cursor-pointer text-xs ${selectedTrends.trends.includes(trend) ? 'bg-blue-600' : ''}`}
-                        onClick={() => toggleTrendSelection('trends', trend)}
-                      >
-                        {trend}
-                      </Badge>
+                      <Badge key={i} variant={selectedTrends.trends.includes(trend) ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => toggleTrendSelection('trends', trend)}>{trend}</Badge>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-medium text-blue-700">Items</span>
+                  <span className="text-xs font-medium text-primary">Items</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {trendExploration.keyItems.map((item, i) => (
-                      <Badge 
-                        key={i} 
-                        variant={selectedTrends.items.includes(item) ? "default" : "outline"}
-                        className={`cursor-pointer text-xs ${selectedTrends.items.includes(item) ? 'bg-blue-600' : ''}`}
-                        onClick={() => toggleTrendSelection('items', item)}
-                      >
-                        {item}
-                      </Badge>
+                      <Badge key={i} variant={selectedTrends.items.includes(item) ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => toggleTrendSelection('items', item)}>{item}</Badge>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
           )}
+        </div>
 
-          {/* Your Selection */}
-          {(selectedTrends.colors.length > 0 || selectedTrends.trends.length > 0 || selectedTrends.items.length > 0) && (
-            <div className="border-t border-blue-200 pt-4">
-              <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
-                <Check className="h-4 w-4" />
-                Your Trend Selection
+        {/* Your Selection */}
+        {(selectedTrends.colors.length > 0 || selectedTrends.trends.length > 0 || selectedTrends.items.length > 0) && (
+          <div className="rounded-lg border bg-card p-4">
+            <h4 className="font-semibold flex items-center gap-2 mb-3">
+              <Check className="h-4 w-4 text-primary" />
+              Your Trend Selection
+            </h4>
+            <div className="grid gap-3 md:grid-cols-3">
+              {selectedTrends.colors.length > 0 && (
+                <div>
+                  <span className="text-xs font-medium text-primary">Selected Colors ({selectedTrends.colors.length})</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedTrends.colors.map((color, i) => (
+                      <Badge key={i} className="bg-primary">{color}<X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => toggleTrendSelection('colors', color)} /></Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {selectedTrends.trends.length > 0 && (
+                <div>
+                  <span className="text-xs font-medium text-primary">Selected Trends ({selectedTrends.trends.length})</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedTrends.trends.map((trend, i) => (
+                      <Badge key={i} className="bg-primary">{trend}<X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => toggleTrendSelection('trends', trend)} /></Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {selectedTrends.items.length > 0 && (
+                <div>
+                  <span className="text-xs font-medium text-primary">Selected Items ({selectedTrends.items.length})</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedTrends.items.map((item, i) => (
+                      <Badge key={i} className="bg-primary">{item}<X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => toggleTrendSelection('items', item)} /></Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* BLOCK 3: Live Signals from Key Neighborhoods */}
+        <div className="rounded-lg border bg-card p-6 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Live Signals from Key Neighborhoods
+            </h3>
+            <p className="text-sm text-muted-foreground">Real-time emerging trends from Shoreditch aggregated across Reddit, YouTube & Pinterest</p>
+          </div>
+
+          {/* Key Outputs from Neighborhoods */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-lg bg-muted/50 p-4">
+              <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Colors</h4>
+              <div className="flex flex-wrap gap-2">
+                {['Warm Beige', 'Olive Green', 'Electric Blue', 'Camel'].map((color, i) => (
+                  <Badge key={i} variant={selectedTrends.colors.includes(color) ? "default" : "secondary"}
+                    className={`cursor-pointer transition-all ${selectedTrends.colors.includes(color) ? 'bg-primary' : 'hover:bg-primary/20'}`}
+                    onClick={() => toggleTrendSelection('colors', color)}>
+                    {selectedTrends.colors.includes(color) && <Check className="h-3 w-3 mr-1" />}{color}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-4">
+              <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Trends</h4>
+              <div className="flex flex-wrap gap-2">
+                {['Oversized Tailoring', 'Gorpcore', 'Y2K Revival'].map((trend, i) => (
+                  <Badge key={i} variant={selectedTrends.trends.includes(trend) ? "default" : "secondary"}
+                    className={`cursor-pointer transition-all ${selectedTrends.trends.includes(trend) ? 'bg-primary' : 'hover:bg-primary/20'}`}
+                    onClick={() => toggleTrendSelection('trends', trend)}>
+                    {selectedTrends.trends.includes(trend) && <Check className="h-3 w-3 mr-1" />}{trend}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-4">
+              <h4 className="text-sm font-semibold text-primary uppercase tracking-wide mb-2">Key Items</h4>
+              <div className="flex flex-wrap gap-2">
+                {['Utility vests', 'Cargo pants', 'Bomber jackets', 'Platform sandals'].map((item, i) => (
+                  <Badge key={i} variant={selectedTrends.items.includes(item) ? "default" : "secondary"}
+                    className={`cursor-pointer transition-all ${selectedTrends.items.includes(item) ? 'bg-primary' : 'hover:bg-primary/20'}`}
+                    onClick={() => toggleTrendSelection('items', item)}>
+                    {selectedTrends.items.includes(item) && <Check className="h-3 w-3 mr-1" />}{item}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        
+          {/* Overview Cards */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="glass-card relative overflow-hidden group transition-all duration-300 hover:-translate-y-1">
+            <div className="p-5 md:p-6 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+                <h3 className="font-semibold">Signals</h3>
+              </div>
+              <div className="text-2xl font-bold mt-1">{totalSignals}</div>
+              <p className="text-xs text-muted-foreground">Active emerging signals (last 30 days)</p>
+              <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-primary/20 transition-all duration-300 group-hover:scale-150"></div>
+            </div>
+          </div>
+          
+          <div className="glass-card relative overflow-hidden group transition-all duration-300 hover:-translate-y-1">
+            <div className="p-5 md:p-6 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <h3 className="font-semibold">Reddit</h3>
+              </div>
+              <div className="text-2xl font-bold mt-1">{totalRedditMentions}</div>
+              <p className="text-xs text-muted-foreground">Mentions linked to fashion signals</p>
+              <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-secondary/20 transition-all duration-300 group-hover:scale-150"></div>
+            </div>
+          </div>
+          
+          <div className="glass-card relative overflow-hidden group transition-all duration-300 hover:-translate-y-1">
+            <div className="p-5 md:p-6 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+                <h3 className="font-semibold">Pinterest</h3>
+              </div>
+              <div className="text-2xl font-bold mt-1">{totalPinterestPins}</div>
+              <p className="text-xs text-muted-foreground">Pins tied to emerging signals</p>
+              <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-accent/20 transition-all duration-300 group-hover:scale-150"></div>
+            </div>
+          </div>
+          
+          <div className="glass-card relative overflow-hidden group transition-all duration-300 hover:-translate-y-1">
+            <div className="p-5 md:p-6 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><circle cx="12" cy="12" r="10"/><path d="m16 8-4 4-4-4"/><path d="m16 16-4-4-4 4"/></svg>
+                <h3 className="font-semibold">Momentum</h3>
+              </div>
+              <div className="text-2xl font-bold mt-1">{growthPercent > 0 ? `+${growthPercent}%` : 'Stable'}</div>
+              <p className="text-xs text-muted-foreground">Average trend acceleration</p>
+              <div className="absolute bottom-0 right-0 h-16 w-16 -mb-6 -mr-6 rounded-full bg-primary/20 transition-all duration-300 group-hover:scale-150"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trending Categories - Selectable */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
+          {signals.length > 0 ? signals.map((signal) => {
+            const isSelected = selectedSignals.includes(signal.signal_name);
+            const accel = typeof signal.acceleration_factor === 'number'
+              ? Math.round((signal.acceleration_factor - 1) * 100) : null;
+            const platformsLabel = signal.platforms_present === 3 ? 'Reddit, YouTube, Pinterest'
+              : signal.platforms_present === 2 ? 'Multi-platform' : 'Single platform';
+
+            return (
+              <div
+                key={signal.id}
+                onClick={() => toggleSignalSelection(signal.signal_name)}
+                className={`rounded-lg border bg-card text-card-foreground shadow-sm p-5 md:p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-md cursor-pointer ${
+                  isSelected ? 'ring-2 ring-primary border-primary' : ''
+                }`}
+              >
+                <div className="absolute top-0 right-0 w-full h-1 olawave-gradient"></div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {isSelected && <Check className="h-4 w-4 text-primary" />}
+                      <h3 className="font-semibold">{signal.signal_name}</h3>
+                    </div>
+                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20 text-primary">
+                      {accel !== null ? `+${accel}%` : 'Signal'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {signal.signal_type
+                      ? `${signal.signal_type} signal with composite score ${Math.round(signal.composite_score || 0)}`
+                      : `Composite score ${Math.round(signal.composite_score || 0)} across platforms.`}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-medium">Top platforms:</span>
+                    <span className="text-muted-foreground">{platformsLabel}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="col-span-2 text-center py-8 text-muted-foreground">
+              No live signals available yet. Data will appear once ingested from social platforms.
+            </div>
+          )}
+        </div>
+
+          {/* Selected Signals */}
+          {selectedSignals.length > 0 && (
+            <div className="mt-4 pt-4 border-t">
+              <h4 className="font-semibold flex items-center gap-2 mb-3">
+                <Check className="h-4 w-4 text-primary" />
+                Selected Signals ({selectedSignals.length})
               </h4>
-              <div className="grid gap-3 md:grid-cols-3">
-                {selectedTrends.colors.length > 0 && (
-                  <div>
-                    <span className="text-xs font-medium text-blue-700">Selected Colors ({selectedTrends.colors.length})</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedTrends.colors.map((color, i) => (
-                        <Badge key={i} className="bg-blue-600">
-                          {color}
-                          <X 
-                            className="h-3 w-3 ml-1 cursor-pointer" 
-                            onClick={() => toggleTrendSelection('colors', color)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selectedTrends.trends.length > 0 && (
-                  <div>
-                    <span className="text-xs font-medium text-blue-700">Selected Trends ({selectedTrends.trends.length})</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedTrends.trends.map((trend, i) => (
-                        <Badge key={i} className="bg-blue-600">
-                          {trend}
-                          <X 
-                            className="h-3 w-3 ml-1 cursor-pointer" 
-                            onClick={() => toggleTrendSelection('trends', trend)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selectedTrends.items.length > 0 && (
-                  <div>
-                    <span className="text-xs font-medium text-blue-700">Selected Items ({selectedTrends.items.length})</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedTrends.items.map((item, i) => (
-                        <Badge key={i} className="bg-blue-600">
-                          {item}
-                          <X 
-                            className="h-3 w-3 ml-1 cursor-pointer" 
-                            onClick={() => toggleTrendSelection('items', item)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="flex flex-wrap gap-2">
+                {selectedSignals.map((signal, i) => (
+                  <Badge key={i} className="bg-primary">
+                    {signal}
+                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={(e) => { e.stopPropagation(); toggleSignalSelection(signal); }} />
+                  </Badge>
+                ))}
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Continue to Next Step - Now at the end */}
+      {/* Continue to Next Step - Now at the very end */}
       <Card className={`border-2 transition-all ${hasContent ? 'border-primary bg-primary/5' : 'border-dashed'}`}>
         <CardContent className="py-6">
           <div className="flex items-center justify-between">
@@ -1226,7 +1347,7 @@ export function CreativeSpaceClient() {
               <h3 className="font-semibold mb-1">Ready to continue?</h3>
               <p className="text-sm text-muted-foreground">
                 {hasContent 
-                  ? `You have ${images.length} images${selectedBoards.length > 0 ? ` and ${selectedBoards.length} Pinterest boards` : ''}${aiAnalysis ? ' with AI analysis' : ''}${selectedTrends.colors.length + selectedTrends.trends.length + selectedTrends.items.length > 0 ? ` and ${selectedTrends.colors.length + selectedTrends.trends.length + selectedTrends.items.length} trend selections` : ''}`
+                  ? `You have ${images.length} images${selectedBoards.length > 0 ? ` and ${selectedBoards.length} Pinterest boards` : ''}${aiAnalysis ? ' with AI analysis' : ''}${selectedTrends.colors.length + selectedTrends.trends.length + selectedTrends.items.length > 0 ? ` and ${selectedTrends.colors.length + selectedTrends.trends.length + selectedTrends.items.length} trend selections` : ''}${selectedSignals.length > 0 ? ` and ${selectedSignals.length} live signals` : ''}`
                   : 'Add some images or select Pinterest boards to continue'
                 }
               </p>
