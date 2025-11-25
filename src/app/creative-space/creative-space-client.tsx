@@ -34,6 +34,7 @@ interface PinterestBoard {
 interface MoodboardAnalysis {
   keyColors: string[];
   keyTrends: string[];
+  keyBrands?: string[];
   keyItems: string[];
   keyStyles?: string[];
   keyMaterials?: string[];
@@ -133,24 +134,82 @@ export function CreativeSpaceClient() {
     }
   }, [images, selectedBoards, pinterestBoards, aiAnalysis]);
 
-  // Analyze moodboard with AI when images change
+  // Convert image URL to base64
+  const imageToBase64 = async (imageUrl: string): Promise<{ base64: string; mimeType: string } | null> => {
+    try {
+      // For blob URLs (uploaded files)
+      if (imageUrl.startsWith('blob:')) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve({ base64, mimeType: blob.type || 'image/jpeg' });
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+      }
+      
+      // For external URLs (Pinterest), fetch and convert
+      if (imageUrl.startsWith('http')) {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve({ base64, mimeType: blob.type || 'image/jpeg' });
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      return null;
+    }
+  };
+
+  // Analyze moodboard with AI - sends actual images to Gemini Vision
   const analyzeMoodboard = async () => {
     if (images.length === 0) return;
     
     setIsAnalyzing(true);
     try {
+      // Convert all images to base64 for Gemini Vision
+      console.log(`Converting ${images.length} images to base64...`);
+      const imagePromises = images.map(img => imageToBase64(img.src));
+      const base64Images = await Promise.all(imagePromises);
+      
+      // Filter out failed conversions
+      const validImages = base64Images.filter((img): img is { base64: string; mimeType: string } => img !== null);
+      
+      if (validImages.length === 0) {
+        console.error('No images could be converted');
+        return;
+      }
+      
+      console.log(`Sending ${validImages.length} images to Gemini Vision...`);
+      
       const response = await fetch('/api/ai/analyze-moodboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imageUrls: images.map(img => img.src),
-          imageNames: images.map(img => img.name),
+          images: validImages,
         }),
       });
 
       if (response.ok) {
         const analysis = await response.json();
+        console.log('AI Analysis received:', analysis);
         setAiAnalysis(analysis);
+      } else {
+        const error = await response.json();
+        console.error('Analysis failed:', error);
       }
     } catch (error) {
       console.error('Error analyzing moodboard:', error);
@@ -472,12 +531,12 @@ export function CreativeSpaceClient() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Colors */}
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-purple-900">Key Colors</h4>
                 <div className="flex flex-wrap gap-1">
-                  {aiAnalysis.keyColors.map((color, i) => (
+                  {aiAnalysis.keyColors?.map((color, i) => (
                     <Badge key={i} variant="secondary" className="bg-white/80">
                       {color}
                     </Badge>
@@ -489,9 +548,21 @@ export function CreativeSpaceClient() {
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-purple-900">Key Trends</h4>
                 <div className="flex flex-wrap gap-1">
-                  {aiAnalysis.keyTrends.map((trend, i) => (
+                  {aiAnalysis.keyTrends?.map((trend, i) => (
                     <Badge key={i} variant="secondary" className="bg-white/80">
                       {trend}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Brands */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-purple-900">Reference Brands</h4>
+                <div className="flex flex-wrap gap-1">
+                  {aiAnalysis.keyBrands?.map((brand, i) => (
+                    <Badge key={i} variant="secondary" className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800">
+                      {brand}
                     </Badge>
                   ))}
                 </div>
@@ -501,9 +572,21 @@ export function CreativeSpaceClient() {
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-purple-900">Key Items</h4>
                 <div className="flex flex-wrap gap-1">
-                  {aiAnalysis.keyItems.map((item, i) => (
+                  {aiAnalysis.keyItems?.map((item, i) => (
                     <Badge key={i} variant="secondary" className="bg-white/80">
                       {item}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Materials */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-purple-900">Key Materials</h4>
+                <div className="flex flex-wrap gap-1">
+                  {aiAnalysis.keyMaterials?.map((material, i) => (
+                    <Badge key={i} variant="secondary" className="bg-white/80">
+                      {material}
                     </Badge>
                   ))}
                 </div>
@@ -519,7 +602,7 @@ export function CreativeSpaceClient() {
                     </Badge>
                   ))}
                   {aiAnalysis.seasonalFit && (
-                    <Badge variant="outline" className="border-purple-300 text-purple-700">
+                    <Badge variant="outline" className="border-purple-300 text-purple-700 font-medium">
                       {aiAnalysis.seasonalFit}
                     </Badge>
                   )}
