@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'models/gemini-2.5-flash-preview-05-20';
+// Use stable Gemini 2.5 Flash for vision (supports images, video, audio)
+const GEMINI_MODEL = 'models/gemini-2.5-flash';
 
 // Max images per batch (Gemini handles up to ~16 well)
 const BATCH_SIZE = 8;
