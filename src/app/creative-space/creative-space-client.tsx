@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft } from 'lucide-react';
+import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft, Pencil, Search, TrendingUp, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { saveCreativeSpaceData, type CreativeSpaceData } from '@/lib/data-sync';
 
 interface MoodImage {
@@ -44,6 +46,27 @@ interface MoodboardAnalysis {
   targetAudience?: string;
 }
 
+interface MarketTrends {
+  keyColors: string[];
+  keyTrends: string[];
+  keyItems: string[];
+  lastUpdated?: string;
+}
+
+interface TrendExploration {
+  query: string;
+  keyColors: string[];
+  keyTrends: string[];
+  keyItems: string[];
+  description: string;
+}
+
+interface SelectedTrends {
+  colors: string[];
+  trends: string[];
+  items: string[];
+}
+
 export function CreativeSpaceClient() {
   const router = useRouter();
   const [images, setImages] = useState<MoodImage[]>([]);
@@ -60,6 +83,18 @@ export function CreativeSpaceClient() {
   const [boardPins, setBoardPins] = useState<PinterestPin[]>([]);
   const [loadingPins, setLoadingPins] = useState(false);
   const [selectedPins, setSelectedPins] = useState<Set<string>>(new Set());
+  
+  // AI Trend Insights state
+  const [marketTrends, setMarketTrends] = useState<MarketTrends | null>(null);
+  const [loadingMarketTrends, setLoadingMarketTrends] = useState(false);
+  const [trendQuery, setTrendQuery] = useState('');
+  const [trendExploration, setTrendExploration] = useState<TrendExploration | null>(null);
+  const [exploringTrend, setExploringTrend] = useState(false);
+  const [selectedTrends, setSelectedTrends] = useState<SelectedTrends>({
+    colors: [],
+    trends: [],
+    items: []
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -427,6 +462,65 @@ export function CreativeSpaceClient() {
     router.push('/ai-advisor');
   };
 
+  // Load market trends
+  const loadMarketTrends = async () => {
+    setLoadingMarketTrends(true);
+    try {
+      const response = await fetch('/api/ai/market-trends');
+      if (response.ok) {
+        const data = await response.json();
+        setMarketTrends(data);
+      }
+    } catch (error) {
+      console.error('Error loading market trends:', error);
+    } finally {
+      setLoadingMarketTrends(false);
+    }
+  };
+
+  // Explore a specific trend
+  const exploreTrend = async () => {
+    if (!trendQuery.trim()) return;
+    
+    setExploringTrend(true);
+    try {
+      const response = await fetch('/api/ai/explore-trends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: trendQuery }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTrendExploration(data);
+      }
+    } catch (error) {
+      console.error('Error exploring trend:', error);
+    } finally {
+      setExploringTrend(false);
+    }
+  };
+
+  // Toggle selection of a trend item
+  const toggleTrendSelection = (type: 'colors' | 'trends' | 'items', value: string) => {
+    setSelectedTrends(prev => ({
+      ...prev,
+      [type]: prev[type].includes(value)
+        ? prev[type].filter(v => v !== value)
+        : [...prev[type], value]
+    }));
+  };
+
+  // Add all items from exploration to selection
+  const addExplorationToSelection = () => {
+    if (!trendExploration) return;
+    setSelectedTrends(prev => ({
+      colors: Array.from(new Set([...prev.colors, ...trendExploration.keyColors])),
+      trends: Array.from(new Set([...prev.trends, ...trendExploration.keyTrends])),
+      items: Array.from(new Set([...prev.items, ...trendExploration.keyItems]))
+    }));
+  };
+
   return (
     <div className="space-y-6">
       {/* Step Indicator */}
@@ -459,12 +553,65 @@ export function CreativeSpaceClient() {
                 Upload images or connect Pinterest to define your collection's visual direction
               </CardDescription>
             </div>
+            {images.length > 0 && (
+              <Button 
+                onClick={analyzeMoodboard} 
+                disabled={isAnalyzing}
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Analyze with AI
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-6">
-            {/* Upload Area */}
-            <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-xl p-8 cursor-pointer hover:bg-muted/50 hover:border-primary/50 transition-all">
+          <div className="flex flex-col gap-4">
+            {/* Masonry Grid - Images First */}
+            {images.length > 0 && (
+              <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-3 space-y-3">
+                {images.map((img, index) => (
+                  <div
+                    key={img.id}
+                    className="relative group overflow-hidden rounded-lg border bg-background break-inside-avoid"
+                  >
+                    <img
+                      src={img.src}
+                      alt={img.name}
+                      className="w-full h-auto object-cover group-hover:scale-105 transition-transform"
+                      style={{ 
+                        // Vary heights for masonry effect
+                        minHeight: index % 3 === 0 ? '200px' : index % 3 === 1 ? '150px' : '180px'
+                      }}
+                    />
+                    <button
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                      onClick={() => removeImage(img.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    {img.source === 'pinterest' && (
+                      <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        Pinterest
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Compact Upload Area - Below Images */}
+            <label className={`flex items-center justify-center gap-3 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 hover:border-primary/50 transition-all ${images.length > 0 ? 'p-4' : 'p-8'}`}>
               <input
                 type="file"
                 accept="image/*"
@@ -472,61 +619,18 @@ export function CreativeSpaceClient() {
                 className="hidden"
                 onChange={(e) => handleFiles(e.target.files)}
               />
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Plus className="h-6 w-6 text-primary" />
+              <div className={`rounded-full bg-primary/10 flex items-center justify-center ${images.length > 0 ? 'w-8 h-8' : 'w-12 h-12'}`}>
+                <Plus className={`text-primary ${images.length > 0 ? 'h-4 w-4' : 'h-6 w-6'}`} />
               </div>
               <div className="text-center">
-                <p className="font-medium">Drop images here or click to upload</p>
-                <p className="text-sm text-muted-foreground">Supports JPG, PNG, GIF up to 10MB each</p>
+                <p className={`font-medium ${images.length > 0 ? 'text-sm' : ''}`}>
+                  {images.length > 0 ? 'Add more images' : 'Drop images here or click to upload'}
+                </p>
+                {images.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Supports JPG, PNG, GIF up to 10MB each</p>
+                )}
               </div>
             </label>
-
-            {/* Uploaded Images Grid */}
-            {images.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-sm">Uploaded Images ({images.length})</h4>
-                  <Button 
-                    onClick={analyzeMoodboard} 
-                    disabled={isAnalyzing}
-                    size="sm"
-                    variant="outline"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Analyze with AI
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
-                  {images.map((img) => (
-                    <div
-                      key={img.id}
-                      className="relative group overflow-hidden rounded-lg border bg-background aspect-square"
-                    >
-                      <img
-                        src={img.src}
-                        alt={img.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <button
-                        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                        onClick={() => removeImage(img.id)}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -535,13 +639,28 @@ export function CreativeSpaceClient() {
       {aiAnalysis && (
         <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-purple-900">
-              <Sparkles className="h-5 w-5 text-purple-600" />
-              AI Moodboard Analysis
-            </CardTitle>
-            <CardDescription>
-              {aiAnalysis.moodDescription || 'Insights extracted from your creative direction'}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                  <Input
+                    value={aiAnalysis.collectionName || ''}
+                    onChange={(e) => setAiAnalysis({ ...aiAnalysis, collectionName: e.target.value })}
+                    placeholder="Collection Name"
+                    className="text-xl font-semibold text-purple-900 bg-transparent border-none hover:bg-white/50 focus:bg-white/80 px-2 py-1 h-auto transition-colors"
+                  />
+                  <Pencil className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                </div>
+                <CardDescription className="mt-1">
+                  {aiAnalysis.moodDescription || 'Insights extracted from your creative direction'}
+                </CardDescription>
+              </div>
+              {aiAnalysis.seasonalFit && (
+                <Badge className="bg-purple-600 text-white text-sm px-3 py-1 flex-shrink-0">
+                  {aiAnalysis.seasonalFit}
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -605,20 +724,15 @@ export function CreativeSpaceClient() {
                 </div>
               </div>
               
-              {/* Styles & Season */}
+              {/* Styles */}
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-purple-900">Style & Season</h4>
+                <h4 className="text-sm font-semibold text-purple-900">Key Styles</h4>
                 <div className="flex flex-wrap gap-1">
                   {aiAnalysis.keyStyles?.map((style, i) => (
                     <Badge key={i} variant="secondary" className="bg-white/80">
                       {style}
                     </Badge>
                   ))}
-                  {aiAnalysis.seasonalFit && (
-                    <Badge variant="outline" className="border-purple-300 text-purple-700 font-medium">
-                      {aiAnalysis.seasonalFit}
-                    </Badge>
-                  )}
                 </div>
               </div>
             </div>
@@ -844,7 +958,267 @@ export function CreativeSpaceClient() {
         </CardContent>
       </Card>
 
-      {/* Continue to Next Step */}
+      {/* AI Trend Insights */}
+      <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-blue-900">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                AI Trend Insights
+              </CardTitle>
+              <CardDescription>
+                Discover market trends and explore specific aesthetics
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={loadMarketTrends}
+              disabled={loadingMarketTrends}
+              variant="outline"
+              size="sm"
+            >
+              {loadingMarketTrends ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {marketTrends ? 'Refresh' : 'Load Market Trends'}
+                </>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Market Trends Section */}
+          {marketTrends && (
+            <div className="space-y-4">
+              <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Current Market Trends
+                <span className="text-xs font-normal text-muted-foreground">
+                  (Click to select for your collection)
+                </span>
+              </h4>
+              
+              <div className="grid gap-4 md:grid-cols-3">
+                {/* Colors */}
+                <div className="space-y-2">
+                  <h5 className="text-sm font-medium text-blue-800">Trending Colors</h5>
+                  <div className="flex flex-wrap gap-1">
+                    {marketTrends.keyColors.map((color, i) => (
+                      <Badge 
+                        key={i} 
+                        variant={selectedTrends.colors.includes(color) ? "default" : "secondary"}
+                        className={`cursor-pointer transition-all ${selectedTrends.colors.includes(color) ? 'bg-blue-600' : 'bg-white/80 hover:bg-blue-100'}`}
+                        onClick={() => toggleTrendSelection('colors', color)}
+                      >
+                        {selectedTrends.colors.includes(color) && <Check className="h-3 w-3 mr-1" />}
+                        {color}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Trends */}
+                <div className="space-y-2">
+                  <h5 className="text-sm font-medium text-blue-800">Trending Aesthetics</h5>
+                  <div className="flex flex-wrap gap-1">
+                    {marketTrends.keyTrends.map((trend, i) => (
+                      <Badge 
+                        key={i} 
+                        variant={selectedTrends.trends.includes(trend) ? "default" : "secondary"}
+                        className={`cursor-pointer transition-all ${selectedTrends.trends.includes(trend) ? 'bg-blue-600' : 'bg-white/80 hover:bg-blue-100'}`}
+                        onClick={() => toggleTrendSelection('trends', trend)}
+                      >
+                        {selectedTrends.trends.includes(trend) && <Check className="h-3 w-3 mr-1" />}
+                        {trend}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Items */}
+                <div className="space-y-2">
+                  <h5 className="text-sm font-medium text-blue-800">Trending Items</h5>
+                  <div className="flex flex-wrap gap-1">
+                    {marketTrends.keyItems.map((item, i) => (
+                      <Badge 
+                        key={i} 
+                        variant={selectedTrends.items.includes(item) ? "default" : "secondary"}
+                        className={`cursor-pointer transition-all ${selectedTrends.items.includes(item) ? 'bg-blue-600' : 'bg-white/80 hover:bg-blue-100'}`}
+                        onClick={() => toggleTrendSelection('items', item)}
+                      >
+                        {selectedTrends.items.includes(item) && <Check className="h-3 w-3 mr-1" />}
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Explore Trends Section */}
+          <div className="border-t border-blue-200 pt-4">
+            <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
+              <Search className="h-4 w-4" />
+              Explore a Specific Trend
+            </h4>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g., Quiet Luxury, Gorpcore, Y2K, Coquette..."
+                value={trendQuery}
+                onChange={(e) => setTrendQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && exploreTrend()}
+                className="flex-1"
+              />
+              <Button 
+                onClick={exploreTrend}
+                disabled={exploringTrend || !trendQuery.trim()}
+              >
+                {exploringTrend ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Exploration Results */}
+          {trendExploration && (
+            <div className="bg-white/60 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h5 className="font-semibold text-blue-900">
+                  Results for "{trendExploration.query}"
+                </h5>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={addExplorationToSelection}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add All to Selection
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">{trendExploration.description}</p>
+              
+              <div className="grid gap-3 md:grid-cols-3">
+                <div>
+                  <span className="text-xs font-medium text-blue-700">Colors</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {trendExploration.keyColors.map((color, i) => (
+                      <Badge 
+                        key={i} 
+                        variant={selectedTrends.colors.includes(color) ? "default" : "outline"}
+                        className={`cursor-pointer text-xs ${selectedTrends.colors.includes(color) ? 'bg-blue-600' : ''}`}
+                        onClick={() => toggleTrendSelection('colors', color)}
+                      >
+                        {color}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-blue-700">Trends</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {trendExploration.keyTrends.map((trend, i) => (
+                      <Badge 
+                        key={i} 
+                        variant={selectedTrends.trends.includes(trend) ? "default" : "outline"}
+                        className={`cursor-pointer text-xs ${selectedTrends.trends.includes(trend) ? 'bg-blue-600' : ''}`}
+                        onClick={() => toggleTrendSelection('trends', trend)}
+                      >
+                        {trend}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-blue-700">Items</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {trendExploration.keyItems.map((item, i) => (
+                      <Badge 
+                        key={i} 
+                        variant={selectedTrends.items.includes(item) ? "default" : "outline"}
+                        className={`cursor-pointer text-xs ${selectedTrends.items.includes(item) ? 'bg-blue-600' : ''}`}
+                        onClick={() => toggleTrendSelection('items', item)}
+                      >
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Your Selection */}
+          {(selectedTrends.colors.length > 0 || selectedTrends.trends.length > 0 || selectedTrends.items.length > 0) && (
+            <div className="border-t border-blue-200 pt-4">
+              <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
+                <Check className="h-4 w-4" />
+                Your Trend Selection
+              </h4>
+              <div className="grid gap-3 md:grid-cols-3">
+                {selectedTrends.colors.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-blue-700">Selected Colors ({selectedTrends.colors.length})</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedTrends.colors.map((color, i) => (
+                        <Badge key={i} className="bg-blue-600">
+                          {color}
+                          <X 
+                            className="h-3 w-3 ml-1 cursor-pointer" 
+                            onClick={() => toggleTrendSelection('colors', color)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedTrends.trends.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-blue-700">Selected Trends ({selectedTrends.trends.length})</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedTrends.trends.map((trend, i) => (
+                        <Badge key={i} className="bg-blue-600">
+                          {trend}
+                          <X 
+                            className="h-3 w-3 ml-1 cursor-pointer" 
+                            onClick={() => toggleTrendSelection('trends', trend)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedTrends.items.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-blue-700">Selected Items ({selectedTrends.items.length})</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedTrends.items.map((item, i) => (
+                        <Badge key={i} className="bg-blue-600">
+                          {item}
+                          <X 
+                            className="h-3 w-3 ml-1 cursor-pointer" 
+                            onClick={() => toggleTrendSelection('items', item)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Continue to Next Step - Now at the end */}
       <Card className={`border-2 transition-all ${hasContent ? 'border-primary bg-primary/5' : 'border-dashed'}`}>
         <CardContent className="py-6">
           <div className="flex items-center justify-between">
@@ -852,7 +1226,7 @@ export function CreativeSpaceClient() {
               <h3 className="font-semibold mb-1">Ready to continue?</h3>
               <p className="text-sm text-muted-foreground">
                 {hasContent 
-                  ? `You have ${images.length} images${selectedBoards.length > 0 ? ` and ${selectedBoards.length} Pinterest boards` : ''} selected`
+                  ? `You have ${images.length} images${selectedBoards.length > 0 ? ` and ${selectedBoards.length} Pinterest boards` : ''}${aiAnalysis ? ' with AI analysis' : ''}${selectedTrends.colors.length + selectedTrends.trends.length + selectedTrends.items.length > 0 ? ` and ${selectedTrends.colors.length + selectedTrends.trends.length + selectedTrends.items.length} trend selections` : ''}`
                   : 'Add some images or select Pinterest boards to continue'
                 }
               </p>
