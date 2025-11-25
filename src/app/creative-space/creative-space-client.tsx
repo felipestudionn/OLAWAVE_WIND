@@ -5,13 +5,22 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft } from 'lucide-react';
 import { saveCreativeSpaceData, type CreativeSpaceData } from '@/lib/data-sync';
 
 interface MoodImage {
   id: string;
   src: string;
   name: string;
+  source?: 'upload' | 'pinterest';
+}
+
+interface PinterestPin {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  dominantColor?: string;
 }
 
 interface PinterestBoard {
@@ -45,6 +54,10 @@ export function CreativeSpaceClient() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [pinterestError, setPinterestError] = useState<string | null>(null);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [viewingBoardId, setViewingBoardId] = useState<string | null>(null);
+  const [boardPins, setBoardPins] = useState<PinterestPin[]>([]);
+  const [loadingPins, setLoadingPins] = useState(false);
+  const [selectedPins, setSelectedPins] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -192,6 +205,8 @@ export function CreativeSpaceClient() {
       setPinterestBoards([]);
       setSelectedBoards([]);
       setPinterestError(null);
+      setViewingBoardId(null);
+      setBoardPins([]);
       
       // Clear localStorage
       localStorage.removeItem('olawave_pinterest_connected');
@@ -201,6 +216,96 @@ export function CreativeSpaceClient() {
       console.error('Error disconnecting Pinterest:', err);
     } finally {
       setIsDisconnecting(false);
+    }
+  };
+
+  const loadBoardPins = async (boardId: string) => {
+    setLoadingPins(true);
+    setViewingBoardId(boardId);
+    setSelectedPins(new Set());
+    try {
+      const res = await fetch(`/api/pinterest/boards/${boardId}/pins`);
+      const data = await res.json();
+      
+      if (res.ok && data.items) {
+        setBoardPins(data.items);
+      } else {
+        setPinterestError('Error al cargar los pins del board');
+      }
+    } catch (err) {
+      console.error('Error loading pins:', err);
+      setPinterestError('Error de conexión al cargar pins');
+    } finally {
+      setLoadingPins(false);
+    }
+  };
+
+  const togglePinSelection = (pinId: string) => {
+    setSelectedPins(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(pinId)) {
+        newSet.delete(pinId);
+      } else {
+        newSet.add(pinId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllPins = () => {
+    if (selectedPins.size === boardPins.length) {
+      setSelectedPins(new Set());
+    } else {
+      setSelectedPins(new Set(boardPins.map(p => p.id)));
+    }
+  };
+
+  const importSelectedPins = () => {
+    const pinsToImport = boardPins.filter(pin => selectedPins.has(pin.id));
+    const newImages: MoodImage[] = pinsToImport.map(pin => ({
+      id: `pinterest-${pin.id}`,
+      src: pin.imageUrl,
+      name: pin.title || 'Pinterest Pin',
+      source: 'pinterest' as const,
+    }));
+    
+    // Add to moodboard, avoiding duplicates
+    setImages(prev => {
+      const existingIds = new Set(prev.map(img => img.id));
+      const uniqueNew = newImages.filter(img => !existingIds.has(img.id));
+      return [...prev, ...uniqueNew];
+    });
+    
+    // Go back to board list
+    setViewingBoardId(null);
+    setBoardPins([]);
+    setSelectedPins(new Set());
+  };
+
+  const importAllBoardPins = async (boardId: string) => {
+    setLoadingPins(true);
+    try {
+      const res = await fetch(`/api/pinterest/boards/${boardId}/pins`);
+      const data = await res.json();
+      
+      if (res.ok && data.items) {
+        const newImages: MoodImage[] = data.items.map((pin: PinterestPin) => ({
+          id: `pinterest-${pin.id}`,
+          src: pin.imageUrl,
+          name: pin.title || 'Pinterest Pin',
+          source: 'pinterest' as const,
+        }));
+        
+        setImages(prev => {
+          const existingIds = new Set(prev.map(img => img.id));
+          const uniqueNew = newImages.filter(img => !existingIds.has(img.id));
+          return [...prev, ...uniqueNew];
+        });
+      }
+    } catch (err) {
+      console.error('Error importing board:', err);
+    } finally {
+      setLoadingPins(false);
     }
   };
 
@@ -506,45 +611,96 @@ export function CreativeSpaceClient() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               <span className="ml-2">Loading your boards...</span>
             </div>
-          ) : pinterestBoards.length > 0 ? (
+          ) : viewingBoardId ? (
+            // Viewing pins inside a board
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-muted-foreground">
-                  Select boards to use as inspiration ({selectedBoards.length} selected)
-                </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => { setViewingBoardId(null); setBoardPins([]); setSelectedPins(new Set()); }}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Volver a boards
+                </Button>
                 <div className="flex items-center gap-2">
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={loadPinterestBoards}
-                    disabled={loadingBoards}
+                    onClick={selectAllPins}
+                    disabled={loadingPins}
                   >
-                    <RefreshCw className={`h-4 w-4 mr-1 ${loadingBoards ? 'animate-spin' : ''}`} />
-                    Refresh
+                    {selectedPins.size === boardPins.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
                   </Button>
-                  {selectedBoards.length > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedBoards([])}>
-                      Clear selection
+                  {selectedPins.size > 0 && (
+                    <Button 
+                      size="sm" 
+                      onClick={importSelectedPins}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Importar {selectedPins.size} pins
                     </Button>
                   )}
                 </div>
               </div>
+              
+              {loadingPins ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2">Cargando pins...</span>
+                </div>
+              ) : boardPins.length > 0 ? (
+                <div className="grid gap-3 grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {boardPins.map((pin) => (
+                    <button
+                      key={pin.id}
+                      onClick={() => togglePinSelection(pin.id)}
+                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all hover:shadow-md ${
+                        selectedPins.has(pin.id)
+                          ? 'border-primary ring-2 ring-primary/30'
+                          : 'border-transparent hover:border-gray-300'
+                      }`}
+                    >
+                      {selectedPins.has(pin.id) && (
+                        <div className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                          <Check className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      <img 
+                        src={pin.imageUrl} 
+                        alt={pin.title || 'Pin'}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">No se encontraron pins en este board</p>
+              )}
+            </div>
+          ) : pinterestBoards.length > 0 ? (
+            // Board list view
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Haz clic en un board para ver sus pins, o importa todo el board directamente
+                </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={loadPinterestBoards}
+                  disabled={loadingBoards}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-1 ${loadingBoards ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
               <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {pinterestBoards.map((board) => (
-                  <button
+                  <div
                     key={board.id}
-                    onClick={() => toggleBoardSelection(board.id)}
-                    className={`relative p-4 rounded-lg border-2 text-left transition-all hover:shadow-md ${
-                      selectedBoards.includes(board.id)
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className="relative p-4 rounded-lg border-2 border-gray-200 hover:border-gray-300 transition-all hover:shadow-md"
                   >
-                    {selectedBoards.includes(board.id) && (
-                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                        <Check className="h-3 w-3 text-white" />
-                      </div>
-                    )}
                     {board.image_thumbnail_url ? (
                       <img 
                         src={board.image_thumbnail_url} 
@@ -556,9 +712,28 @@ export function CreativeSpaceClient() {
                         <FolderOpen className="h-8 w-8 text-gray-400" />
                       </div>
                     )}
-                    <h4 className="font-medium text-sm truncate">{board.name}</h4>
-                    <p className="text-xs text-muted-foreground">{board.pin_count} pins</p>
-                  </button>
+                    <h4 className="font-medium text-sm truncate mb-1">{board.name}</h4>
+                    <p className="text-xs text-muted-foreground mb-3">{board.pin_count} pins</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 text-xs"
+                        onClick={() => loadBoardPins(board.id)}
+                      >
+                        Ver pins
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="flex-1 text-xs"
+                        onClick={() => importAllBoardPins(board.id)}
+                        disabled={loadingPins}
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Importar
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
