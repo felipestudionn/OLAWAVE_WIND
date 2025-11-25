@@ -28,18 +28,18 @@ export function Navbar() {
       <div className="flex h-24 items-center px-2 md:px-4">
         <div className="flex items-center gap-3">
           {/* OLAWAVE Logo */}
-          <div className="relative h-20 w-20 flex items-center">
+          <div className="relative h-16 w-16 flex items-center">
             <Image
               src="/images/olawave-logo.png"
               alt="OLAWAVE Logo"
-              width={84}
-              height={84}
+              width={67}
+              height={67}
               className="object-contain"
               priority
             />
           </div>
           <Link href="/" className="flex flex-col">
-            <span className="olawave-heading text-xl font-normal tracking-normal uppercase">
+            <span className="olawave-heading text-xl font-light tracking-normal uppercase">
               OLAWAVE AI
             </span>
           </Link>
