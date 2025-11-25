@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Plus, Trash2, GripVertical, Sparkles, Loader2, Filter, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Calendar, Plus, Trash2, GripVertical, Sparkles, Loader2, Filter, AlertTriangle, CheckCircle, TrendingUp, Save, User, LogOut } from 'lucide-react';
 import { useDrops, type Drop } from '@/hooks/useDrops';
 import { useCommercialActions, type CommercialAction } from '@/hooks/useCommercialActions';
 import { useSkus, type SKU } from '@/hooks/useSkus';
 import type { SetupData } from '@/types/planner';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthModal } from '@/components/auth/AuthModal';
 
 // Month names for timeline
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -46,6 +48,11 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
   const [showAddAction, setShowAddAction] = useState(false);
   const [newDrop, setNewDrop] = useState({ name: '', launch_date: '', weeks_active: 8 });
   const [newAction, setNewAction] = useState({ name: '', action_type: 'CAMPAIGN' as CommercialAction['action_type'], start_date: '', category: '' });
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  const { user, signOut } = useAuth();
 
   // Initialize drops from SKU drop_numbers if no drops exist
   useEffect(() => {
@@ -135,6 +142,34 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
 
   const totalPlannedSales = skus.reduce((sum, sku) => sum + sku.expected_sales, 0);
 
+  // Handle save plan
+  const handleSavePlan = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    setIsSaving(true);
+    setSaveMessage(null);
+    
+    try {
+      const response = await fetch(`/api/collection-plans/${plan.id}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to save plan');
+      
+      setSaveMessage({ type: 'success', text: 'Plan saved successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: 'Failed to save plan. Please try again.' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Calculate timeline range (6 months from first drop)
   const timelineData = useMemo(() => {
     if (drops.length === 0) return { months: [], startDate: new Date(), endDate: new Date() };
@@ -217,8 +252,55 @@ export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardPr
             <p className="text-sm text-muted-foreground">Total Sales Target</p>
             <p className="text-2xl font-bold text-green-600">€{totalPlannedSales.toLocaleString()}</p>
           </div>
+          
+          {/* Save & User Section */}
+          <div className="flex items-center gap-2 pl-4 border-l">
+            {saveMessage && (
+              <span className={`text-sm ${saveMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                {saveMessage.text}
+              </span>
+            )}
+            <Button 
+              onClick={handleSavePlan} 
+              disabled={isSaving}
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+            >
+              {isSaving ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>
+              ) : (
+                <><Save className="h-4 w-4 mr-2" />Save Plan</>
+              )}
+            </Button>
+            
+            {user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
+                  <User className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm text-gray-700 max-w-[120px] truncate">{user.email}</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={signOut} title="Sign out">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" onClick={() => setShowAuthModal(true)}>
+                <User className="h-4 w-4 mr-2" />
+                Sign In
+              </Button>
+            )}
+          </div>
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          // After login, try to save again
+          handleSavePlan();
+        }}
+      />
 
       {/* Channel Filter */}
       <div className="flex items-center gap-4 mb-6">
