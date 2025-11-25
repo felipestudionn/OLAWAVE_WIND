@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, Palette, Brain, Calculator, ChevronRight } from "lucide-react";
+import { Sparkles, Palette, Brain, Calculator, TrendingUp, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 
@@ -15,6 +15,7 @@ export function Navbar() {
     if (pathname?.startsWith('/creative-space')) return 1;
     if (pathname?.startsWith('/ai-advisor')) return 2;
     if (pathname?.startsWith('/planner')) return 3;
+    if (pathname?.startsWith('/go-to-market')) return 4;
     return 0;
   };
 
@@ -29,7 +30,7 @@ export function Navbar() {
           {/* OLAWAVE Logo */}
           <div className="relative h-20 w-20 flex items-center">
             <Image
-              src="/images/olawave-logo.svg"
+              src="/images/olawave-logo.png"
               alt="OLAWAVE Logo"
               width={84}
               height={84}
@@ -83,26 +84,44 @@ export function Navbar() {
                 <span className="hidden xl:inline">Strategy</span>
               </Link>
               <ChevronRight className="h-4 w-4 text-gray-400" />
+              <Link
+                href="/planner"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  currentStep === 3 
+                    ? 'bg-white shadow-sm text-primary' 
+                    : currentStep > 3 
+                      ? 'text-green-600' 
+                      : 'text-gray-500'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                  currentStep > 3 ? 'bg-green-500 text-white' : currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-300 text-white'
+                }`}>
+                  {currentStep > 3 ? '✓' : '3'}
+                </div>
+                <span className="hidden xl:inline">Planning</span>
+              </Link>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
               <div
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-                  currentStep === 3 
+                  currentStep === 4 
                     ? 'bg-white shadow-sm text-primary' 
                     : 'text-gray-500'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                  currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-300 text-white'
+                  currentStep === 4 ? 'bg-primary text-white' : 'bg-gray-300 text-white'
                 }`}>
-                  3
+                  4
                 </div>
-                <span className="hidden xl:inline">Execution</span>
+                <span className="hidden xl:inline">Go to Market</span>
               </div>
             </nav>
           )}
           
           {/* Regular Navigation (shown on landing/other pages) */}
           {!isInJourney && (
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-6">
               <Link
                 href="/creative-space"
                 className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
@@ -122,7 +141,14 @@ export function Navbar() {
                 className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
               >
                 <Calculator className="h-4 w-4" />
-                Execution
+                Planning
+              </Link>
+              <Link
+                href="#"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Go to Market
               </Link>
             </nav>
           )}
@@ -185,38 +211,50 @@ export function Navbar() {
         <div className="md:hidden bg-white/95 backdrop-blur-sm dark:bg-gray-950/95 border-b shadow-md">
           <div className="flex flex-col space-y-4 p-6">
             {/* Journey Steps for Mobile */}
-            <div className="flex items-center justify-between gap-2 pb-4 border-b">
+            <div className="flex items-center justify-between gap-1 pb-4 border-b">
               <Link
                 href="/creative-space"
                 className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 1 ? 'bg-primary/10' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
                   currentStep > 1 ? 'bg-green-500 text-white' : currentStep === 1 ? 'bg-primary text-white' : 'bg-gray-200'
                 }`}>
                   {currentStep > 1 ? '✓' : '1'}
                 </div>
-                <span className="text-xs font-medium">Inspiration</span>
+                <span className="text-[10px] font-medium">Inspiration</span>
               </Link>
               <Link
                 href="/ai-advisor"
                 className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 2 ? 'bg-primary/10' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
                   currentStep > 2 ? 'bg-green-500 text-white' : currentStep === 2 ? 'bg-primary text-white' : 'bg-gray-200'
                 }`}>
                   {currentStep > 2 ? '✓' : '2'}
                 </div>
-                <span className="text-xs font-medium">Strategy</span>
+                <span className="text-[10px] font-medium">Strategy</span>
               </Link>
-              <div className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 3 ? 'bg-primary/10' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                  currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-200'
+              <Link
+                href="/planner"
+                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 3 ? 'bg-primary/10' : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
+                  currentStep > 3 ? 'bg-green-500 text-white' : currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-200'
                 }`}>
-                  3
+                  {currentStep > 3 ? '✓' : '3'}
                 </div>
-                <span className="text-xs font-medium">Execution</span>
+                <span className="text-[10px] font-medium">Planning</span>
+              </Link>
+              <div className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 4 ? 'bg-primary/10' : ''}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
+                  currentStep === 4 ? 'bg-primary text-white' : 'bg-gray-200'
+                }`}>
+                  4
+                </div>
+                <span className="text-[10px] font-medium">GTM</span>
               </div>
             </div>
             

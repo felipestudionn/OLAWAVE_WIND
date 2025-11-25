@@ -23,10 +23,6 @@ export default function HomePage() {
               <div className="max-w-3xl flex-1">
                 <div className="flex flex-col justify-center space-y-6">
                   <div className="space-y-6">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/30 backdrop-blur-2xl text-sm font-medium text-gray-700 w-fit shadow-[0_2px_20px_-2px_rgba(0,0,0,0.1)] border border-white/40 animate-fade-in-up">
-                      <Sparkles className="h-4 w-4 text-pink-500" />
-                      AI-Powered Collection Planning
-                    </div>
                     <h1 className="text-5xl sm:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1]">
                       <span className="block text-gray-900 animate-fade-in-up animate-delay-100">Plan Your Fashion</span>
                       <span className="block text-gray-900 animate-fade-in-up animate-delay-200">Collection in</span>
