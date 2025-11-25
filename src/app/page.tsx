@@ -71,7 +71,7 @@ export default function HomePage() {
         {/* How It Works - 4 AI Power Steps */}
         <section id="how-it-works" className="relative w-full py-24 px-4 md:px-6">
           <div className="max-w-7xl mx-auto">
-            <AnimateOnScroll delay={800} duration={3} className="text-center mb-16">
+            <AnimateOnScroll delay={0} duration={0.6} className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 text-gray-900">
                 How It Works
               </h2>
@@ -82,7 +82,7 @@ export default function HomePage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Step 1 */}
-              <AnimateOnScroll delay={1200} duration={2.5} className="relative">
+              <AnimateOnScroll delay={100} duration={0.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -126,7 +126,7 @@ export default function HomePage() {
               </AnimateOnScroll>
               
               {/* Step 2 */}
-              <AnimateOnScroll delay={1600} duration={2.5} className="relative">
+              <AnimateOnScroll delay={200} duration={0.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -170,7 +170,7 @@ export default function HomePage() {
               </AnimateOnScroll>
               
               {/* Step 3 */}
-              <AnimateOnScroll delay={2000} duration={2.5} className="relative">
+              <AnimateOnScroll delay={300} duration={0.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -214,7 +214,7 @@ export default function HomePage() {
               </AnimateOnScroll>
 
               {/* Step 4 */}
-              <AnimateOnScroll delay={2400} duration={2.5} className="relative">
+              <AnimateOnScroll delay={400} duration={0.5} className="relative">
                 <div className="bg-white/60 backdrop-blur-2xl p-8 rounded-3xl shadow-[0_4px_30px_-4px_rgba(0,0,0,0.12)] border border-white/50 h-full flex flex-col transition-all hover:shadow-[0_8px_40px_-4px_rgba(0,0,0,0.18)] hover:-translate-y-1">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-lg">
@@ -269,7 +269,7 @@ export default function HomePage() {
         {/* Value Proposition Section */}
         <section className="relative w-full py-24 px-4 md:px-6 overflow-hidden">
           <div className="max-w-5xl mx-auto">
-            <AnimateOnScroll animation="fade-up" className="text-center mb-12">
+            <AnimateOnScroll delay={0} duration={0.5} className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight mb-6">
                 Collection planning is complex.<br />
                 <span className="text-foreground/70">We make it simple.</span>
@@ -277,7 +277,7 @@ export default function HomePage() {
             </AnimateOnScroll>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-              <AnimateOnScroll animation="fade-right" delay={200} className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl">
+              <AnimateOnScroll delay={100} duration={0.5} className="bg-white/60 backdrop-blur-sm p-8 rounded-2xl">
                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
                     <span className="text-red-500 text-lg">✕</span>
@@ -304,7 +304,7 @@ export default function HomePage() {
                 </ul>
               </AnimateOnScroll>
               
-              <AnimateOnScroll animation="fade-left" delay={400} className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-200">
+              <AnimateOnScroll delay={200} duration={0.5} className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-200">
                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                     <span className="text-green-500 text-lg">✓</span>
@@ -338,7 +338,7 @@ export default function HomePage() {
         <section className="relative w-full py-24 px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <AnimateOnScroll animation="fade-up" delay={0} className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll delay={0} duration={0.5} className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Predictive<br/>Context</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -352,7 +352,7 @@ export default function HomePage() {
                 <p className="text-sm text-black/70">Anticipates not just trends, but their causes</p>
               </AnimateOnScroll>
               
-              <AnimateOnScroll animation="fade-up" delay={150} className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll delay={100} duration={0.5} className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Pattern<br/>Recognition</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -366,7 +366,7 @@ export default function HomePage() {
                 <p className="text-sm text-black/70">Identifies patterns invisible to humans</p>
               </AnimateOnScroll>
               
-              <AnimateOnScroll animation="fade-up" delay={300} className="bg-gradient-to-br from-pink-50 via-blue-50 to-purple-50 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll delay={200} duration={0.5} className="bg-gradient-to-br from-pink-50 via-blue-50 to-purple-50 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Enhanced Data-Driven<br/>Decisions</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -380,7 +380,7 @@ export default function HomePage() {
                 <p className="text-sm text-black/70">Turns uncertainty into strategic advantage</p>
               </AnimateOnScroll>
               
-              <AnimateOnScroll animation="fade-up" delay={450} className="bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-8 rounded-3xl flex flex-col items-center text-center">
+              <AnimateOnScroll delay={300} duration={0.5} className="bg-gradient-to-br from-blue-50 via-purple-50 to-blue-100 p-8 rounded-3xl flex flex-col items-center text-center">
                 <h3 className="text-xl font-medium mb-2 relative pb-4 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-20 after:h-0.5 after:bg-gray-300 before:content-[''] before:absolute before:bottom-2 before:left-1/2 before:-translate-x-1/2 before:w-28 before:h-0.5 before:bg-gray-300">Retail<br/>Optimization</h3>
                 <div className="w-52 h-52 my-8 flex items-center justify-center">
                   <ColoredSvg 
@@ -400,7 +400,7 @@ export default function HomePage() {
         {/* CTA Section */}
         <section className="relative w-full py-20 md:py-28">
           <div className="container relative z-10 px-4 md:px-6">
-            <AnimateOnScroll animation="scale" className="mx-auto max-w-3xl text-center bg-white/80 backdrop-blur-xl rounded-3xl p-12 md:p-16 shadow-xl shadow-black/5 border border-white/60">
+            <AnimateOnScroll delay={0} duration={0.6} className="mx-auto max-w-3xl text-center bg-white/80 backdrop-blur-xl rounded-3xl p-12 md:p-16 shadow-xl shadow-black/5 border border-white/60">
               <h2 className="text-4xl font-bold sm:text-5xl mb-6 text-gray-900">
                 Ready to Plan Your Collection?
               </h2>

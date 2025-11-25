@@ -203,16 +203,28 @@ export function CreativeSpaceClient() {
         }),
       });
 
+      const data = await response.json();
+      console.log('API Response status:', response.status);
+      console.log('API Response data:', JSON.stringify(data, null, 2));
+      
       if (response.ok) {
-        const analysis = await response.json();
-        console.log('AI Analysis received:', analysis);
-        setAiAnalysis(analysis);
+        // Check if we got valid analysis data
+        if (data && (data.keyColors || data.keyTrends || data.keyItems)) {
+          console.log('Setting AI Analysis:', data);
+          setAiAnalysis(data);
+        } else if (data.error) {
+          console.error('API returned error:', data.error);
+          alert(`Error: ${data.error}`);
+        } else {
+          console.error('Invalid analysis data received:', data);
+        }
       } else {
-        const error = await response.json();
-        console.error('Analysis failed:', error);
+        console.error('Analysis failed:', data);
+        alert(`Analysis failed: ${data.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error analyzing moodboard:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsAnalyzing(false);
     }

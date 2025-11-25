@@ -193,13 +193,19 @@ async function analyzeBatch(imageBatch: ImageData[]): Promise<AnalysisResult | n
     }
 
     const data = await response.json();
-    const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    let textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    console.log('Raw Gemini response:', textResponse.substring(0, 200));
+
+    // Remove markdown code blocks if present (```json ... ```)
+    textResponse = textResponse.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
     // Extract JSON from response
     const firstBrace = textResponse.indexOf('{');
     const lastBrace = textResponse.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
-      return JSON.parse(textResponse.slice(firstBrace, lastBrace + 1));
+      const jsonStr = textResponse.slice(firstBrace, lastBrace + 1);
+      return JSON.parse(jsonStr);
     }
     
     return JSON.parse(textResponse);
@@ -274,7 +280,10 @@ Return ONLY valid JSON:
 
     if (response.ok) {
       const data = await response.json();
-      const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      let textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      
+      // Remove markdown code blocks if present
+      textResponse = textResponse.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
       
       const firstBrace = textResponse.indexOf('{');
       const lastBrace = textResponse.lastIndexOf('}');

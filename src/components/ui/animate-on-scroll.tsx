@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-type AnimationType = 'fade-up' | 'fade-down' | 'fade-left' | 'fade-right' | 'scale' | 'blur';
+type AnimationType = 'fade' | 'fade-up' | 'fade-down' | 'fade-left' | 'fade-right' | 'scale';
 
 interface AnimateOnScrollProps {
   children: React.ReactNode;
@@ -12,30 +12,12 @@ interface AnimateOnScrollProps {
   animation?: AnimationType;
 }
 
-const getInitialTransform = (animation: AnimationType): string => {
-  switch (animation) {
-    case 'fade-up':
-      return 'translateY(40px)';
-    case 'fade-down':
-      return 'translateY(-40px)';
-    case 'fade-left':
-      return 'translateX(-60px)';
-    case 'fade-right':
-      return 'translateX(60px)';
-    case 'scale':
-      return 'scale(0.95)';
-    case 'blur':
-    default:
-      return 'translateX(-60px)';
-  }
-};
-
 export function AnimateOnScroll({ 
   children, 
   className = '', 
   delay = 0, 
-  duration = 0.8,
-  animation = 'fade-up'
+  duration = 0.6,
+  animation = 'fade'
 }: AnimateOnScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -60,7 +42,7 @@ export function AnimateOnScroll({
           observer.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
     );
 
     observer.observe(element);
@@ -77,7 +59,8 @@ export function AnimateOnScroll({
     );
   }
 
-  const initialTransform = getInitialTransform(animation);
+  // Simple fade - just opacity change, no movement
+  const isFadeOnly = animation === 'fade';
 
   return (
     <div
@@ -85,8 +68,7 @@ export function AnimateOnScroll({
       className={className}
       style={{
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translate(0) scale(1)' : initialTransform,
-        transition: `opacity ${duration}s ease-out, transform ${duration}s ease-out`,
+        transition: `opacity ${duration}s ease-out`,
       }}
     >
       {children}
