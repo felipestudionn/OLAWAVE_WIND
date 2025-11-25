@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles, Calculator, Loader2, Target, TrendingUp, DollarSign } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Calculator, Loader2, Target, TrendingUp, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -107,21 +107,29 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
 
   return (
     <div className="max-w-[1600px] mx-auto px-6 sm:px-8 lg:px-12 py-6">
-      {/* Step Indicator */}
+      {/* Step Indicator - 4 AI Power Steps */}
       <div className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold">
             3
           </div>
           <div>
-            <h3 className="font-semibold">Step 3: Execution</h3>
+            <h3 className="font-semibold">Step 3 of 4: Execution</h3>
             <p className="text-sm text-muted-foreground">Build your SKU-level collection plan</p>
           </div>
         </div>
-        <Badge variant="secondary" className="bg-green-100 text-green-700">
-          <Sparkles className="h-3 w-3 mr-1" />
-          AI-Optimized
-        </Badge>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            <div className="w-2 h-2 rounded-full bg-green-500" title="Inspiration" />
+            <div className="w-2 h-2 rounded-full bg-green-500" title="Strategy" />
+            <div className="w-2 h-2 rounded-full bg-green-500" title="Execution" />
+            <div className="w-2 h-2 rounded-full bg-gray-300" title="Go to Market" />
+          </div>
+          <Badge variant="secondary" className="bg-green-100 text-green-700 ml-2">
+            <Sparkles className="h-3 w-3 mr-1" />
+            4 AI Power Steps
+          </Badge>
+        </div>
       </div>
 
       {/* Header */}
@@ -146,6 +154,12 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
                 </p>
               </div>
             </div>
+            {setupComplete && (
+              <Button onClick={() => router.push(`/go-to-market/${plan.id}`)} className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600">
+                Go to Market
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

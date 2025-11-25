@@ -1,0 +1,278 @@
+'use client';
+
+import React, { useState, useMemo, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, Plus, Trash2, GripVertical, Sparkles, Loader2, Filter, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useDrops, type Drop } from '@/hooks/useDrops';
+import { useCommercialActions, type CommercialAction } from '@/hooks/useCommercialActions';
+import { useSkus, type SKU } from '@/hooks/useSkus';
+import type { SetupData } from '@/types/planner';
+
+interface GoToMarketDashboardProps {
+  plan: { id: string; name: string; setup_data: SetupData };
+  initialSkus: SKU[];
+}
+
+const ACTION_COLORS: Record<string, string> = {
+  SALE: 'bg-red-500', COLLAB: 'bg-purple-500', CAMPAIGN: 'bg-blue-500',
+  SEEDING: 'bg-green-500', EVENT: 'bg-orange-500', OTHER: 'bg-gray-500',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  VISIBILIDAD: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  POSICIONAMIENTO: 'bg-blue-100 text-blue-800 border-blue-300',
+  VENTAS: 'bg-green-100 text-green-800 border-green-300',
+  NOTORIEDAD: 'bg-purple-100 text-purple-800 border-purple-300',
+};
+
+export function GoToMarketDashboard({ plan, initialSkus }: GoToMarketDashboardProps) {
+  const setupData = plan.setup_data;
+  const { drops, addDrop, updateDrop, deleteDrop, loading: dropsLoading } = useDrops(plan.id);
+  const { actions, addAction, deleteAction } = useCommercialActions(plan.id);
+  const { skus, updateSku, refetch: refetchSkus } = useSkus(plan.id);
+  
+  const [channelFilter, setChannelFilter] = useState<string>('ALL');
+  const [isGeneratingPrediction, setIsGeneratingPrediction] = useState(false);
+  const [prediction, setPrediction] = useState<any>(null);
+  const [showAddDrop, setShowAddDrop] = useState(false);
+  const [showAddAction, setShowAddAction] = useState(false);
+  const [newDrop, setNewDrop] = useState({ name: '', launch_date: '', weeks_active: 8 });
+  const [newAction, setNewAction] = useState({ name: '', action_type: 'CAMPAIGN' as CommercialAction['action_type'], start_date: '', category: '' });
+
+  // Initialize drops from SKU drop_numbers if no drops exist
+  useEffect(() => {
+    if (!dropsLoading && drops.length === 0 && skus.length > 0) {
+      const dropNumbers = Array.from(new Set(skus.map(s => s.drop_number))).sort();
+      const today = new Date();
+      dropNumbers.forEach(async (num, index) => {
+        const launchDate = new Date(today);
+        launchDate.setDate(launchDate.getDate() + (index * 30));
+        await addDrop({
+          collection_plan_id: plan.id, drop_number: num, name: `Drop ${num}`,
+          launch_date: launchDate.toISOString().split('T')[0], weeks_active: 8,
+          channels: ['DTC', 'WHOLESALE'], position: index,
+        });
+      });
+    }
+  }, [dropsLoading, drops.length, skus]);
+
+  const filteredSkus = useMemo(() => {
+    if (channelFilter === 'ALL') return skus;
+    return skus.filter(sku => sku.channel === channelFilter || sku.channel === 'BOTH');
+  }, [skus, channelFilter]);
+
+  const skusByDrop = useMemo(() => {
+    const grouped: Record<number, SKU[]> = {};
+    filteredSkus.forEach(sku => {
+      const dropNum = sku.drop_number || 1;
+      if (!grouped[dropNum]) grouped[dropNum] = [];
+      grouped[dropNum].push(sku);
+    });
+    return grouped;
+  }, [filteredSkus]);
+
+  const handleAddDrop = async () => {
+    if (!newDrop.name || !newDrop.launch_date) return;
+    const nextDropNumber = drops.length > 0 ? Math.max(...drops.map(d => d.drop_number)) + 1 : 1;
+    await addDrop({
+      collection_plan_id: plan.id, drop_number: nextDropNumber, name: newDrop.name,
+      launch_date: newDrop.launch_date, weeks_active: newDrop.weeks_active,
+      channels: ['DTC', 'WHOLESALE'], position: drops.length,
+    });
+    setNewDrop({ name: '', launch_date: '', weeks_active: 8 });
+    setShowAddDrop(false);
+  };
+
+  const handleAddAction = async () => {
+    if (!newAction.name || !newAction.start_date) return;
+    await addAction({
+      collection_plan_id: plan.id, name: newAction.name, action_type: newAction.action_type,
+      start_date: newAction.start_date, category: newAction.category,
+      channels: ['DTC', 'WHOLESALE'], position: actions.length,
+    });
+    setNewAction({ name: '', action_type: 'CAMPAIGN', start_date: '', category: '' });
+    setShowAddAction(false);
+  };
+
+  const handleMoveSku = async (skuId: string, newDropNumber: number) => {
+    await updateSku(skuId, { drop_number: newDropNumber });
+    refetchSkus();
+  };
+
+  const handleGeneratePrediction = async () => {
+    setIsGeneratingPrediction(true);
+    try {
+      const response = await fetch('/api/ai/market-prediction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          collectionPlanId: plan.id, drops, commercialActions: actions, skus,
+          totalSalesTarget: setupData.totalSalesTarget, season: (setupData as any).season || 'AW',
+          productCategory: setupData.productCategory, location: (setupData as any).location || 'Europe',
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to generate prediction');
+      const data = await response.json();
+      setPrediction(data);
+    } catch (error) {
+      console.error('Error generating prediction:', error);
+      alert('Error generating market prediction. Please try again.');
+    } finally {
+      setIsGeneratingPrediction(false);
+    }
+  };
+
+  const totalPlannedSales = filteredSkus.reduce((sum, sku) => sum + sku.expected_sales, 0);
+  const totalBudget = setupData.totalSalesTarget || 0;
+
+  return (
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <span>Step 4 of 4</span><span>•</span><span>Go to Market</span>
+          </div>
+          <h1 className="text-2xl font-bold">{plan.name} - GTM Planning</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Total Sales Target</p>
+            <p className="text-2xl font-bold text-green-600">€{totalBudget.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Channel Filter */}
+      <div className="flex items-center gap-4 mb-6">
+        <Filter className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">Channel:</span>
+        {['ALL', 'DTC', 'WHOLESALE'].map(channel => (
+          <Button key={channel} variant={channelFilter === channel ? 'default' : 'outline'} size="sm" onClick={() => setChannelFilter(channel)}>
+            {channel === 'ALL' ? 'All Channels' : channel}
+          </Button>
+        ))}
+      </div>
+
+      {/* Drops Section */}
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div><CardTitle>Drops</CardTitle><CardDescription>Drag products between drops to reorganize</CardDescription></div>
+            <Button size="sm" onClick={() => setShowAddDrop(true)}><Plus className="h-4 w-4 mr-1" />Add Drop</Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {showAddDrop && (
+            <div className="mb-4 p-4 border rounded-lg bg-muted/50 grid grid-cols-4 gap-4">
+              <div><Label className="text-xs">Drop Name</Label><Input value={newDrop.name} onChange={(e) => setNewDrop({ ...newDrop, name: e.target.value })} placeholder="e.g., Season Launch" className="h-9" /></div>
+              <div><Label className="text-xs">Launch Date</Label><Input type="date" value={newDrop.launch_date} onChange={(e) => setNewDrop({ ...newDrop, launch_date: e.target.value })} className="h-9" /></div>
+              <div><Label className="text-xs">Weeks Active</Label><Input type="number" value={newDrop.weeks_active} onChange={(e) => setNewDrop({ ...newDrop, weeks_active: Number(e.target.value) })} className="h-9" min={1} max={52} /></div>
+              <div className="flex items-end gap-2"><Button size="sm" onClick={handleAddDrop}>Add</Button><Button size="sm" variant="outline" onClick={() => setShowAddDrop(false)}>Cancel</Button></div>
+            </div>
+          )}
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {drops.map((drop) => (
+              <div key={drop.id} className="flex-shrink-0 w-64 border rounded-lg bg-white">
+                <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+                  <div className="flex items-center justify-between mb-1">
+                    <Input value={drop.name} onChange={(e) => updateDrop(drop.id, { name: e.target.value })} className="h-7 text-sm font-semibold bg-transparent border-none p-0 focus-visible:ring-0" />
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => deleteDrop(drop.id)}><Trash2 className="h-3 w-3" /></Button>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    <Input type="date" value={drop.launch_date} onChange={(e) => updateDrop(drop.id, { launch_date: e.target.value })} className="h-6 text-xs bg-transparent border-none p-0 w-auto focus-visible:ring-0" />
+                  </div>
+                </div>
+                <div className="p-2 min-h-[120px] max-h-[300px] overflow-y-auto">
+                  {(skusByDrop[drop.drop_number] || []).map((sku) => (
+                    <div key={sku.id} className="flex items-center gap-2 p-2 mb-1 bg-gray-50 rounded text-xs hover:bg-gray-100">
+                      <GripVertical className="h-3 w-3 text-gray-400" />
+                      {sku.reference_image_url ? <img src={sku.reference_image_url} alt={sku.name} className="w-8 h-8 object-cover rounded" /> : <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-[8px] text-gray-400">IMG</div>}
+                      <div className="flex-1 min-w-0"><p className="font-medium truncate">{sku.name}</p><p className="text-muted-foreground">€{sku.pvp}</p></div>
+                      <Select value={String(sku.drop_number)} onValueChange={(v) => handleMoveSku(sku.id, Number(v))}>
+                        <SelectTrigger className="h-6 w-16 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>{drops.map((d) => (<SelectItem key={d.id} value={String(d.drop_number)}>D{d.drop_number}</SelectItem>))}</SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                  {(!skusByDrop[drop.drop_number] || skusByDrop[drop.drop_number].length === 0) && <p className="text-xs text-muted-foreground text-center py-4">No products</p>}
+                </div>
+                <div className="p-2 border-t bg-gray-50 text-xs">
+                  <div className="flex justify-between"><span className="text-muted-foreground">SKUs</span><span className="font-medium">{(skusByDrop[drop.drop_number] || []).length}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Sales</span><span className="font-medium text-green-600">€{Math.round((skusByDrop[drop.drop_number] || []).reduce((s, sku) => s + sku.expected_sales, 0)).toLocaleString()}</span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Commercial Actions */}
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div><CardTitle>Commercial Actions</CardTitle><CardDescription>Marketing events, collabs, and campaigns</CardDescription></div>
+            <Button size="sm" onClick={() => setShowAddAction(true)}><Plus className="h-4 w-4 mr-1" />Add Action</Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {showAddAction && (
+            <div className="mb-4 p-4 border rounded-lg bg-muted/50 grid grid-cols-5 gap-4">
+              <div><Label className="text-xs">Name</Label><Input value={newAction.name} onChange={(e) => setNewAction({ ...newAction, name: e.target.value })} placeholder="e.g., Black Friday" className="h-9" /></div>
+              <div><Label className="text-xs">Type</Label><Select value={newAction.action_type} onValueChange={(v) => setNewAction({ ...newAction, action_type: v as any })}><SelectTrigger className="h-9"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="SALE">Sale</SelectItem><SelectItem value="COLLAB">Collab</SelectItem><SelectItem value="CAMPAIGN">Campaign</SelectItem><SelectItem value="SEEDING">Seeding</SelectItem><SelectItem value="EVENT">Event</SelectItem></SelectContent></Select></div>
+              <div><Label className="text-xs">Date</Label><Input type="date" value={newAction.start_date} onChange={(e) => setNewAction({ ...newAction, start_date: e.target.value })} className="h-9" /></div>
+              <div><Label className="text-xs">Category</Label><Select value={newAction.category} onValueChange={(v) => setNewAction({ ...newAction, category: v })}><SelectTrigger className="h-9"><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent><SelectItem value="VISIBILIDAD">Visibilidad</SelectItem><SelectItem value="POSICIONAMIENTO">Posicionamiento</SelectItem><SelectItem value="VENTAS">Ventas</SelectItem><SelectItem value="NOTORIEDAD">Notoriedad</SelectItem></SelectContent></Select></div>
+              <div className="flex items-end gap-2"><Button size="sm" onClick={handleAddAction}>Add</Button><Button size="sm" variant="outline" onClick={() => setShowAddAction(false)}>Cancel</Button></div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {actions.map((action) => (
+              <div key={action.id} className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${CATEGORY_COLORS[action.category || ''] || 'bg-gray-100 border-gray-300'}`}>
+                <div className={`w-2 h-2 rounded-full ${ACTION_COLORS[action.action_type]}`} />
+                <div><p className="text-xs font-medium">{action.name}</p><p className="text-[10px] text-muted-foreground">{new Date(action.start_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</p></div>
+                <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => deleteAction(action.id)}><Trash2 className="h-3 w-3" /></Button>
+              </div>
+            ))}
+            {actions.length === 0 && <p className="text-sm text-muted-foreground">No commercial actions yet.</p>}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Validation */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div><CardTitle>AI Market Validation</CardTitle><CardDescription>Compare your plan with predicted market demand</CardDescription></div>
+            <Button onClick={handleGeneratePrediction} disabled={isGeneratingPrediction || drops.length === 0}>
+              {isGeneratingPrediction ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing...</> : <><Sparkles className="h-4 w-4 mr-2" />Validate with AI</>}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {prediction ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 rounded-lg"><h4 className="font-semibold text-blue-900 mb-2">Insights</h4><p className="text-sm text-blue-800">{prediction.insights}</p></div>
+              {prediction.gaps?.length > 0 && (
+                <div className="p-4 bg-orange-50 rounded-lg"><h4 className="font-semibold text-orange-900 mb-2 flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Gaps Detected</h4><ul className="text-sm text-orange-800 list-disc list-inside">{prediction.gaps.map((gap: string, i: number) => <li key={i}>{gap}</li>)}</ul></div>
+              )}
+              {prediction.recommendations?.length > 0 && (
+                <div className="p-4 bg-green-50 rounded-lg"><h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2"><CheckCircle className="h-4 w-4" />Recommendations</h4><ul className="text-sm text-green-800 list-disc list-inside">{prediction.recommendations.map((rec: string, i: number) => <li key={i}>{rec}</li>)}</ul></div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-20" />
+              <p>Click "Validate with AI" to analyze your commercial plan against market demand trends</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
