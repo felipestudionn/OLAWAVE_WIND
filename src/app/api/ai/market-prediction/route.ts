@@ -45,13 +45,13 @@ export async function POST(req: NextRequest) {
       currentDate.setDate(currentDate.getDate() + 7);
     }
 
-    const SYSTEM_PROMPT = `You are a retail market analyst expert. Analyze this commercial plan and predict weekly sales based on market demand patterns.
+    const SYSTEM_PROMPT = `You are a retail market analyst expert. Analyze this commercial plan and generate DEMAND WEIGHTS for each week based on market patterns.
 
 COMMERCIAL PLAN:
 - Season: ${season || 'AW'}
 - Category: ${productCategory || 'Fashion'}
 - Location: ${location || 'Europe'}
-- Total Sales Target: €${totalSalesTarget}
+- Total Sales Budget: €${totalSalesTarget} (this is the FIXED budget to distribute)
 
 DROPS SCHEDULE:
 ${drops.map((d: any) => `- ${d.name}: ${d.launch_date} (${d.weeks_active || 8} weeks active)`).join('\n')}
@@ -59,42 +59,42 @@ ${drops.map((d: any) => `- ${d.name}: ${d.launch_date} (${d.weeks_active || 8} w
 COMMERCIAL ACTIONS:
 ${commercialActions.map((a: any) => `- ${a.name} (${a.action_type}): ${a.start_date}${a.end_date ? ' to ' + a.end_date : ''} - Category: ${a.category || 'General'}`).join('\n')}
 
-SKUs BY DROP:
+SKUs BY DROP (User's current plan):
 ${drops.map((d: any) => {
   const dropSkus = skus.filter((s: any) => s.drop_id === d.id || s.drop_number === d.drop_number);
   const dropSales = dropSkus.reduce((sum: number, s: any) => sum + (s.expected_sales || 0), 0);
   return `- ${d.name}: ${dropSkus.length} SKUs, €${Math.round(dropSales)} expected sales`;
 }).join('\n')}
 
-WEEKS TO PREDICT: ${weeks.join(', ')}
+WEEKS TO ANALYZE: ${weeks.join(', ')}
 
-Based on:
-1. Retail seasonality patterns (Black Friday, Christmas, January Sales, etc.)
-2. Fashion industry demand cycles
-3. The commercial actions planned
-4. Drop timing and product mix
+YOUR TASK:
+Generate a demandWeight for each week that represents the RELATIVE market demand based on:
+1. Retail seasonality (Black Friday ~W47-48, Christmas ~W51-52, January Sales ~W1-4)
+2. Fashion industry cycles for ${productCategory || 'Fashion'} in ${location || 'Europe'}
+3. Impact of the planned commercial actions
+4. Natural demand patterns for ${season || 'AW'} season
 
-Generate a realistic weekly sales prediction curve. The curve should reflect:
-- Higher demand during key retail moments (Black Friday, Christmas)
-- Lower demand in typically slow periods
-- Impact of commercial actions on sales
-- Natural product lifecycle decay
+The demandWeight values will be used to DISTRIBUTE the fixed €${totalSalesTarget} budget.
+Higher weight = more sales should happen that week according to market demand.
 
 Return ONLY a valid JSON object:
 {
   "weeklyPredictions": [
-    { "week": "2024-W35", "predictedSales": 25000, "demandIndex": 0.7, "notes": "Season start, moderate demand" }
+    { "week": "2024-W35", "demandWeight": 0.5, "notes": "Season start, building momentum" },
+    { "week": "2024-W47", "demandWeight": 1.0, "notes": "Black Friday peak" }
   ],
-  "insights": "Overall analysis of the commercial plan",
-  "gaps": ["List of potential issues or gaps detected"],
-  "recommendations": ["List of recommendations to optimize the plan"]
+  "insights": "Overall analysis comparing user's plan vs optimal market timing",
+  "gaps": ["Specific gaps where user's drop timing doesn't match market demand peaks"],
+  "recommendations": ["Actionable recommendations to better align with market demand"]
 }
 
-IMPORTANT:
-- demandIndex is 0-1 scale (1 = peak demand)
-- predictedSales should be realistic weekly figures that roughly sum to the total target over the period
-- Identify gaps where planned sales don't align with market demand
-- Be specific in recommendations`;
+CRITICAL RULES:
+- demandWeight is a relative scale where higher = more demand (use 0.1 to 1.0 range)
+- DO NOT calculate sales amounts - only provide weights. We will calculate sales from weights.
+- Focus on WHEN demand peaks occur, not how much total sales
+- Compare user's drop timing against optimal market windows
+- Be specific about which weeks have misaligned expectations`;
 
     const url = new URL(
       `https://generativelanguage.googleapis.com/v1beta/${GEMINI_MODEL}:generateContent`
@@ -136,6 +136,23 @@ IMPORTANT:
         { error: 'Failed to parse AI prediction', raw: textResponse },
         { status: 500 }
       );
+    }
+
+    // Calculate predictedSales from demandWeights
+    // This ensures the total ALWAYS equals the user's budget
+    if (prediction.weeklyPredictions && prediction.weeklyPredictions.length > 0) {
+      const totalWeight = prediction.weeklyPredictions.reduce(
+        (sum: number, wp: any) => sum + (wp.demandWeight || 0), 
+        0
+      );
+      
+      if (totalWeight > 0) {
+        prediction.weeklyPredictions = prediction.weeklyPredictions.map((wp: any) => ({
+          ...wp,
+          predictedSales: Math.round((wp.demandWeight / totalWeight) * totalSalesTarget),
+          demandIndex: wp.demandWeight // Keep for reference
+        }));
+      }
     }
 
     // Save prediction to database
