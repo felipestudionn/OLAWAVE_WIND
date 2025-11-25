@@ -165,7 +165,7 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
     };
   }, [skus, availableFamilies, setupData, marginPercentage]);
 
-  // Generate AI-suggested SKUs
+  // Generate AI-suggested SKUs - fills remaining to reach EXACT expected count
   const handleGenerateSkus = async () => {
     const remaining = setupData.expectedSkus - skus.length;
     if (remaining <= 0) {
@@ -173,14 +173,25 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
       return;
     }
 
+    // Calculate remaining sales target based on current SKUs
+    const currentSales = skus.reduce((sum, sku) => sum + sku.expected_sales, 0);
+    const remainingSalesTarget = setupData.totalSalesTarget - currentSales;
+
+    // Create adjusted setupData for remaining SKUs
+    const adjustedSetupData = {
+      ...setupData,
+      expectedSkus: remaining,
+      totalSalesTarget: remainingSalesTarget > 0 ? remainingSalesTarget : setupData.totalSalesTarget / remaining * remaining,
+    };
+
     setIsGenerating(true);
     try {
       const response = await fetch('/api/ai/generate-skus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          setupData,
-          count: Math.min(remaining, 10), // Generate up to 10 at a time
+          setupData: adjustedSetupData,
+          count: remaining, // Generate EXACTLY the remaining count
         }),
       });
 
@@ -190,10 +201,8 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
 
       const { skus: suggestedSkus } = await response.json();
 
-      // Add each suggested SKU
+      // Add each suggested SKU - use expectedSales from API
       for (const suggested of suggestedSkus) {
-        const finalPrice = suggested.pvp * (1 - (suggested.discount || 0) / 100);
-        const expectedSales = (suggested.suggestedUnits * 0.6) * finalPrice; // Assume 60% sell-through
         const margin = ((suggested.pvp - suggested.cost) / suggested.pvp) * 100;
 
         await addSku({
@@ -207,11 +216,11 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
           pvp: suggested.pvp,
           cost: suggested.cost,
           discount: 0,
-          final_price: finalPrice,
-          buy_units: suggested.suggestedUnits || 50,
+          final_price: suggested.pvp,
+          buy_units: suggested.suggestedUnits,
           sale_percentage: 60,
-          expected_sales: expectedSales,
-          margin,
+          expected_sales: suggested.expectedSales, // Use EXACT value from API
+          margin: Math.round(margin * 100) / 100,
           launch_date: new Date().toISOString().split('T')[0],
         });
       }

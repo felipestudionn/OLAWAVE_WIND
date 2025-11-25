@@ -44,13 +44,13 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
     setSetupData(updatedSetupData);
 
     try {
-      // Generate SKUs automatically based on the budget
+      // Generate EXACTLY the expected number of SKUs with EXACT sales target
       const response = await fetch('/api/ai/generate-skus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           setupData: updatedSetupData,
-          count: Math.min(updatedSetupData.expectedSkus, 15), // Generate up to 15 SKUs
+          count: updatedSetupData.expectedSkus, // Generate EXACTLY this many SKUs
         }),
       });
 
@@ -58,12 +58,12 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
         throw new Error('Failed to generate SKUs');
       }
 
-      const { skus: suggestedSkus } = await response.json();
+      const { skus: suggestedSkus, summary } = await response.json();
+      
+      console.log(`Generated ${summary.skuCount} SKUs with total sales: €${summary.totalExpectedSales} (target: €${summary.targetSales})`);
 
-      // Add each suggested SKU to the collection
+      // Add each suggested SKU to the collection - use expectedSales from API (already calculated to hit exact target)
       for (const suggested of suggestedSkus) {
-        const finalPrice = suggested.pvp * (1 - (suggested.discount || 0) / 100);
-        const expectedSales = (suggested.suggestedUnits * 0.6) * finalPrice;
         const margin = ((suggested.pvp - suggested.cost) / suggested.pvp) * 100;
 
         await fetch('/api/skus', {
@@ -80,11 +80,11 @@ export function PlannerDashboard({ plan }: PlannerDashboardProps) {
             pvp: suggested.pvp,
             cost: suggested.cost,
             discount: 0,
-            final_price: finalPrice,
-            buy_units: suggested.suggestedUnits || 50,
+            final_price: suggested.pvp, // No discount initially
+            buy_units: suggested.suggestedUnits,
             sale_percentage: 60,
-            expected_sales: expectedSales,
-            margin,
+            expected_sales: suggested.expectedSales, // Use EXACT value from API
+            margin: Math.round(margin * 100) / 100,
             launch_date: new Date().toISOString().split('T')[0],
           }),
         });
