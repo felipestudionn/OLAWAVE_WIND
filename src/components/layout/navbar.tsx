@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, ChevronRight, User, LogOut } from "lucide-react";
+import { Sparkles, ChevronRight, User, LogOut, FolderOpen } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -126,35 +126,58 @@ export function Navbar() {
           {/* Auth & CTA Section */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/50 rounded-full">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700 max-w-[120px] truncate">{user.email}</span>
-                </div>
-                <button 
-                  onClick={() => signOut()}
-                  className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-white/50 transition-colors"
-                  title="Sign out"
+              <>
+                {/* My Collections */}
+                <Link
+                  href="/my-collections"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
                 >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </div>
+                  <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+                  My Collections
+                </Link>
+                {/* New Collection */}
+                <Link 
+                  href="/creative-space"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium transition-all hover:bg-gray-800"
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  New Collection
+                </Link>
+                {/* User Profile */}
+                <div className="flex items-center gap-1 pl-2 border-l border-gray-300">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-white/50 rounded-full">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-xs font-medium">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm text-gray-700 max-w-[100px] truncate">{user.email?.split('@')[0]}</span>
+                  </div>
+                  <button 
+                    onClick={() => signOut()}
+                    className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-white/50 transition-colors"
+                    title="Sign out"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              </>
             ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
-              >
-                <User className="mr-1.5 h-3.5 w-3.5" />
-                Sign In
-              </button>
+              <>
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
+                >
+                  <User className="mr-1.5 h-3.5 w-3.5" />
+                  Sign In
+                </button>
+                <Link 
+                  href="/creative-space"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium transition-all hover:bg-gray-800"
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  New Collection
+                </Link>
+              </>
             )}
-            <Link 
-              href="/creative-space"
-              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium transition-all hover:bg-gray-800"
-            >
-              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              New Collection
-            </Link>
           </div>
           <button 
             className="md:hidden inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 w-9"
@@ -248,18 +271,30 @@ export function Navbar() {
             
             {/* Auth Section Mobile */}
             {user ? (
-              <div className="flex items-center justify-between py-2 border-b">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{user.email}</span>
+              <>
+                <div className="flex items-center justify-between py-3 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-sm font-medium">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm text-gray-700">{user.email}</span>
+                  </div>
+                  <button 
+                    onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Sign Out
+                  </button>
                 </div>
-                <button 
-                  onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                <Link
+                  href="/my-collections"
+                  className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
+                  onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign Out
-                </button>
-              </div>
+                  <FolderOpen className="h-4 w-4" />
+                  My Collections
+                </Link>
+              </>
             ) : (
               <button
                 onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
