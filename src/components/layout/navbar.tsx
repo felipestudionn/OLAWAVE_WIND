@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, Palette, Brain, Calculator, TrendingUp, ChevronRight } from "lucide-react";
+import { Sparkles, ChevronRight, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const pathname = usePathname();
+  const { user, signOut } = useAuth();
 
   // Determine current step based on pathname
   const getCurrentStep = () => {
@@ -119,41 +123,31 @@ export function Navbar() {
             </nav>
           )}
           
-          {/* Regular Navigation (shown on landing/other pages) */}
-          {!isInJourney && (
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                href="/creative-space"
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
-              >
-                <Palette className="h-4 w-4" />
-                Inspiration
-              </Link>
-              <Link
-                href="/ai-advisor"
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
-              >
-                <Brain className="h-4 w-4" />
-                Strategy
-              </Link>
-              <Link
-                href="/planner"
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
-              >
-                <Calculator className="h-4 w-4" />
-                Planning
-              </Link>
-              <Link
-                href="#"
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex items-center gap-1.5"
-              >
-                <TrendingUp className="h-4 w-4" />
-                Go to Market
-              </Link>
-            </nav>
-          )}
-          
+          {/* Auth & CTA Section */}
           <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/50 rounded-full">
+                  <User className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm text-gray-700 max-w-[120px] truncate">{user.email}</span>
+                </div>
+                <button 
+                  onClick={() => signOut()}
+                  className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-white/50 transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
+              >
+                <User className="mr-1.5 h-3.5 w-3.5" />
+                Sign In
+              </button>
+            )}
             <Link 
               href="/creative-space"
               className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium transition-all hover:bg-gray-800"
@@ -210,78 +204,73 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-sm dark:bg-gray-950/95 border-b shadow-md">
           <div className="flex flex-col space-y-4 p-6">
-            {/* Journey Steps for Mobile */}
-            <div className="flex items-center justify-between gap-1 pb-4 border-b">
-              <Link
-                href="/creative-space"
-                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 1 ? 'bg-primary/10' : ''}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                  currentStep > 1 ? 'bg-green-500 text-white' : currentStep === 1 ? 'bg-primary text-white' : 'bg-gray-200'
-                }`}>
-                  {currentStep > 1 ? '✓' : '1'}
+            {/* Journey Steps for Mobile (only show when in journey) */}
+            {isInJourney && (
+              <div className="flex items-center justify-between gap-1 pb-4 border-b">
+                <Link
+                  href="/creative-space"
+                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 1 ? 'bg-primary/10' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
+                    currentStep > 1 ? 'bg-green-500 text-white' : currentStep === 1 ? 'bg-primary text-white' : 'bg-gray-200'
+                  }`}>
+                    {currentStep > 1 ? '✓' : '1'}
+                  </div>
+                  <span className="text-[10px] font-medium">Inspiration</span>
+                </Link>
+                <div className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 2 ? 'bg-primary/10' : ''}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
+                    currentStep > 2 ? 'bg-green-500 text-white' : currentStep === 2 ? 'bg-primary text-white' : 'bg-gray-200'
+                  }`}>
+                    {currentStep > 2 ? '✓' : '2'}
+                  </div>
+                  <span className="text-[10px] font-medium">Strategy</span>
                 </div>
-                <span className="text-[10px] font-medium">Inspiration</span>
-              </Link>
-              <Link
-                href="/ai-advisor"
-                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 2 ? 'bg-primary/10' : ''}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                  currentStep > 2 ? 'bg-green-500 text-white' : currentStep === 2 ? 'bg-primary text-white' : 'bg-gray-200'
-                }`}>
-                  {currentStep > 2 ? '✓' : '2'}
+                <div className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 3 ? 'bg-primary/10' : ''}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
+                    currentStep > 3 ? 'bg-green-500 text-white' : currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-200'
+                  }`}>
+                    {currentStep > 3 ? '✓' : '3'}
+                  </div>
+                  <span className="text-[10px] font-medium">Planning</span>
                 </div>
-                <span className="text-[10px] font-medium">Strategy</span>
-              </Link>
-              <Link
-                href="/planner"
-                className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 3 ? 'bg-primary/10' : ''}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                  currentStep > 3 ? 'bg-green-500 text-white' : currentStep === 3 ? 'bg-primary text-white' : 'bg-gray-200'
-                }`}>
-                  {currentStep > 3 ? '✓' : '3'}
+                <div className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 4 ? 'bg-primary/10' : ''}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
+                    currentStep === 4 ? 'bg-primary text-white' : 'bg-gray-200'
+                  }`}>
+                    4
+                  </div>
+                  <span className="text-[10px] font-medium">GTM</span>
                 </div>
-                <span className="text-[10px] font-medium">Planning</span>
-              </Link>
-              <div className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-lg ${currentStep === 4 ? 'bg-primary/10' : ''}`}>
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                  currentStep === 4 ? 'bg-primary text-white' : 'bg-gray-200'
-                }`}>
-                  4
-                </div>
-                <span className="text-[10px] font-medium">GTM</span>
               </div>
-            </div>
+            )}
             
-            <Link
-              href="/creative-space"
-              className="text-base font-medium py-2 transition-colors hover:text-primary flex items-center gap-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Palette className="h-4 w-4" />
-              Creative Space
-            </Link>
-            <Link
-              href="/ai-advisor"
-              className="text-base font-medium py-2 transition-colors hover:text-primary flex items-center gap-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Brain className="h-4 w-4" />
-              AI Advisor
-            </Link>
-            <Link
-              href="/dashboard"
-              className="text-base font-medium py-2 transition-colors hover:text-primary"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Trends Library
-            </Link>
-            <div className="pt-4">
+            {/* Auth Section Mobile */}
+            {user ? (
+              <div className="flex items-center justify-between py-2 border-b">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">{user.email}</span>
+                </div>
+                <button 
+                  onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
+                className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
+              >
+                <User className="h-4 w-4" />
+                Sign In
+              </button>
+            )}
+            
+            <div className="pt-2">
               <Link 
                 href="/creative-space"
                 className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2"
@@ -294,6 +283,12 @@ export function Navbar() {
           </div>
         </div>
       )}
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+      />
       </div>
     </div>
   );
