@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit, Sparkles, Loader2, LayoutGrid, List, ImagePlus, X } from 'lucide-react';
 import { useSkus, type SKU } from '@/hooks/useSkus';
 import type { SetupData } from '@/types/planner';
 
@@ -28,6 +28,10 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
   const [salePercentage, setSalePercentage] = useState(60);
   const [discount, setDiscount] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
+  const [selectedSku, setSelectedSku] = useState<SKU | null>(null);
+  const [editingNotes, setEditingNotes] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const { skus, addSku, updateSku, deleteSku, loading } = useSkus(collectionPlanId);
 
@@ -85,6 +89,41 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
   };
 
   const availableFamilies = setupData.productFamilies?.map(f => f.name) || [];
+
+  // Handle image upload for SKU
+  const handleImageUpload = async (skuId: string, file: File) => {
+    setUploadingImage(true);
+    try {
+      // Convert to base64 for now (in production, upload to storage)
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        await updateSku(skuId, { reference_image_url: base64 });
+        if (selectedSku?.id === skuId) {
+          setSelectedSku(prev => prev ? { ...prev, reference_image_url: base64 } : null);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Handle notes update
+  const handleNotesUpdate = async (skuId: string) => {
+    await updateSku(skuId, { notes: editingNotes });
+    if (selectedSku?.id === skuId) {
+      setSelectedSku(prev => prev ? { ...prev, notes: editingNotes } : null);
+    }
+  };
+
+  // Open SKU detail
+  const openSkuDetail = (sku: SKU) => {
+    setSelectedSku(sku);
+    setEditingNotes(sku.notes || '');
+  };
 
   // Calculate framework validation metrics
   const frameworkValidation = useMemo(() => {
@@ -458,17 +497,40 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
         </CardContent>
       </Card>
 
-      {/* SKU Table */}
+      {/* SKU List with View Toggle */}
       <Card>
         <CardHeader>
-          <CardTitle>SKU List ({skus.length})</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>SKU List ({skus.length})</CardTitle>
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 px-3"
+              >
+                <List className="h-4 w-4 mr-1" />
+                List
+              </Button>
+              <Button
+                variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('cards')}
+                className="h-8 px-3"
+              >
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                Cards
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading SKUs...</p>
           ) : skus.length === 0 ? (
             <p className="text-sm text-muted-foreground">No SKUs yet. Add your first product above.</p>
-          ) : (
+          ) : viewMode === 'list' ? (
+            /* List View */
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -486,7 +548,11 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
                 </thead>
                 <tbody>
                   {skus.map((sku) => (
-                    <tr key={sku.id} className="border-b hover:bg-muted/50">
+                    <tr 
+                      key={sku.id} 
+                      className="border-b hover:bg-muted/50 cursor-pointer"
+                      onClick={() => openSkuDetail(sku)}
+                    >
                       <td className="py-2 px-2 font-medium">{sku.name}</td>
                       <td className="py-2 px-2">
                         <Badge variant="outline" className="text-xs">{sku.family}</Badge>
@@ -507,7 +573,7 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deleteSku(sku.id)}
+                          onClick={(e) => { e.stopPropagation(); deleteSku(sku.id); }}
                           className="h-7 w-7 p-0"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -518,9 +584,244 @@ export function CollectionBuilder({ setupData, collectionPlanId }: CollectionBui
                 </tbody>
               </table>
             </div>
+          ) : (
+            /* Cards View */
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {skus.map((sku) => (
+                <div
+                  key={sku.id}
+                  className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer bg-white"
+                  onClick={() => openSkuDetail(sku)}
+                >
+                  {/* Image Area */}
+                  <div className="aspect-square bg-gray-100 relative">
+                    {sku.reference_image_url ? (
+                      <img
+                        src={sku.reference_image_url}
+                        alt={sku.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                        <ImagePlus className="h-12 w-12 mb-2" />
+                        <span className="text-xs">No image</span>
+                      </div>
+                    )}
+                    {/* Type Badge */}
+                    <Badge 
+                      className={`absolute top-2 right-2 ${
+                        sku.type === 'IMAGEN' ? 'bg-purple-500' : 
+                        sku.type === 'ENTRY' ? 'bg-blue-500' : 'bg-green-500'
+                      }`}
+                    >
+                      {sku.type}
+                    </Badge>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-sm mb-1 truncate">{sku.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-3">{sku.family}</p>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">PVP</span>
+                        <p className="font-semibold">€{sku.pvp}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Cost</span>
+                        <p className="font-semibold">€{sku.cost}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Units</span>
+                        <p className="font-semibold">{sku.buy_units}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Margin</span>
+                        <p className={`font-semibold ${sku.margin >= 50 ? 'text-green-600' : 'text-orange-600'}`}>
+                          {sku.margin.toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {sku.notes && (
+                      <p className="text-xs text-muted-foreground mt-3 line-clamp-2 italic">
+                        "{sku.notes}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* SKU Detail Modal */}
+      {selectedSku && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle>{selectedSku.name}</CardTitle>
+                <CardDescription>{selectedSku.family} · Drop {selectedSku.drop_number}</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedSku(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Image Section */}
+              <div className="space-y-2">
+                <Label>Reference Image / Sketch</Label>
+                <div className="border-2 border-dashed rounded-lg overflow-hidden">
+                  {selectedSku.reference_image_url ? (
+                    <div className="relative">
+                      <img
+                        src={selectedSku.reference_image_url}
+                        alt={selectedSku.name}
+                        className="w-full max-h-64 object-contain bg-gray-50"
+                      />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="absolute bottom-2 right-2"
+                        onClick={() => updateSku(selectedSku.id, { reference_image_url: undefined })}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-muted/50">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(selectedSku.id, file);
+                        }}
+                      />
+                      {uploadingImage ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                          <span className="text-sm text-muted-foreground">Click to upload image or sketch</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Attributes Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Type</Label>
+                  <Badge className={`w-full justify-center ${
+                    selectedSku.type === 'IMAGEN' ? 'bg-purple-500' : 
+                    selectedSku.type === 'ENTRY' ? 'bg-blue-500' : 'bg-green-500'
+                  }`}>
+                    {selectedSku.type}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Channel</Label>
+                  <p className="font-semibold text-sm">{selectedSku.channel}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Category</Label>
+                  <p className="font-semibold text-sm">{selectedSku.category}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Launch Date</Label>
+                  <p className="font-semibold text-sm">{selectedSku.launch_date || 'TBD'}</p>
+                </div>
+              </div>
+
+              {/* Financial Details */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <h4 className="font-semibold text-sm mb-3">Financial Details</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Cost</span>
+                    <p className="font-semibold text-lg">€{selectedSku.cost}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">PVP</span>
+                    <p className="font-semibold text-lg">€{selectedSku.pvp}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Buy Units</span>
+                    <p className="font-semibold text-lg">{selectedSku.buy_units}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Margin</span>
+                    <p className={`font-semibold text-lg ${selectedSku.margin >= 50 ? 'text-green-600' : 'text-orange-600'}`}>
+                      {selectedSku.margin.toFixed(1)}%
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Discount</span>
+                    <p className="font-semibold">{selectedSku.discount}%</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Final Price</span>
+                    <p className="font-semibold">€{selectedSku.final_price}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Sale %</span>
+                    <p className="font-semibold">{selectedSku.sale_percentage}%</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Expected Sales</span>
+                    <p className="font-semibold text-green-600">€{Math.round(selectedSku.expected_sales).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes Section */}
+              <div className="space-y-2">
+                <Label>Notes & Concept Description</Label>
+                <textarea
+                  value={editingNotes}
+                  onChange={(e) => setEditingNotes(e.target.value)}
+                  placeholder="Add notes about this SKU, concept ideas, fabric details, etc..."
+                  className="w-full h-24 p-3 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <div className="flex justify-end">
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleNotesUpdate(selectedSku.id)}
+                    disabled={editingNotes === (selectedSku.notes || '')}
+                  >
+                    Save Notes
+                  </Button>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-between pt-4 border-t">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    deleteSku(selectedSku.id);
+                    setSelectedSku(null);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete SKU
+                </Button>
+                <Button onClick={() => setSelectedSku(null)}>
+                  Close
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
