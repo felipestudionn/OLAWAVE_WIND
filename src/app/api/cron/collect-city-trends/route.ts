@@ -33,8 +33,8 @@ const TIKTOK_HASHTAGS = [
   // Specific items trending
   'meshjacket',
   'shaggyjacket',
-  'kiттенheels',
-  'platformmary janes',
+  'kittenheels',
+  'platformmaryjanes',
   'clogscomeback',
   // Niche microtrends
   'deconstructedfashion',
