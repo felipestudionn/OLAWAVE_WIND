@@ -42,54 +42,68 @@ export async function GET() {
     
     // If we have processed data, use it
     if (processedTrends && processedTrends.length > 0) {
-      // Group by city
-      const citiesMap: Record<string, {
+      // Group by neighborhood (not city) for more granular data
+      const neighborhoodsMap: Record<string, {
         city: string;
         neighborhood: string;
-        items: Array<{ name: string; mentions: number; avgEngagement: number; change: string; rank: number }>;
-        styles: Array<{ name: string; mentions: number; change: string }>;
-        colors: Array<{ name: string; mentions: number }>;
+        garments: Array<{ name: string; mentions: number; isNew: boolean; rank: number }>;
+        styles: Array<{ name: string; mentions: number; isNew: boolean }>;
+        brands: Array<{ name: string; mentions: number; type: string }>;
+        localSpots: Array<{ name: string; mentions: number }>;
+        microTrends: Array<{ name: string; description: string; confidence: number }>;
       }> = {};
       
       for (const trend of processedTrends) {
-        if (!citiesMap[trend.city]) {
-          citiesMap[trend.city] = {
+        const key = trend.neighborhood || trend.city;
+        if (!neighborhoodsMap[key]) {
+          neighborhoodsMap[key] = {
             city: trend.city,
-            neighborhood: trend.neighborhood || '',
-            items: [],
+            neighborhood: trend.neighborhood || trend.city,
+            garments: [],
             styles: [],
-            colors: [],
+            brands: [],
+            localSpots: [],
+            microTrends: [],
           };
         }
         
-        const changeStr = trend.is_new ? 'NEW' : 
-          trend.change_percent > 0 ? `+${Math.round(trend.change_percent)}%` :
-          trend.change_percent < 0 ? `${Math.round(trend.change_percent)}%` : '0%';
+        const metadata = trend.metadata || {};
         
-        if (trend.trend_type === 'item') {
-          citiesMap[trend.city].items.push({
+        if (trend.trend_type === 'garment') {
+          neighborhoodsMap[key].garments.push({
             name: trend.trend_name,
             mentions: trend.mentions,
-            avgEngagement: Math.round(trend.avg_engagement),
-            change: changeStr,
+            isNew: trend.is_new || false,
             rank: trend.rank,
           });
         } else if (trend.trend_type === 'style') {
-          citiesMap[trend.city].styles.push({
+          neighborhoodsMap[key].styles.push({
             name: trend.trend_name,
             mentions: trend.mentions,
-            change: changeStr,
+            isNew: trend.is_new || false,
           });
-        } else if (trend.trend_type === 'color') {
-          citiesMap[trend.city].colors.push({
+        } else if (trend.trend_type === 'brand') {
+          neighborhoodsMap[key].brands.push({
             name: trend.trend_name,
             mentions: trend.mentions,
+            type: metadata.brand_type || 'unknown',
+          });
+        } else if (trend.trend_type === 'local_spot') {
+          neighborhoodsMap[key].localSpots.push({
+            name: trend.trend_name,
+            mentions: trend.mentions,
+          });
+        } else if (trend.trend_type === 'micro_trend') {
+          neighborhoodsMap[key].microTrends.push({
+            name: trend.trend_name,
+            description: metadata.description || '',
+            confidence: metadata.confidence || trend.mentions,
           });
         }
       }
       
       return NextResponse.json({
-        cities: Object.values(citiesMap),
+        neighborhoods: Object.values(neighborhoodsMap),
         tiktokTrends: tiktokTrends || [],
         period: currentWeek,
         hasProcessedData: true,
