@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/collect-social-data",
+      "path": "/api/cron/collect-tiktok-trends",
       "schedule": "0 6 * * 4"
     },
     {
