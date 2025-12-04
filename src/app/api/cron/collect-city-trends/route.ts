@@ -17,23 +17,36 @@ const CITY_LOCATIONS = [
   { city: 'Seoul', neighborhood: 'Hongdae', locationQuery: 'Hongdae, Seoul' },
 ];
 
-// TikTok hashtags to track
+// TikTok hashtags to track - MICROTRENDS & EMERGING (not obvious mainstream)
 const TIKTOK_HASHTAGS = [
-  'quietluxury',
-  'gorpcore',
-  'streetwear',
-  'streetstyle',
-  'y2kfashion',
-  'oldmoney',
-  'coquette',
-  'ootd',
-  'fashiontok',
-  'vintagefashion',
+  // Emerging aesthetics 2025-2026
+  'ecleticgrandpa',
+  'corporatecore',
+  'balletcore',
+  'tenniscore',
+  'blokecore',
+  'coastalgrandmother',
+  'mobwife',
+  'cherryred2025',
+  'burgundytrend',
+  'barrellegjeans',
+  // Specific items trending
+  'meshjacket',
+  'shaggyjacket',
+  'kiттенheels',
+  'platformmary janes',
+  'clogscomeback',
+  // Niche microtrends
+  'deconstructedfashion',
+  'avantbasic',
+  'normcore2025',
+  'minimalismfashion',
+  'capsulewardrobe2025',
 ];
 
 // Posts per location/hashtag (optimized for budget)
-const POSTS_PER_LOCATION = 350; // ~2,100 total for Instagram
-const POSTS_PER_HASHTAG = 120;  // ~1,200 total for TikTok
+const POSTS_PER_LOCATION = 100; // Reduced for separate cron execution
+const POSTS_PER_HASHTAG = 50;   // Reduced for more hashtags
 
 // Auth check for Vercel Cron
 function verifyCronAuth(req: NextRequest): boolean {

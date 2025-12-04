@@ -1,12 +1,24 @@
 {
   "crons": [
     {
-      "path": "/api/cron/collect-city-trends",
+      "path": "/api/cron/collect-instagram",
       "schedule": "0 6 * * 4"
     },
     {
+      "path": "/api/cron/collect-instagram-2",
+      "schedule": "5 6 * * 4"
+    },
+    {
+      "path": "/api/cron/collect-instagram-3",
+      "schedule": "10 6 * * 4"
+    },
+    {
+      "path": "/api/cron/collect-tiktok",
+      "schedule": "15 6 * * 4"
+    },
+    {
       "path": "/api/cron/process-city-trends",
-      "schedule": "0 8 * * 4"
+      "schedule": "0 7 * * 4"
     }
   ]
 }
