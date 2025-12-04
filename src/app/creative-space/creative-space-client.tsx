@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft, Pencil, Search, TrendingUp, Send, Lock } from 'lucide-react';
+import { Plus, Link as LinkIcon, ArrowRight, Check, X, Loader2, Sparkles, ImageIcon, FolderOpen, LogOut, AlertCircle, RefreshCw, Download, ChevronLeft, Pencil, Search, TrendingUp, Send, Lock, MapPin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { saveCreativeSpaceData, type CreativeSpaceData } from '@/lib/data-sync';
 import { useAuth } from '@/contexts/AuthContext';
@@ -217,6 +217,47 @@ interface SelectedTrends {
   items: string[];
 }
 
+interface CityTrendItem {
+  name: string;
+  mentions: number;
+  avgEngagement: number;
+  change: string;
+  rank: number;
+}
+
+interface CityTrendStyle {
+  name: string;
+  mentions: number;
+  change: string;
+}
+
+interface CityTrendColor {
+  name: string;
+  mentions: number;
+}
+
+interface CityTrendsData {
+  city: string;
+  neighborhood: string;
+  items: CityTrendItem[];
+  styles: CityTrendStyle[];
+  colors: CityTrendColor[];
+}
+
+interface TikTokHashtagTrend {
+  hashtag: string;
+  total_plays: number;
+  total_likes: number;
+  post_count: number;
+}
+
+interface CityTrendsResponse {
+  cities: CityTrendsData[];
+  tiktokTrends: TikTokHashtagTrend[];
+  period: string;
+  hasProcessedData: boolean;
+}
+
 interface Signal {
   id: string;
   signal_name: string;
@@ -265,6 +306,12 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
     items: []
   });
   const [selectedSignals, setSelectedSignals] = useState<string[]>([]);
+  
+  // City Trends state (Instagram + TikTok from Apify)
+  const [cityTrends, setCityTrends] = useState<CityTrendsResponse | null>(null);
+  const [loadingCityTrends, setLoadingCityTrends] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<string>('London');
+  const [selectedCityTrends, setSelectedCityTrends] = useState<string[]>([]);
 
   // Computed values from signals
   const totalSignals = signals.length;
@@ -709,6 +756,38 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
         : [...prev, signalName]
     );
   };
+
+  // Load City Trends data (from Apify scraping)
+  const loadCityTrends = async () => {
+    setLoadingCityTrends(true);
+    try {
+      const response = await fetch('/api/city-trends');
+      if (response.ok) {
+        const data = await response.json();
+        setCityTrends(data);
+        // Set first city as selected if available
+        if (data.cities && data.cities.length > 0 && !data.cities.find((c: CityTrendsData) => c.city === selectedCity)) {
+          setSelectedCity(data.cities[0].city);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading city trends:', error);
+    } finally {
+      setLoadingCityTrends(false);
+    }
+  };
+
+  // Toggle city trend selection
+  const toggleCityTrendSelection = (trendName: string) => {
+    setSelectedCityTrends(prev => 
+      prev.includes(trendName)
+        ? prev.filter(t => t !== trendName)
+        : [...prev, trendName]
+    );
+  };
+
+  // Get current city data
+  const currentCityData = cityTrends?.cities.find(c => c.city === selectedCity);
 
   // Show loading state while checking auth
   if (authLoading) {
@@ -1940,6 +2019,237 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                   </Badge>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* BLOCK 4: City Trends - Real data from fashion neighborhoods */}
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-slate-50 to-white p-8 space-y-8 shadow-sm">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-violet-500/10">
+                  <MapPin className="h-6 w-6 text-violet-600" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold tracking-tight">City Trends</h3>
+                  <p className="text-sm text-muted-foreground">Real data from fashion neighborhoods · Instagram & TikTok</p>
+                </div>
+              </div>
+            </div>
+            <Button onClick={loadCityTrends} disabled={loadingCityTrends} variant="outline" className="gap-2 rounded-full px-6">
+              {loadingCityTrends ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {cityTrends ? 'Refresh' : 'Load Trends'}
+            </Button>
+          </div>
+
+          {cityTrends && cityTrends.cities.length > 0 ? (
+            <>
+              {/* City Selector Tabs */}
+              <div className="flex flex-wrap gap-2">
+                {cityTrends.cities.map((city) => (
+                  <button
+                    key={city.city}
+                    onClick={() => setSelectedCity(city.city)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      selectedCity === city.city
+                        ? 'bg-violet-600 text-white shadow-md'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:border-violet-300 hover:text-violet-600'
+                    }`}
+                  >
+                    {city.city}
+                    {city.neighborhood && <span className="opacity-70 ml-1">· {city.neighborhood}</span>}
+                  </button>
+                ))}
+              </div>
+
+              {currentCityData && (
+                <div className="space-y-6">
+                  {/* Rising Items */}
+                  {currentCityData.items && currentCityData.items.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Rising Items</h4>
+                        <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                      </div>
+                      <div className="space-y-2">
+                        {currentCityData.items.slice(0, 5).map((item, idx) => {
+                          const isSelected = selectedCityTrends.includes(`${selectedCity}:item:${item.name}`);
+                          const barWidth = Math.min(100, (item.mentions / (currentCityData.items[0]?.mentions || 1)) * 100);
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => toggleCityTrendSelection(`${selectedCity}:item:${item.name}`)}
+                              className={`relative p-3 rounded-lg cursor-pointer transition-all ${
+                                isSelected 
+                                  ? 'bg-violet-50 border-2 border-violet-300' 
+                                  : 'bg-white border border-slate-200 hover:border-violet-200'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between relative z-10">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm font-bold text-slate-400 w-5">{idx + 1}</span>
+                                  <span className={`font-medium ${isSelected ? 'text-violet-700' : 'text-slate-800'}`}>
+                                    {item.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs text-slate-500">{item.avgEngagement.toLocaleString()} eng</span>
+                                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                                    item.change === 'NEW' ? 'bg-orange-100 text-orange-600' :
+                                    item.change.startsWith('+') ? 'bg-green-100 text-green-600' :
+                                    item.change.startsWith('-') ? 'bg-red-100 text-red-600' :
+                                    'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {item.change === 'NEW' ? '🔥 NEW' : item.change}
+                                  </span>
+                                  {isSelected && <Check className="h-4 w-4 text-violet-600" />}
+                                </div>
+                              </div>
+                              {/* Progress bar */}
+                              <div className="absolute bottom-0 left-0 h-1 bg-violet-200 rounded-b-lg" style={{ width: `${barWidth}%` }} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Styles and Colors Grid */}
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Trending Styles */}
+                    {currentCityData.styles && currentCityData.styles.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Trending Styles</h4>
+                          <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                        </div>
+                        <div className="space-y-2">
+                          {currentCityData.styles.map((style, idx) => {
+                            const isSelected = selectedCityTrends.includes(`${selectedCity}:style:${style.name}`);
+                            return (
+                              <div
+                                key={idx}
+                                onClick={() => toggleCityTrendSelection(`${selectedCity}:style:${style.name}`)}
+                                className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                                  isSelected 
+                                    ? 'bg-violet-600 text-white' 
+                                    : 'bg-white border border-slate-200 hover:border-violet-200'
+                                }`}
+                              >
+                                <span className={`font-medium ${isSelected ? '' : 'text-slate-800'}`}>{style.name}</span>
+                                <span className={`text-sm font-semibold ${
+                                  isSelected ? 'text-violet-200' :
+                                  style.change.startsWith('+') ? 'text-green-600' :
+                                  style.change.startsWith('-') ? 'text-red-600' : 'text-slate-500'
+                                }`}>
+                                  {style.change}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Trending Colors */}
+                    {currentCityData.colors && currentCityData.colors.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Trending Colors</h4>
+                          <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {currentCityData.colors.map((color, idx) => {
+                            const isSelected = selectedCityTrends.includes(`${selectedCity}:color:${color.name}`);
+                            return (
+                              <div
+                                key={idx}
+                                onClick={() => toggleCityTrendSelection(`${selectedCity}:color:${color.name}`)}
+                                className={`px-4 py-2 rounded-full cursor-pointer transition-all ${
+                                  isSelected 
+                                    ? 'bg-violet-600 text-white' 
+                                    : 'bg-white border border-slate-200 hover:border-violet-200 text-slate-700'
+                                }`}
+                              >
+                                <span className="font-medium">{color.name}</span>
+                                <span className={`ml-2 text-sm ${isSelected ? 'text-violet-200' : 'text-slate-400'}`}>
+                                  {color.mentions}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TikTok Global Trends */}
+              {cityTrends.tiktokTrends && cityTrends.tiktokTrends.length > 0 && (
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">TikTok Global Trends</h4>
+                    <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {cityTrends.tiktokTrends.slice(0, 8).map((trend, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-50 to-violet-50 border border-pink-200"
+                      >
+                        <span className="font-medium text-slate-800">#{trend.hashtag}</span>
+                        <span className="text-xs text-pink-600 font-semibold">
+                          {(trend.total_plays / 1000000).toFixed(1)}M plays
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Selected City Trends */}
+              {selectedCityTrends.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h4 className="font-semibold flex items-center gap-2 mb-3">
+                    <Check className="h-4 w-4 text-violet-600" />
+                    Selected City Trends ({selectedCityTrends.length})
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCityTrends.map((trend, i) => {
+                      const parts = trend.split(':');
+                      const displayName = parts.length >= 3 ? parts[2] : trend;
+                      return (
+                        <Badge key={i} className="bg-violet-600 hover:bg-violet-700">
+                          {displayName}
+                          <X className="h-3 w-3 ml-1 cursor-pointer" onClick={(e) => { e.stopPropagation(); toggleCityTrendSelection(trend); }} />
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Period info */}
+              <p className="text-xs text-muted-foreground text-center">
+                Data from {cityTrends.period} · {cityTrends.hasProcessedData ? 'AI-processed trends' : 'Raw data aggregated'}
+              </p>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-50 mb-4">
+                <MapPin className="h-8 w-8 text-violet-600" />
+              </div>
+              <h4 className="font-semibold text-lg mb-2">Discover what&apos;s trending in fashion capitals</h4>
+              <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                Real data from Shoreditch, Le Marais, Williamsburg, Harajuku and more fashion neighborhoods.
+              </p>
+              <Button onClick={loadCityTrends} disabled={loadingCityTrends} className="bg-violet-600 hover:bg-violet-700">
+                {loadingCityTrends ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <MapPin className="h-4 w-4 mr-2" />}
+                Load City Trends
+              </Button>
             </div>
           )}
         </div>
