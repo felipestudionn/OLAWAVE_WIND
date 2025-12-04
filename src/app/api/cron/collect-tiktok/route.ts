@@ -7,28 +7,30 @@ const apifyClient = new ApifyClient({
 });
 
 // KEYWORD SEARCHES - Like how users search on TikTok
-// Format: { query: "search term", city: "associated city" }
+// Format: { query: "search term", city: "city", neighborhood: "barrio" }
 const TIKTOK_SEARCHES = [
-  // LONDON / SHOREDITCH - Emerging trends
-  { query: 'shoreditch fashion trends', city: 'London' },
-  { query: 'east london street style', city: 'London' },
-  { query: 'london fashion 2025', city: 'London' },
-  // PARIS / LE MARAIS - Emerging trends
-  { query: 'paris fashion trends 2025', city: 'Paris' },
-  { query: 'le marais style', city: 'Paris' },
-  { query: 'french girl fashion', city: 'Paris' },
-  // NEW YORK / BROOKLYN - Emerging trends
-  { query: 'brooklyn fashion trends', city: 'New York' },
-  { query: 'williamsburg style', city: 'New York' },
-  { query: 'nyc street fashion 2025', city: 'New York' },
-  // TOKYO / HARAJUKU - Emerging trends
-  { query: 'harajuku fashion trends', city: 'Tokyo' },
-  { query: 'tokyo street style 2025', city: 'Tokyo' },
-  { query: 'japanese fashion trends', city: 'Tokyo' },
-  // EMERGING / MICROTRENDS (global but valuable)
-  { query: 'emerging fashion trends 2025', city: 'Global' },
-  { query: 'underrated fashion trends', city: 'Global' },
-  { query: 'fashion microtrends', city: 'Global' },
+  // SHOREDITCH (London)
+  { query: 'shoreditch fashion', city: 'London', neighborhood: 'Shoreditch' },
+  { query: 'shoreditch street style', city: 'London', neighborhood: 'Shoreditch' },
+  { query: 'shoreditch outfit', city: 'London', neighborhood: 'Shoreditch' },
+  // LE MARAIS (Paris)
+  { query: 'le marais fashion', city: 'Paris', neighborhood: 'Le Marais' },
+  { query: 'le marais style', city: 'Paris', neighborhood: 'Le Marais' },
+  { query: 'marais paris outfit', city: 'Paris', neighborhood: 'Le Marais' },
+  // WILLIAMSBURG (Brooklyn/NYC)
+  { query: 'williamsburg fashion', city: 'New York', neighborhood: 'Williamsburg' },
+  { query: 'williamsburg brooklyn style', city: 'New York', neighborhood: 'Williamsburg' },
+  { query: 'williamsburg outfit', city: 'New York', neighborhood: 'Williamsburg' },
+  // HARAJUKU (Tokyo)
+  { query: 'harajuku fashion', city: 'Tokyo', neighborhood: 'Harajuku' },
+  { query: 'harajuku street style', city: 'Tokyo', neighborhood: 'Harajuku' },
+  { query: 'harajuku outfit 2025', city: 'Tokyo', neighborhood: 'Harajuku' },
+  // KREUZBERG (Berlin)
+  { query: 'kreuzberg fashion', city: 'Berlin', neighborhood: 'Kreuzberg' },
+  { query: 'kreuzberg berlin style', city: 'Berlin', neighborhood: 'Kreuzberg' },
+  // HONGDAE (Seoul)
+  { query: 'hongdae fashion', city: 'Seoul', neighborhood: 'Hongdae' },
+  { query: 'hongdae street style', city: 'Seoul', neighborhood: 'Hongdae' },
 ];
 
 const RESULTS_PER_SEARCH = 30;
@@ -100,7 +102,7 @@ export async function GET(req: NextRequest) {
             .upsert({
               platform: 'tiktok',
               city: search.city,
-              neighborhood: search.query, // Store the search query as context
+              neighborhood: search.neighborhood, // Store the actual neighborhood
               post_id: String(videoId),
               caption: description,
               hashtags,
