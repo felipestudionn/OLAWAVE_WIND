@@ -6,34 +6,32 @@ const apifyClient = new ApifyClient({
   token: process.env.APIFY_API_TOKEN,
 });
 
-// MICROTRENDS & EMERGING hashtags - NOT obvious mainstream
-const TIKTOK_HASHTAGS = [
-  // Emerging aesthetics 2025-2026
-  'eclecticgrandpa',
-  'corporatecore',
-  'balletcore',
-  'tenniscore',
-  'blokecore',
-  'coastalgrandmother',
-  'mobwife',
-  'cherryred',
-  'burgundyaesthetic',
-  'barrellegjeans',
-  // Specific items trending
-  'meshjacket',
-  'shaggyjacket',
-  'kittenheels',
-  'maryjanes',
-  'clogsoutfit',
-  // Niche microtrends
-  'deconstructedfashion',
-  'avantbasic',
-  'normcore',
-  'capsulewardrobe',
-  'minimaloutfit',
+// KEYWORD SEARCHES - Like how users search on TikTok
+// Format: { query: "search term", city: "associated city" }
+const TIKTOK_SEARCHES = [
+  // LONDON / SHOREDITCH - Emerging trends
+  { query: 'shoreditch fashion trends', city: 'London' },
+  { query: 'east london street style', city: 'London' },
+  { query: 'london fashion 2025', city: 'London' },
+  // PARIS / LE MARAIS - Emerging trends
+  { query: 'paris fashion trends 2025', city: 'Paris' },
+  { query: 'le marais style', city: 'Paris' },
+  { query: 'french girl fashion', city: 'Paris' },
+  // NEW YORK / BROOKLYN - Emerging trends
+  { query: 'brooklyn fashion trends', city: 'New York' },
+  { query: 'williamsburg style', city: 'New York' },
+  { query: 'nyc street fashion 2025', city: 'New York' },
+  // TOKYO / HARAJUKU - Emerging trends
+  { query: 'harajuku fashion trends', city: 'Tokyo' },
+  { query: 'tokyo street style 2025', city: 'Tokyo' },
+  { query: 'japanese fashion trends', city: 'Tokyo' },
+  // EMERGING / MICROTRENDS (global but valuable)
+  { query: 'emerging fashion trends 2025', city: 'Global' },
+  { query: 'underrated fashion trends', city: 'Global' },
+  { query: 'fashion microtrends', city: 'Global' },
 ];
 
-const POSTS_PER_HASHTAG = 40;
+const RESULTS_PER_SEARCH = 30;
 
 function verifyCronAuth(req: NextRequest): boolean {
   const authHeader = req.headers.get('authorization');
@@ -55,17 +53,20 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    console.log('Starting TikTok microtrends scraping...');
-    const results: { hashtag: string; posts: number }[] = [];
+    console.log('Starting TikTok keyword search scraping...');
+    const results: { query: string; city: string; posts: number }[] = [];
     const currentWeek = getWeekString(new Date());
     
-    for (const hashtag of TIKTOK_HASHTAGS) {
+    for (const search of TIKTOK_SEARCHES) {
       try {
-        console.log(`Scraping TikTok: #${hashtag}...`);
+        console.log(`Searching TikTok: "${search.query}" (${search.city})...`);
         
-        const run = await apifyClient.actor('clockworks/tiktok-scraper').call({
-          hashtags: [hashtag],
-          resultsPerPage: POSTS_PER_HASHTAG,
+        // Use TikTok Keyword Search Scraper
+        const run = await apifyClient.actor('sociavault/tiktok-keyword-search-scraper').call({
+          query: search.query,
+          max_results: RESULTS_PER_SEARCH,
+          sort_by: 'relevance',
+          date_posted: 'this-month', // Recent content only
         });
         
         const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
@@ -76,33 +77,38 @@ export async function GET(req: NextRequest) {
         let totalShares = 0;
         
         for (const item of items as Array<Record<string, unknown>>) {
-          if (!item.id) continue;
+          const videoId = (item.id as string) || (item.video_id as string);
+          if (!videoId) continue;
           
-          const playCount = (item.playCount as number) || 0;
-          const diggCount = (item.diggCount as number) || 0;
-          const shareCount = (item.shareCount as number) || 0;
-          const commentCount = (item.commentCount as number) || 0;
-          const hashtagsArr = item.hashtags as Array<{ name?: string }> | undefined;
-          const authorMeta = item.authorMeta as { name?: string } | undefined;
+          const playCount = (item.play_count as number) || (item.playCount as number) || 0;
+          const likeCount = (item.digg_count as number) || (item.diggCount as number) || (item.like_count as number) || 0;
+          const shareCount = (item.share_count as number) || (item.shareCount as number) || 0;
+          const commentCount = (item.comment_count as number) || (item.commentCount as number) || 0;
+          const description = (item.desc as string) || (item.description as string) || (item.text as string) || '';
+          const author = (item.author as { nickname?: string })?.nickname || (item.authorMeta as { name?: string })?.name || '';
+          
+          // Extract hashtags from description
+          const hashtagMatches = description.match(/#[\w\u00C0-\u024F]+/g);
+          const hashtags = hashtagMatches ? hashtagMatches.map(h => h.toLowerCase().replace('#', '')) : [];
           
           totalPlays += playCount;
-          totalLikes += diggCount;
+          totalLikes += likeCount;
           totalShares += shareCount;
           
           const { error } = await supabaseAdmin
             .from('city_trends_raw')
             .upsert({
               platform: 'tiktok',
-              city: 'Global',
-              neighborhood: null,
-              post_id: String(item.id),
-              caption: (item.text as string) || '',
-              hashtags: hashtagsArr?.map((h) => h.name?.toLowerCase()) || [hashtag],
-              likes: diggCount,
+              city: search.city,
+              neighborhood: search.query, // Store the search query as context
+              post_id: String(videoId),
+              caption: description,
+              hashtags,
+              likes: likeCount,
               comments: commentCount,
               plays: playCount,
               shares: shareCount,
-              author: authorMeta?.name || '',
+              author,
             }, {
               onConflict: 'platform,post_id',
             });
@@ -110,12 +116,12 @@ export async function GET(req: NextRequest) {
           if (!error) insertedCount++;
         }
         
-        // Save hashtag aggregate stats
+        // Save search query aggregate stats
         if (insertedCount > 0) {
           await supabaseAdmin
             .from('tiktok_hashtag_trends')
             .upsert({
-              hashtag,
+              hashtag: search.query, // Store the search query
               period: currentWeek,
               total_plays: totalPlays,
               total_likes: totalLikes,
@@ -127,12 +133,12 @@ export async function GET(req: NextRequest) {
             });
         }
         
-        results.push({ hashtag, posts: insertedCount });
-        console.log(`✓ #${hashtag}: ${insertedCount} posts, ${(totalPlays/1000000).toFixed(1)}M plays`);
+        results.push({ query: search.query, city: search.city, posts: insertedCount });
+        console.log(`✓ "${search.query}": ${insertedCount} posts, ${(totalPlays/1000000).toFixed(1)}M plays`);
         
       } catch (error) {
-        console.error(`Error scraping #${hashtag}:`, error);
-        results.push({ hashtag, posts: 0 });
+        console.error(`Error searching "${search.query}":`, error);
+        results.push({ query: search.query, city: search.city, posts: 0 });
       }
     }
     
@@ -140,9 +146,9 @@ export async function GET(req: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      message: 'TikTok microtrends scraping completed',
+      message: 'TikTok keyword search scraping completed',
       total: totalPosts,
-      hashtags: results,
+      searches: results,
       timestamp: new Date().toISOString(),
     });
     
