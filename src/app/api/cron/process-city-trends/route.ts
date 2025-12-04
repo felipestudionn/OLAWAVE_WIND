@@ -21,36 +21,60 @@ function verifyCronAuth(req: NextRequest): boolean {
 }
 
 interface TrendExtraction {
-  items: Array<{ name: string; mentions: number }>;
-  styles: Array<{ name: string; mentions: number }>;
+  garments: Array<{ name: string; mentions: number; emerging: boolean }>;
+  styles: Array<{ name: string; mentions: number; emerging: boolean }>;
   colors: Array<{ name: string; mentions: number }>;
-  brands: Array<{ name: string; mentions: number }>;
+  brands: Array<{ name: string; mentions: number; type: string }>;
+  local_spots: Array<{ name: string; mentions: number }>;
+  micro_trends: Array<{ name: string; description: string; confidence: number }>;
 }
 
-// Use Gemini to extract trends from captions
-async function extractTrendsWithAI(captions: string[], city: string): Promise<TrendExtraction> {
+// Use Gemini to extract trends from TikTok captions
+async function extractTrendsWithAI(captions: string[], neighborhood: string, city: string): Promise<TrendExtraction> {
   const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.5-flash' });
   
-  const prompt = `Analyze these Instagram captions from ${city} street style posts and extract fashion trends.
+  const prompt = `You are a fashion trend analyst. Analyze these TikTok captions from ${neighborhood}, ${city} and extract REAL fashion intelligence.
 
-CAPTIONS:
-${captions.slice(0, 100).join('\n---\n')}
+CAPTIONS FROM ${neighborhood.toUpperCase()}:
+${captions.slice(0, 150).join('\n---\n')}
 
-Extract and count mentions of:
-1. ITEMS: Specific clothing items (e.g., "barrel jeans", "oversized blazer", "balaclava")
-2. STYLES: Fashion aesthetics (e.g., "gorpcore", "quiet luxury", "y2k")
-3. COLORS: Color trends mentioned (e.g., "burgundy", "olive green", "cream")
-4. BRANDS: Fashion brands mentioned (e.g., "Arc'teryx", "Salomon", "Carhartt")
+Your task: Find the SPECIFIC, ACTIONABLE fashion trends. Not generic things like "fashion" or "style" - we need REAL items people are wearing.
 
-Return ONLY valid JSON in this exact format:
+Extract:
+
+1. GARMENTS: Specific clothing pieces mentioned or shown
+   - Be SPECIFIC: "barrel jeans" not "jeans", "cropped leather jacket" not "jacket"
+   - Include: shoes, bags, accessories, specific cuts/styles
+   - Mark as "emerging: true" if it seems new/unusual
+
+2. STYLES/AESTHETICS: Fashion movements or looks
+   - Examples: "gorpcore", "quiet luxury", "coquette", "old money", "y2k revival"
+   - Mark as "emerging: true" if it's not mainstream yet
+
+3. COLORS: Specific color trends
+   - Be specific: "butter yellow" not "yellow", "chocolate brown" not "brown"
+
+4. BRANDS: Fashion brands mentioned (with @ or directly)
+   - Include type: "luxury", "streetwear", "vintage", "fast-fashion", "emerging-designer"
+
+5. LOCAL_SPOTS: Shops, markets, or locations mentioned in ${neighborhood}
+   - These are valuable for understanding WHERE trends come from
+
+6. MICRO_TRENDS: Identify 2-3 emerging micro-trends you see forming
+   - These are the "brotes verdes" - early signals of what's coming
+   - Include confidence score 0-100
+
+Return ONLY valid JSON:
 {
-  "items": [{"name": "item name", "mentions": 5}],
-  "styles": [{"name": "style name", "mentions": 3}],
-  "colors": [{"name": "color name", "mentions": 2}],
-  "brands": [{"name": "brand name", "mentions": 4}]
+  "garments": [{"name": "barrel jeans", "mentions": 8, "emerging": true}],
+  "styles": [{"name": "quiet luxury", "mentions": 5, "emerging": false}],
+  "colors": [{"name": "burgundy", "mentions": 4}],
+  "brands": [{"name": "Avirex", "mentions": 3, "type": "streetwear"}],
+  "local_spots": [{"name": "Brick Lane Market", "mentions": 6}],
+  "micro_trends": [{"name": "vintage bomber revival", "description": "People pairing vintage bombers with modern tailored pants", "confidence": 75}]
 }
 
-Sort each array by mentions descending. Include only items with 2+ mentions. Be specific with item names.`;
+Be analytical. Find patterns. Identify what's UNIQUE to ${neighborhood}.`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -62,10 +86,10 @@ Sort each array by mentions descending. Include only items with 2+ mentions. Be 
       return JSON.parse(jsonMatch[0]);
     }
   } catch (error) {
-    console.error(`Error extracting trends for ${city}:`, error);
+    console.error(`Error extracting trends for ${neighborhood}:`, error);
   }
   
-  return { items: [], styles: [], colors: [], brands: [] };
+  return { garments: [], styles: [], colors: [], brands: [], local_spots: [], micro_trends: [] };
 }
 
 export async function GET(req: NextRequest) {
@@ -74,16 +98,15 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    console.log('Processing city trends...');
+    console.log('🧠 Processing TikTok trends with Gemini AI...');
     const currentWeek = getWeekString(new Date());
     const previousWeek = getWeekString(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
     
-    // Get raw data from the last 7 days grouped by city
+    // Get TikTok data from the last 7 days grouped by neighborhood
     const { data: rawData, error } = await supabaseAdmin
       .from('city_trends_raw')
-      .select('city, neighborhood, caption, hashtags, likes, comments')
-      .eq('platform', 'instagram')
-      .neq('city', 'Global')
+      .select('city, neighborhood, caption, hashtags, likes, plays, shares')
+      .eq('platform', 'tiktok')
       .gte('collected_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
     
     if (error || !rawData) {
@@ -91,126 +114,184 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch raw data' }, { status: 500 });
     }
     
-    // Group by city
-    const citiesData: Record<string, { neighborhood: string; captions: string[]; totalEngagement: number }> = {};
+    console.log(`📊 Found ${rawData.length} TikTok posts to analyze`);
+    
+    // Group by neighborhood (not city)
+    const neighborhoodData: Record<string, { 
+      city: string; 
+      captions: string[]; 
+      totalViews: number;
+      totalLikes: number;
+    }> = {};
     
     for (const post of rawData) {
-      if (!citiesData[post.city]) {
-        citiesData[post.city] = {
-          neighborhood: post.neighborhood || '',
+      const key = post.neighborhood || post.city;
+      if (!neighborhoodData[key]) {
+        neighborhoodData[key] = {
+          city: post.city,
           captions: [],
-          totalEngagement: 0,
+          totalViews: 0,
+          totalLikes: 0,
         };
       }
-      if (post.caption) {
-        citiesData[post.city].captions.push(post.caption);
+      if (post.caption && post.caption.length > 10) {
+        neighborhoodData[key].captions.push(post.caption);
       }
-      citiesData[post.city].totalEngagement += (post.likes || 0) + (post.comments || 0);
+      neighborhoodData[key].totalViews += (post.plays || 0);
+      neighborhoodData[key].totalLikes += (post.likes || 0);
     }
     
     // Get previous week's data for comparison
     const { data: prevData } = await supabaseAdmin
       .from('city_trends_processed')
-      .select('city, trend_type, trend_name, mentions')
+      .select('neighborhood, trend_type, trend_name, mentions')
       .eq('period', previousWeek);
     
     const prevTrends: Record<string, number> = {};
     if (prevData) {
       for (const t of prevData) {
-        prevTrends[`${t.city}:${t.trend_type}:${t.trend_name}`] = t.mentions;
+        prevTrends[`${t.neighborhood}:${t.trend_type}:${t.trend_name}`] = t.mentions;
       }
     }
     
-    // Process each city with AI
-    const results: Record<string, number> = {};
+    // Process each neighborhood with AI
+    const results: Record<string, { trends: number; microTrends: string[] }> = {};
     
-    for (const [city, data] of Object.entries(citiesData)) {
-      if (data.captions.length < 10) {
-        console.log(`Skipping ${city}: not enough data (${data.captions.length} posts)`);
+    for (const [neighborhood, data] of Object.entries(neighborhoodData)) {
+      if (data.captions.length < 20) {
+        console.log(`⏭️ Skipping ${neighborhood}: not enough data (${data.captions.length} posts)`);
         continue;
       }
       
-      console.log(`Processing ${city} (${data.captions.length} posts)...`);
+      console.log(`\n🔍 Analyzing ${neighborhood} (${data.captions.length} posts, ${(data.totalViews/1000000).toFixed(1)}M views)...`);
       
-      const trends = await extractTrendsWithAI(data.captions, city);
-      const avgEngagement = data.captions.length > 0 ? data.totalEngagement / data.captions.length : 0;
+      const trends = await extractTrendsWithAI(data.captions, neighborhood, data.city);
+      const avgEngagement = data.captions.length > 0 ? data.totalLikes / data.captions.length : 0;
       
       let insertedCount = 0;
       
-      // Insert items
-      for (let i = 0; i < trends.items.length && i < 10; i++) {
-        const item = trends.items[i];
-        const prevKey = `${city}:item:${item.name}`;
+      // Insert garments
+      for (let i = 0; i < trends.garments.length && i < 15; i++) {
+        const garment = trends.garments[i];
+        const prevKey = `${neighborhood}:garment:${garment.name}`;
         const prevMentions = prevTrends[prevKey];
-        const changePercent = prevMentions ? ((item.mentions - prevMentions) / prevMentions) * 100 : null;
+        const changePercent = prevMentions ? ((garment.mentions - prevMentions) / prevMentions) * 100 : null;
         
         await supabaseAdmin.from('city_trends_processed').upsert({
-          city,
-          neighborhood: data.neighborhood,
+          city: data.city,
+          neighborhood,
           period: currentWeek,
-          trend_type: 'item',
-          trend_name: item.name,
-          mentions: item.mentions,
+          trend_type: 'garment',
+          trend_name: garment.name,
+          mentions: garment.mentions,
           avg_engagement: avgEngagement,
           change_percent: changePercent,
-          is_new: !prevMentions,
+          is_new: garment.emerging || !prevMentions,
           rank: i + 1,
-          source_platform: 'instagram',
+          source_platform: 'tiktok',
         }, { onConflict: 'city,period,trend_type,trend_name' });
         insertedCount++;
       }
       
       // Insert styles
-      for (let i = 0; i < trends.styles.length && i < 5; i++) {
+      for (let i = 0; i < trends.styles.length && i < 10; i++) {
         const style = trends.styles[i];
-        const prevKey = `${city}:style:${style.name}`;
+        const prevKey = `${neighborhood}:style:${style.name}`;
         const prevMentions = prevTrends[prevKey];
         const changePercent = prevMentions ? ((style.mentions - prevMentions) / prevMentions) * 100 : null;
         
         await supabaseAdmin.from('city_trends_processed').upsert({
-          city,
-          neighborhood: data.neighborhood,
+          city: data.city,
+          neighborhood,
           period: currentWeek,
           trend_type: 'style',
           trend_name: style.name,
           mentions: style.mentions,
           avg_engagement: avgEngagement,
           change_percent: changePercent,
-          is_new: !prevMentions,
+          is_new: style.emerging || !prevMentions,
           rank: i + 1,
-          source_platform: 'instagram',
+          source_platform: 'tiktok',
         }, { onConflict: 'city,period,trend_type,trend_name' });
         insertedCount++;
       }
       
-      // Insert colors
-      for (let i = 0; i < trends.colors.length && i < 5; i++) {
-        const color = trends.colors[i];
+      // Insert brands
+      for (let i = 0; i < trends.brands.length && i < 10; i++) {
+        const brand = trends.brands[i];
         
         await supabaseAdmin.from('city_trends_processed').upsert({
-          city,
-          neighborhood: data.neighborhood,
+          city: data.city,
+          neighborhood,
           period: currentWeek,
-          trend_type: 'color',
-          trend_name: color.name,
-          mentions: color.mentions,
+          trend_type: 'brand',
+          trend_name: brand.name,
+          mentions: brand.mentions,
+          avg_engagement: avgEngagement,
+          change_percent: null,
+          is_new: brand.type === 'emerging-designer',
+          rank: i + 1,
+          source_platform: 'tiktok',
+          metadata: { brand_type: brand.type },
+        }, { onConflict: 'city,period,trend_type,trend_name' });
+        insertedCount++;
+      }
+      
+      // Insert local spots
+      for (let i = 0; i < trends.local_spots.length && i < 5; i++) {
+        const spot = trends.local_spots[i];
+        
+        await supabaseAdmin.from('city_trends_processed').upsert({
+          city: data.city,
+          neighborhood,
+          period: currentWeek,
+          trend_type: 'local_spot',
+          trend_name: spot.name,
+          mentions: spot.mentions,
           avg_engagement: avgEngagement,
           change_percent: null,
           is_new: false,
           rank: i + 1,
-          source_platform: 'instagram',
+          source_platform: 'tiktok',
         }, { onConflict: 'city,period,trend_type,trend_name' });
         insertedCount++;
       }
       
-      results[city] = insertedCount;
-      console.log(`✓ ${city}: ${insertedCount} trends processed`);
+      // Insert micro-trends (the gold!)
+      const microTrendNames: string[] = [];
+      for (let i = 0; i < trends.micro_trends.length && i < 5; i++) {
+        const mt = trends.micro_trends[i];
+        microTrendNames.push(mt.name);
+        
+        await supabaseAdmin.from('city_trends_processed').upsert({
+          city: data.city,
+          neighborhood,
+          period: currentWeek,
+          trend_type: 'micro_trend',
+          trend_name: mt.name,
+          mentions: mt.confidence, // Use confidence as "strength"
+          avg_engagement: avgEngagement,
+          change_percent: null,
+          is_new: true,
+          rank: i + 1,
+          source_platform: 'tiktok',
+          metadata: { description: mt.description, confidence: mt.confidence },
+        }, { onConflict: 'city,period,trend_type,trend_name' });
+        insertedCount++;
+      }
+      
+      results[neighborhood] = { trends: insertedCount, microTrends: microTrendNames };
+      console.log(`✅ ${neighborhood}: ${insertedCount} trends extracted`);
+      if (microTrendNames.length > 0) {
+        console.log(`   🌱 Micro-trends: ${microTrendNames.join(', ')}`);
+      }
     }
     
     return NextResponse.json({
       success: true,
-      message: 'City trends processed',
+      message: 'TikTok trends processed with Gemini AI',
       period: currentWeek,
+      totalNeighborhoods: Object.keys(results).length,
       results,
       timestamp: new Date().toISOString(),
     });
