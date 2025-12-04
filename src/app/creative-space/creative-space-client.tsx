@@ -2042,21 +2042,21 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
         </div>
 
         {/* BLOCK 4: Neighborhood Trends - Real data from fashion neighborhoods */}
-        <div className="rounded-2xl border-0 bg-gradient-to-br from-slate-900 to-slate-800 p-8 space-y-8 shadow-xl text-white">
+        <div className="rounded-2xl border-0 bg-gradient-to-br from-slate-50 to-white p-8 space-y-8 shadow-sm">
           {/* Header */}
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500">
-                  <MapPin className="h-6 w-6 text-white" />
+                <div className="p-2 rounded-xl bg-violet-500/10">
+                  <MapPin className="h-6 w-6 text-violet-600" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold tracking-tight">Street Intelligence</h3>
-                  <p className="text-sm text-slate-400">Real-time trends from fashion neighborhoods · TikTok</p>
+                  <p className="text-sm text-muted-foreground">Real-time trends from fashion neighborhoods · TikTok</p>
                 </div>
               </div>
             </div>
-            <Button onClick={loadCityTrends} disabled={loadingCityTrends} variant="outline" className="gap-2 rounded-full px-6 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white">
+            <Button onClick={loadCityTrends} disabled={loadingCityTrends} variant="outline" className="gap-2 rounded-full px-6">
               {loadingCityTrends ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {cityTrends ? 'Refresh' : 'Load'}
             </Button>
@@ -2072,12 +2072,12 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                     onClick={() => setSelectedCity(n.neighborhood)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       selectedCity === n.neighborhood
-                        ? 'bg-gradient-to-r from-emerald-400 to-cyan-500 text-white shadow-lg shadow-emerald-500/25'
-                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 hover:text-white'
+                        ? 'bg-violet-600 text-white shadow-md'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:border-violet-300 hover:text-violet-600'
                     }`}
                   >
                     {n.neighborhood}
-                    <span className="opacity-60 ml-1 text-xs">· {n.city}</span>
+                    <span className="opacity-70 ml-1">· {n.city}</span>
                   </button>
                 ))}
               </div>
@@ -2088,9 +2088,8 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                   {currentNeighborhoodData.microTrends && currentNeighborhoodData.microTrends.length > 0 && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🌱</span>
-                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Emerging Micro-Trends</h4>
-                        <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/50 to-transparent" />
+                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">🌱 Emerging Micro-Trends</h4>
+                        <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
                       </div>
                       <div className="grid gap-4">
                         {currentNeighborhoodData.microTrends.map((mt: MicroTrend, idx: number) => (
@@ -2099,23 +2098,23 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                             onClick={() => toggleCityTrendSelection(`${selectedCity}:micro:${mt.name}`)}
                             className={`p-4 rounded-xl cursor-pointer transition-all border ${
                               selectedCityTrends.includes(`${selectedCity}:micro:${mt.name}`)
-                                ? 'bg-emerald-500/20 border-emerald-400'
-                                : 'bg-slate-700/30 border-slate-600 hover:border-emerald-500/50'
+                                ? 'bg-violet-50 border-violet-300'
+                                : 'bg-white border-slate-200 hover:border-violet-200'
                             }`}
                           >
                             <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-semibold text-white">{mt.name}</h5>
+                              <h5 className="font-semibold text-slate-800">{mt.name}</h5>
                               <div className="flex items-center gap-2">
-                                <div className="h-2 w-16 bg-slate-600 rounded-full overflow-hidden">
+                                <div className="h-2 w-16 bg-slate-200 rounded-full overflow-hidden">
                                   <div 
-                                    className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full"
+                                    className="h-full bg-gradient-to-r from-violet-400 to-pink-400 rounded-full"
                                     style={{ width: `${mt.confidence}%` }}
                                   />
                                 </div>
-                                <span className="text-xs text-emerald-400 font-bold">{mt.confidence}%</span>
+                                <span className="text-xs text-violet-600 font-bold">{mt.confidence}%</span>
                               </div>
                             </div>
-                            <p className="text-sm text-slate-400">{mt.description}</p>
+                            <p className="text-sm text-muted-foreground">{mt.description}</p>
                           </div>
                         ))}
                       </div>
@@ -2126,9 +2125,8 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                   {currentNeighborhoodData.garments && currentNeighborhoodData.garments.length > 0 && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">👕</span>
-                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Rising Garments</h4>
-                        <div className="flex-1 h-px bg-gradient-to-r from-slate-600 to-transparent" />
+                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">👕 Rising Garments</h4>
+                        <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {currentNeighborhoodData.garments.slice(0, 12).map((g: NeighborhoodGarment, idx: number) => {
@@ -2139,12 +2137,12 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                               onClick={() => toggleCityTrendSelection(`${selectedCity}:garment:${g.name}`)}
                               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                                 isSelected
-                                  ? 'bg-white text-slate-900'
-                                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600'
+                                  ? 'bg-violet-600 text-white'
+                                  : 'bg-white border border-slate-200 text-slate-700 hover:border-violet-300'
                               }`}
                             >
                               {g.name}
-                              {g.isNew && <span className="text-xs px-1.5 py-0.5 rounded bg-orange-500 text-white">NEW</span>}
+                              {g.isNew && <span className="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-600">NEW</span>}
                             </button>
                           );
                         })}
@@ -2158,8 +2156,7 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                     {currentNeighborhoodData.styles && currentNeighborhoodData.styles.length > 0 && (
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">🎨</span>
-                          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Aesthetics</h4>
+                          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">🎨 Aesthetics</h4>
                         </div>
                         <div className="space-y-2">
                           {currentNeighborhoodData.styles.slice(0, 6).map((s: NeighborhoodStyle, idx: number) => {
@@ -2170,14 +2167,14 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                                 onClick={() => toggleCityTrendSelection(`${selectedCity}:style:${s.name}`)}
                                 className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
                                   isSelected
-                                    ? 'bg-violet-500 text-white'
-                                    : 'bg-slate-700/30 hover:bg-slate-700/50'
+                                    ? 'bg-violet-600 text-white'
+                                    : 'bg-white border border-slate-200 hover:border-violet-200'
                                 }`}
                               >
-                                <span className="font-medium">{s.name}</span>
+                                <span className={`font-medium ${isSelected ? '' : 'text-slate-800'}`}>{s.name}</span>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs opacity-60">{s.mentions} mentions</span>
-                                  {s.isNew && <span className="text-xs px-1.5 py-0.5 rounded bg-orange-500 text-white">NEW</span>}
+                                  <span className={`text-xs ${isSelected ? 'text-violet-200' : 'text-slate-500'}`}>{s.mentions} mentions</span>
+                                  {s.isNew && <span className={`text-xs px-1.5 py-0.5 rounded ${isSelected ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'}`}>NEW</span>}
                                 </div>
                               </div>
                             );
@@ -2190,17 +2187,19 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                     {currentNeighborhoodData.brands && currentNeighborhoodData.brands.length > 0 && (
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">🏷️</span>
-                          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Brands Mentioned</h4>
+                          <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">🏷️ Brands Mentioned</h4>
                         </div>
                         <div className="space-y-2">
                           {currentNeighborhoodData.brands.slice(0, 6).map((b: NeighborhoodBrand, idx: number) => {
                             const isSelected = selectedCityTrends.includes(`${selectedCity}:brand:${b.name}`);
                             const typeColors: Record<string, string> = {
-                              'streetwear': 'bg-pink-500/20 text-pink-300',
-                              'vintage': 'bg-amber-500/20 text-amber-300',
-                              'luxury': 'bg-purple-500/20 text-purple-300',
-                              'emerging-designer': 'bg-emerald-500/20 text-emerald-300',
+                              'streetwear': 'bg-pink-100 text-pink-700',
+                              'vintage': 'bg-amber-100 text-amber-700',
+                              'vintage market': 'bg-amber-100 text-amber-700',
+                              'vintage store': 'bg-amber-100 text-amber-700',
+                              'luxury': 'bg-purple-100 text-purple-700',
+                              'concept store': 'bg-blue-100 text-blue-700',
+                              'emerging-designer': 'bg-green-100 text-green-700',
                             };
                             return (
                               <div
@@ -2208,12 +2207,12 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                                 onClick={() => toggleCityTrendSelection(`${selectedCity}:brand:${b.name}`)}
                                 className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
                                   isSelected
-                                    ? 'bg-cyan-500 text-white'
-                                    : 'bg-slate-700/30 hover:bg-slate-700/50'
+                                    ? 'bg-violet-600 text-white'
+                                    : 'bg-white border border-slate-200 hover:border-violet-200'
                                 }`}
                               >
-                                <span className="font-medium">{b.name}</span>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${typeColors[b.type] || 'bg-slate-600 text-slate-300'}`}>
+                                <span className={`font-medium ${isSelected ? '' : 'text-slate-800'}`}>{b.name}</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${isSelected ? 'bg-white/20 text-white' : typeColors[b.type] || 'bg-slate-100 text-slate-600'}`}>
                                   {b.type}
                                 </span>
                               </div>
@@ -2228,19 +2227,18 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                   {currentNeighborhoodData.localSpots && currentNeighborhoodData.localSpots.length > 0 && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">📍</span>
-                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Local Hotspots</h4>
-                        <div className="flex-1 h-px bg-gradient-to-r from-slate-600 to-transparent" />
+                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">📍 Local Hotspots</h4>
+                        <div className="flex-1 h-px bg-gradient-to-r from-muted to-transparent" />
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {currentNeighborhoodData.localSpots.map((spot: NeighborhoodSpot, idx: number) => (
                           <div
                             key={idx}
-                            className="px-3 py-1.5 rounded-full text-sm bg-slate-700/50 text-slate-300 flex items-center gap-2"
+                            className="px-3 py-1.5 rounded-full text-sm bg-slate-100 text-slate-700 flex items-center gap-2"
                           >
-                            <MapPin className="h-3 w-3" />
+                            <MapPin className="h-3 w-3 text-slate-500" />
                             {spot.name}
-                            <span className="text-xs opacity-50">{spot.mentions}</span>
+                            <span className="text-xs text-slate-400">{spot.mentions}</span>
                           </div>
                         ))}
                       </div>
@@ -2251,8 +2249,8 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
 
               {/* Selected Trends Summary */}
               {selectedCityTrends.length > 0 && (
-                <div className="pt-6 border-t border-slate-700">
-                  <h4 className="font-semibold flex items-center gap-2 mb-3 text-emerald-400">
+                <div className="pt-6 border-t">
+                  <h4 className="font-semibold flex items-center gap-2 mb-3 text-violet-600">
                     <Check className="h-4 w-4" />
                     Selected for Collection ({selectedCityTrends.length})
                   </h4>
@@ -2261,7 +2259,7 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
                       const parts = trend.split(':');
                       const displayName = parts.length >= 3 ? parts[2] : trend;
                       return (
-                        <Badge key={i} className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                        <Badge key={i} className="bg-violet-600 hover:bg-violet-700">
                           {displayName}
                           <X className="h-3 w-3 ml-1 cursor-pointer" onClick={(e) => { e.stopPropagation(); toggleCityTrendSelection(trend); }} />
                         </Badge>
@@ -2272,21 +2270,21 @@ export function CreativeSpaceClient({ signals = [] }: CreativeSpaceClientProps) 
               )}
 
               {/* Period info */}
-              <p className="text-xs text-slate-500 text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 Week {cityTrends.period} · Powered by TikTok + Gemini AI
               </p>
             </>
           ) : (
             <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 mb-6">
-                <MapPin className="h-10 w-10 text-white" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-50 mb-4">
+                <MapPin className="h-8 w-8 text-violet-600" />
               </div>
-              <h4 className="font-bold text-xl mb-2">Discover Street Intelligence</h4>
-              <p className="text-slate-400 mb-6 max-w-md mx-auto">
+              <h4 className="font-semibold text-lg mb-2">Discover Street Intelligence</h4>
+              <p className="text-muted-foreground mb-4 max-w-md mx-auto">
                 Real-time trends from Shoreditch, Le Marais, Williamsburg, Harajuku, Kreuzberg & Hongdae.
               </p>
-              <Button onClick={loadCityTrends} disabled={loadingCityTrends} className="bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-500 hover:to-cyan-600 text-white rounded-full px-8">
-                {loadingCityTrends ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+              <Button onClick={loadCityTrends} disabled={loadingCityTrends} className="bg-violet-600 hover:bg-violet-700">
+                {loadingCityTrends ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <MapPin className="h-4 w-4 mr-2" />}
                 Load Street Intelligence
               </Button>
             </div>
