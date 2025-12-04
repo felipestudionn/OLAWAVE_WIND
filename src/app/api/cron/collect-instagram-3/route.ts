@@ -50,30 +50,37 @@ export async function GET(req: NextRequest) {
         
         let insertedCount = 0;
         
-        for (const item of items as Array<Record<string, unknown>>) {
-          if (!item.id) continue;
+        // Instagram scraper returns locations with posts inside
+        for (const locationData of items as Array<Record<string, unknown>>) {
+          const posts = locationData.posts as Array<Record<string, unknown>> | undefined;
+          if (!posts || !Array.isArray(posts)) continue;
           
-          const caption = (item.caption as string) || '';
-          const hashtags = extractHashtags(caption);
-          
-          const { error } = await supabaseAdmin
-            .from('city_trends_raw')
-            .upsert({
-              platform: 'instagram',
-              city: location.city,
-              neighborhood: location.neighborhood,
-              post_id: String(item.id),
-              caption,
-              hashtags,
-              likes: (item.likesCount as number) || 0,
-              comments: (item.commentsCount as number) || 0,
-              image_url: (item.displayUrl as string) || (item.url as string) || '',
-              author: (item.ownerUsername as string) || '',
-            }, {
-              onConflict: 'platform,post_id',
-            });
-          
-          if (!error) insertedCount++;
+          for (const post of posts) {
+            const postId = (post.id as string) || (post.shortCode as string);
+            if (!postId) continue;
+            
+            const caption = (post.caption as string) || '';
+            const hashtags = extractHashtags(caption);
+            
+            const { error } = await supabaseAdmin
+              .from('city_trends_raw')
+              .upsert({
+                platform: 'instagram',
+                city: location.city,
+                neighborhood: location.neighborhood,
+                post_id: String(postId),
+                caption,
+                hashtags,
+                likes: (post.likesCount as number) || 0,
+                comments: (post.commentsCount as number) || 0,
+                image_url: (post.displayUrl as string) || (post.url as string) || '',
+                author: (post.ownerUsername as string) || '',
+              }, {
+                onConflict: 'platform,post_id',
+              });
+            
+            if (!error) insertedCount++;
+          }
         }
         
         results.push({
