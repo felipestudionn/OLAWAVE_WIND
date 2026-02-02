@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/navbar';
-import { Palette, Shuffle, Copy, Check, ArrowLeft, Search, X, Expand } from 'lucide-react';
+import { Palette, Shuffle, Copy, Check, ArrowLeft, Search, X } from 'lucide-react';
 import palettesData from '@/data/sanzo-palettes.json';
 
 interface SanzoColor {
@@ -146,44 +146,35 @@ export default function ColorPalettesPage() {
           )}
 
           {/* All Palettes Grid */}
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-8">
             {searchQuery ? `Matching Palettes` : 'Browse All Palettes'}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-16">
             {filteredPalettes.map((palette, paletteIndex) => (
               <div
                 key={paletteIndex}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all cursor-pointer group"
+                className="cursor-pointer group"
                 onClick={() => setSelectedPalette({ palette, index: paletteIndex })}
               >
-                <div className="flex h-24">
+                <p className="text-sm text-gray-500 mb-4">{paletteIndex + 1}.</p>
+                <div className="flex h-48 md:h-64">
                   {palette.map((color, colorIndex) => (
                     <div
                       key={colorIndex}
-                      className="flex-1 relative"
+                      className="flex-1"
                       style={{ backgroundColor: color.hex }}
                     />
                   ))}
                 </div>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-medium text-gray-700">
-                      Palette #{paletteIndex + 1}
-                    </p>
-                    <Expand className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-                  </div>
-                  <div className="space-y-1.5">
-                    {palette.map((color, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div 
-                          className="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0"
-                          style={{ backgroundColor: color.hex }}
-                        />
-                        <span className="text-xs text-gray-600 truncate flex-1">{color.name}</span>
-                        <span className="text-[10px] text-gray-400 uppercase">{color.hex}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex mt-6">
+                  {palette.map((color, colorIndex) => (
+                    <div key={colorIndex} className="flex-1">
+                      <p className="text-xs text-gray-400 mb-1">Name</p>
+                      <p className="text-sm text-gray-900">{color.name}</p>
+                      <p className="text-xs text-gray-400 mt-3 mb-1">Hex Code</p>
+                      <p className="text-sm text-gray-900">{color.hex}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
