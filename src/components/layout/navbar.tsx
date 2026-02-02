@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, ChevronRight, User, LogOut, FolderOpen } from "lucide-react";
+import { Sparkles, ChevronRight, User, LogOut, FolderOpen, Palette } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -127,6 +127,14 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
+                {/* Color Palettes */}
+                <Link
+                  href="/color-palettes"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
+                >
+                  <Palette className="mr-1.5 h-3.5 w-3.5" />
+                  Color Palettes
+                </Link>
                 {/* My Collections */}
                 <Link
                   href="/my-collections"
@@ -162,6 +170,13 @@ export function Navbar() {
               </>
             ) : (
               <>
+                <Link
+                  href="/color-palettes"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
+                >
+                  <Palette className="mr-1.5 h-3.5 w-3.5" />
+                  Color Palettes
+                </Link>
                 <button
                   onClick={() => setShowAuthModal(true)}
                   className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
@@ -287,6 +302,14 @@ export function Navbar() {
                   </button>
                 </div>
                 <Link
+                  href="/color-palettes"
+                  className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Palette className="h-4 w-4" />
+                  Color Palettes
+                </Link>
+                <Link
                   href="/my-collections"
                   className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
                   onClick={() => setMobileMenuOpen(false)}
@@ -296,13 +319,23 @@ export function Navbar() {
                 </Link>
               </>
             ) : (
-              <button
-                onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
-                className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
-              >
-                <User className="h-4 w-4" />
-                Sign In
-              </button>
+              <>
+                <Link
+                  href="/color-palettes"
+                  className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Palette className="h-4 w-4" />
+                  Color Palettes
+                </Link>
+                <button
+                  onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
+                  className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
+                >
+                  <User className="h-4 w-4" />
+                  Sign In
+                </button>
+              </>
             )}
             
             <div className="pt-2">
