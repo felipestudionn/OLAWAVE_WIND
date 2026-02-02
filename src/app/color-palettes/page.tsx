@@ -146,18 +146,17 @@ export default function ColorPalettesPage() {
           )}
 
           {/* All Palettes Grid */}
-          <h2 className="text-xl font-semibold text-gray-900 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">
             {searchQuery ? `Matching Palettes` : 'Browse All Palettes'}
           </h2>
-          <div className="space-y-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredPalettes.map((palette, paletteIndex) => (
               <div
                 key={paletteIndex}
-                className="cursor-pointer group"
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => setSelectedPalette({ palette, index: paletteIndex })}
               >
-                <p className="text-sm text-gray-500 mb-4">{paletteIndex + 1}.</p>
-                <div className="flex h-48 md:h-64">
+                <div className="flex h-24">
                   {palette.map((color, colorIndex) => (
                     <div
                       key={colorIndex}
@@ -166,13 +165,11 @@ export default function ColorPalettesPage() {
                     />
                   ))}
                 </div>
-                <div className="flex mt-6">
+                <div className="flex border-t border-gray-100">
                   {palette.map((color, colorIndex) => (
-                    <div key={colorIndex} className="flex-1">
-                      <p className="text-xs text-gray-400 mb-1">Name</p>
-                      <p className="text-sm text-gray-900">{color.name}</p>
-                      <p className="text-xs text-gray-400 mt-3 mb-1">Hex Code</p>
-                      <p className="text-sm text-gray-900">{color.hex}</p>
+                    <div key={colorIndex} className="flex-1 p-2 text-center border-r border-gray-100 last:border-r-0">
+                      <p className="text-[11px] text-gray-700 truncate">{color.name}</p>
+                      <p className="text-[10px] text-gray-400 uppercase">{color.hex}</p>
                     </div>
                   ))}
                 </div>
