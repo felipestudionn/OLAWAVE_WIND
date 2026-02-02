@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/navbar';
-import { Palette, Shuffle, Copy, Check, ArrowLeft, Search, X } from 'lucide-react';
+import { Palette, Shuffle, Copy, Check, ArrowLeft, Search, X, Expand } from 'lucide-react';
 import palettesData from '@/data/sanzo-palettes.json';
 
 interface SanzoColor {
@@ -17,6 +17,7 @@ export default function ColorPalettesPage() {
   const [copiedColor, setCopiedColor] = useState<string | null>(null);
   const [randomPalette, setRandomPalette] = useState<SanzoPalette | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPalette, setSelectedPalette] = useState<{ palette: SanzoPalette; index: number } | null>(null);
   
   const palettes = palettesData as SanzoPalette[];
 
@@ -148,43 +149,39 @@ export default function ColorPalettesPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             {searchQuery ? `Matching Palettes` : 'Browse All Palettes'}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPalettes.map((palette, paletteIndex) => (
               <div
                 key={paletteIndex}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
-                onClick={() => setRandomPalette(palette)}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all cursor-pointer group"
+                onClick={() => setSelectedPalette({ palette, index: paletteIndex })}
               >
-                <div className="flex h-20">
+                <div className="flex h-24">
                   {palette.map((color, colorIndex) => (
                     <div
                       key={colorIndex}
-                      className="flex-1 relative group/color"
+                      className="flex-1 relative"
                       style={{ backgroundColor: color.hex }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyToClipboard(color.hex);
-                      }}
-                    >
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/color:opacity-100 transition-opacity bg-black/30">
-                        {copiedColor === color.hex ? (
-                          <Check className="h-4 w-4 text-white" />
-                        ) : (
-                          <Copy className="h-4 w-4 text-white" />
-                        )}
-                      </div>
-                    </div>
+                    />
                   ))}
                 </div>
-                <div className="p-3">
-                  <p className="text-xs text-gray-500">
-                    #{paletteIndex + 1} · {palette.length} colors
-                  </p>
-                  <div className="flex gap-1 mt-1 flex-wrap">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-gray-700">
+                      Palette #{paletteIndex + 1}
+                    </p>
+                    <Expand className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                  </div>
+                  <div className="space-y-1.5">
                     {palette.map((color, i) => (
-                      <span key={i} className="text-[10px] text-gray-400 uppercase">
-                        {color.hex}
-                      </span>
+                      <div key={i} className="flex items-center gap-2">
+                        <div 
+                          className="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <span className="text-xs text-gray-600 truncate flex-1">{color.name}</span>
+                        <span className="text-[10px] text-gray-400 uppercase">{color.hex}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -193,6 +190,82 @@ export default function ColorPalettesPage() {
           </div>
         </div>
       </main>
+
+      {/* Full Screen Palette Modal */}
+      {selectedPalette && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setSelectedPalette(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Palette #{selectedPalette.index + 1}</h2>
+                <p className="text-sm text-gray-500 mt-1">{selectedPalette.palette.length} colors by Sanzo Wada</p>
+              </div>
+              <button
+                onClick={() => setSelectedPalette(null)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Large Color Display */}
+            <div className="flex h-48 md:h-64">
+              {selectedPalette.palette.map((color, index) => (
+                <div
+                  key={index}
+                  className="flex-1 relative cursor-pointer group"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => copyToClipboard(color.hex)}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                    {copiedColor === color.hex ? (
+                      <Check className="h-8 w-8 text-white" />
+                    ) : (
+                      <Copy className="h-8 w-8 text-white" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Color Details */}
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedPalette.palette.map((color, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => copyToClipboard(color.hex)}
+                  >
+                    <div 
+                      className="w-16 h-16 rounded-xl shadow-md flex-shrink-0"
+                      style={{ backgroundColor: color.hex }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{color.name}</p>
+                      <p className="text-sm text-gray-500 uppercase mt-1">{color.hex}</p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {copiedColor === color.hex ? (
+                        <Check className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Copy className="h-5 w-5 text-gray-400" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
