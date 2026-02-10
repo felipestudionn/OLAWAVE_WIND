@@ -103,7 +103,7 @@ async function generateImageWithGeminiFromPhoto(
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
 
   const url = new URL(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent'
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
   );
   url.searchParams.set('key', GEMINI_API_KEY);
 
