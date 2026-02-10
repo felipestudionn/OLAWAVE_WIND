@@ -3,6 +3,7 @@
 import { forwardRef, useState, useCallback } from 'react';
 import { ConstructionNote, SuggestedMeasurements, SketchOption } from '@/types/tech-pack';
 import RedNote from './RedNote';
+import MeasurementLines from './MeasurementLines';
 import MetadataHeader from './MetadataHeader';
 import FabricSwatch from './FabricSwatch';
 
@@ -14,12 +15,6 @@ interface TechPackPreviewProps {
   styleName: string;
   fabric: string;
 }
-
-const MEASUREMENT_LINES = [
-  { label: 'bust', y: 22 },
-  { label: 'waist', y: 32 },
-  { label: 'seat', y: 40 },
-];
 
 const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
   function TechPackPreview({ selectedSketch, selectedNotes, suggestedMeasurements, season, styleName, fabric }, ref) {
@@ -68,42 +63,29 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
           onFieldChange={handleHeaderChange}
         />
 
-        {/* Main sketch area — mannequin + sketch overlay */}
-        <div className="flex" style={{ minHeight: 720 }}>
-          {/* Measurement labels — left side */}
-          <div className="relative flex-shrink-0" style={{ width: 80 }}>
-            {MEASUREMENT_LINES.map((line) => (
-              <div
-                key={line.label}
-                className="absolute flex items-center"
-                style={{ top: `${line.y}%`, left: 0, right: 0 }}
-              >
-                <span className="text-[8px] text-gray-400 font-medium tracking-wide mr-1 whitespace-nowrap">
-                  {line.label}
-                </span>
-                <div className="flex-1 border-t border-dashed border-gray-300" />
-              </div>
-            ))}
+        {/* Sketch area — single front view */}
+        <div className="flex gap-2 mb-4" style={{ minHeight: 700 }}>
+          {/* Measurement lines — left side */}
+          <div className="relative flex-shrink-0" style={{ width: 60 }}>
+            <MeasurementLines
+              measurements={{
+                bust: suggestedMeasurements?.bust,
+                waist: suggestedMeasurements?.waist,
+                seat: suggestedMeasurements?.seat,
+              }}
+            />
           </div>
 
-          {/* Mannequin + sketch container */}
-          <div className="flex-1 relative" style={{ maxWidth: 500, margin: '0 auto' }}>
-            {/* Layer 1: Mannequin image (light pencil figure) */}
-            <img
-              src="/images/mannequin-front.png"
-              alt="Maniquí"
-              className="absolute inset-0 w-full h-full object-contain"
-            />
-
-            {/* Layer 2: Sketch image (multiply blend — white disappears, black lines stay) */}
-            <img
-              src={selectedSketch.frontImageBase64}
-              alt="Vista frontal"
-              className="absolute inset-0 w-full h-full object-contain"
-              style={{ mixBlendMode: 'multiply' }}
-            />
-
-            {/* Layer 3: Red construction notes */}
+          {/* Front sketch image — centered, large */}
+          <div className="flex-1 relative" style={{ maxWidth: 520, height: 700, margin: '0 auto' }}>
+            <div className="w-full h-full flex items-center justify-center bg-white">
+              <img
+                src={selectedSketch.frontImageBase64}
+                alt="Vista frontal"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            {/* Front notes */}
             <div className="absolute inset-0 pointer-events-none">
               {frontNotes.map((note, i) => (
                 <RedNote
@@ -116,8 +98,6 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
                 />
               ))}
             </div>
-
-            {/* Label */}
             <div className="absolute bottom-0 left-0 right-0 text-center text-[9px] text-gray-400 font-medium uppercase tracking-wider">
               Frontal
             </div>
@@ -125,7 +105,7 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
         </div>
 
         {/* Bottom: Fabric swatch only */}
-        <div className="mt-2">
+        <div>
           <p className="text-[8px] text-gray-400 font-medium mb-1 uppercase tracking-wide">Tejido</p>
           <FabricSwatch
             swatchBase64={swatchBase64}

@@ -2,9 +2,13 @@
 export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto de referencia y describir la prenda con máximo detalle para reproducirla fielmente como un sketch técnico de vista frontal.
 
 INSTRUCCIONES:
-1. Analiza la FOTO PRINCIPAL en detalle absoluto: silueta, corte, largo, mangas, cuello, detalles constructivos, proporciones, acabados, cierres, bolsillos, costuras visibles
-2. Describe VISTA FRONTAL con máximo detalle: cada elemento visible desde delante, incluyendo tipo exacto de cuello, forma de cierre, número y posición de botones, tipo de bolsillos, costuras decorativas, pespuntes, acabados de bordes, proporciones exactas
-3. Incluye todos los detalles constructivos: tipo de costura, tipo de cierre, acabados, ribetes, entretelas visibles
+1. Analiza la FOTO PRINCIPAL con lupa: silueta exacta, corte, largo, mangas, cuello, cierres, bolsillos, costuras
+2. CIERRES: describe tipo exacto (botones, alamares/brandeburgos, cremallera, corchetes, lazos), número exacto, posición exacta, forma del cierre
+3. CUELLO: tipo exacto (mao/mandarín, solapa, cuello camisero, etc.), altura, forma, acabado
+4. BOLSILLOS: tipo (plastrón, vivo, ojal, parche), posición, tamaño, tapeta si la tiene
+5. COSTURAS: pespuntes visibles, costuras decorativas, ribetes, vivos, acabados de bordes
+6. MANGAS: tipo (montada, raglán, japonesa), largo exacto, puño, acabado
+7. PROPORCIONES: largo total respecto a cadera, ancho de hombros, cintura marcada o recta
 
 FORMATO DE SALIDA (JSON puro, sin markdown):
 {
@@ -29,31 +33,27 @@ export function buildPhotoToSketchPrompt(
   garmentType: string,
   claudeDescription: string
 ): string {
-  return `Transform this ${garmentType} into a professional fashion technical drawing, front view as if worn on a standing body.
+  return `Redraw this exact ${garmentType} as a professional fashion flat technical drawing. Copy EVERY detail from this photo exactly.
 
-CRITICAL REQUIREMENTS:
-- Pure white background (#FFFFFF), absolutely nothing else in the background
-- Single garment centered, perfectly symmetrical, facing straight forward
-- Front view as worn on a standing female figure — show natural shoulder slope, fitted waist, hip curve
-- Do NOT draw the body or figure — only the garment silhouette as it would look when worn
-- Bold, clean, confident BLACK outlines (2-3px stroke weight)
-- All construction lines must be perfectly straight and parallel where they should be
-- Symmetrical: left side mirrors right side exactly
+COPY THESE DETAILS EXACTLY FROM THE PHOTO:
+- Exact collar type and shape as shown
+- Exact closure type: buttons, toggles, zippers, frog closures — draw them exactly as they appear
+- Exact number and position of closures/buttons
+- Exact pocket shapes, flap details, welt pockets
+- Exact seam lines, topstitching, decorative stitching
+- Exact proportions: sleeve length, body length, shoulder width
+- Exact hem shape and finishing
 
-STYLE:
-- Professional fashion CAD technical illustration style
-- Like a high-end fashion flat from CLO3D or Adobe Illustrator
-- Sharp precise lines, no sketchy or hand-drawn wobble
-- Include every visible construction detail: seams, darts, topstitching, buttons, zippers, pockets, collars, cuffs
-- Show stitch lines as fine dashed lines where appropriate
-- Buttons as small filled circles with cross-stitch detail
+DRAWING STYLE:
+- Pure white background, nothing else
+- Flat lay perspective: garment laid flat on a table
+- Bold clean BLACK outlines (2-3px weight), perfectly symmetrical
+- Sharp precise lines like Adobe Illustrator or CLO3D fashion flat
+- Fine dashed lines for stitch details
+- No color, no shading, no gray, no texture — only black line art
+- No body, no mannequin, no text, no labels, no shadows
 
-ABSOLUTELY NO:
-- No color, no shading, no gradients, no gray tones, no texture fills
-- No text, no labels, no annotations
-- No background elements, no shadows
-- No body, skin, face, hands, or mannequin visible — only the garment outline
-- No wrinkles or heavy draping
+IMPORTANT: Do not simplify or generalize the design. Every closure, every seam, every pocket detail from the original photo MUST appear in the sketch. This is a technical drawing for manufacturing — accuracy is critical.
 
 GARMENT DETAILS: ${claudeDescription}`;
 }
