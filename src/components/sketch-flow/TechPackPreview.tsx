@@ -89,7 +89,7 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
           <div className="flex-1 relative" style={{ maxWidth: 320, height: 480 }}>
             <div className="w-full h-full flex items-center justify-center bg-white">
               <img
-                src={`data:image/png;base64,${selectedSketch.frontImageBase64}`}
+                src={selectedSketch.frontImageBase64}
                 alt="Vista frontal"
                 className="max-w-full max-h-full object-contain"
               />
@@ -116,7 +116,7 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
           <div className="flex-1 relative" style={{ maxWidth: 320, height: 480 }}>
             <div className="w-full h-full flex items-center justify-center bg-white">
               <img
-                src={`data:image/png;base64,${selectedSketch.backImageBase64}`}
+                src={selectedSketch.backImageBase64}
                 alt="Vista trasera"
                 className="max-w-full max-h-full object-contain"
               />

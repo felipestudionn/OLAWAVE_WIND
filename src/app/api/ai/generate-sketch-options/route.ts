@@ -97,7 +97,7 @@ async function generateImageWithFlux(prompt: string): Promise<string> {
   if (!HF_TOKEN) throw new Error('HUGGING_FACE_ACCESS_TOKEN not configured');
 
   const response = await fetch(
-    'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+    'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
     {
       method: 'POST',
       headers: {
@@ -120,10 +120,11 @@ async function generateImageWithFlux(prompt: string): Promise<string> {
     throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`);
   }
 
-  // Flux returns raw image bytes
+  // Flux returns raw image bytes (JPEG)
+  const contentType = response.headers.get('content-type') || 'image/jpeg';
   const arrayBuffer = await response.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString('base64');
-  return base64;
+  return `data:${contentType};base64,${base64}`;
 }
 
 // Step 2b: Generate sketch image with Gemini Imagen (fallback)
@@ -131,7 +132,7 @@ async function generateImageWithGemini(prompt: string): Promise<string> {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
 
   const url = new URL(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent'
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
   );
   url.searchParams.set('key', GEMINI_API_KEY);
 
@@ -163,10 +164,11 @@ async function generateImageWithGemini(prompt: string): Promise<string> {
     throw new Error('No image in Gemini response');
   }
 
-  return imagePart.inline_data.data;
+  const mimeType = imagePart.inline_data.mime_type || 'image/png';
+  return `data:${mimeType};base64,${imagePart.inline_data.data}`;
 }
 
-// Generate a single image with fallback
+// Generate a single image with fallback — returns base64 with data URI prefix
 async function generateImage(prompt: string): Promise<string> {
   // Try Hugging Face Flux first
   try {

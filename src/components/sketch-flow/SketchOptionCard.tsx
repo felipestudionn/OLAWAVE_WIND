@@ -34,7 +34,7 @@ export default function SketchOptionCard({ option, isSelected, onSelect }: Sketc
         {/* Front */}
         <div className="flex-1 bg-white border border-gray-100 rounded-lg overflow-hidden">
           <img
-            src={`data:image/png;base64,${option.frontImageBase64}`}
+            src={option.frontImageBase64}
             alt="Vista frontal"
             className="w-full h-auto object-contain"
             style={{ maxHeight: 200 }}
@@ -44,7 +44,7 @@ export default function SketchOptionCard({ option, isSelected, onSelect }: Sketc
         {/* Back */}
         <div className="flex-1 bg-white border border-gray-100 rounded-lg overflow-hidden">
           <img
-            src={`data:image/png;base64,${option.backImageBase64}`}
+            src={option.backImageBase64}
             alt="Vista trasera"
             className="w-full h-auto object-contain"
             style={{ maxHeight: 200 }}
