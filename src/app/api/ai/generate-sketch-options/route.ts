@@ -8,6 +8,7 @@ import {
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const HF_TOKEN = process.env.HUGGING_FACE_ACCESS_TOKEN;
+const FAL_KEY = process.env.FAL_KEY;
 
 interface RequestBody {
   images: Array<{
@@ -95,8 +96,48 @@ async function generateConcepts(body: RequestBody): Promise<{ baseDescription: s
   };
 }
 
-// Step 2: HuggingFace image-to-image — photo + prompt → line drawing sketch
-async function generateSketchWithHF(
+// Helper: fetch image from URL and convert to data URI
+async function fetchImageAsDataUri(url: string): Promise<string> {
+  const res = await fetch(url);
+  const arrayBuffer = await res.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString('base64');
+  const contentType = res.headers.get('content-type') || 'image/png';
+  return `data:${contentType};base64,${base64}`;
+}
+
+// Step 2a: fal.ai lineart preprocessor — photo → clean line drawing (BEST quality)
+async function extractLineartWithFal(
+  photoBase64: string,
+  photoMimeType: string
+): Promise<string> {
+  if (!FAL_KEY) throw new Error('FAL_KEY not configured');
+
+  const response = await fetch('https://fal.run/fal-ai/image-preprocessors/lineart', {
+    method: 'POST',
+    headers: {
+      Authorization: `Key ${FAL_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      image_url: `data:${photoMimeType};base64,${photoBase64}`,
+      coarse: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`fal.ai lineart error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  if (data.image?.url) {
+    return fetchImageAsDataUri(data.image.url);
+  }
+  throw new Error('No image in fal.ai lineart response');
+}
+
+// Step 2b: FLUX Kontext via HuggingFace router — photo + prompt → sketch
+async function generateSketchWithFlux(
   prompt: string,
   photoBase64: string,
   photoMimeType: string,
@@ -104,9 +145,6 @@ async function generateSketchWithHF(
   provider: string
 ): Promise<string> {
   if (!HF_TOKEN) throw new Error('HUGGING_FACE_ACCESS_TOKEN not configured');
-
-  // Convert base64 to binary buffer for the multipart request
-  const imageBuffer = Buffer.from(photoBase64, 'base64');
 
   const response = await fetch(
     `https://router.huggingface.co/${provider}/models/${model}`,
@@ -117,10 +155,11 @@ async function generateSketchWithHF(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: `data:${photoMimeType};base64,${photoBase64}`,
-        parameters: {
-          prompt,
-        },
+        prompt,
+        image_url: `data:${photoMimeType};base64,${photoBase64}`,
+        guidance_scale: 8,
+        num_inference_steps: 35,
+        output_format: 'png',
       }),
     }
   );
@@ -132,9 +171,13 @@ async function generateSketchWithHF(
 
   const contentType = response.headers.get('content-type') || 'image/png';
 
-  // If response is JSON (some providers return base64 in JSON)
   if (contentType.includes('application/json')) {
     const data = await response.json();
+    // fal-ai returns images array with URLs
+    if (data.images?.[0]?.url) {
+      return fetchImageAsDataUri(data.images[0].url);
+    }
+    // HuggingFace native format
     if (data.image) return `data:image/png;base64,${data.image}`;
     if (data[0]?.image) return `data:image/png;base64,${data[0].image}`;
     throw new Error(`Unexpected JSON response from ${model}`);
@@ -146,22 +189,35 @@ async function generateSketchWithHF(
   return `data:${contentType};base64,${base64}`;
 }
 
-// Try multiple providers: FLUX Kontext → Qwen Image Edit → HunyuanImage
+// Main sketch generation: lineart extraction → FLUX Kontext fallback
 async function generateSketch(
   prompt: string,
   photoBase64: string,
-  photoMimeType: string
+  photoMimeType: string,
+  view: 'front' | 'back'
 ): Promise<string> {
+  // For front view: try fal.ai lineart extraction first (best quality)
+  if (view === 'front' && FAL_KEY) {
+    try {
+      console.log('Trying fal.ai lineart extraction (front view)...');
+      const result = await extractLineartWithFal(photoBase64, photoMimeType);
+      console.log('fal.ai lineart extraction successful');
+      return result;
+    } catch (err) {
+      console.error('fal.ai lineart extraction failed:', err);
+    }
+  }
+
+  // Fallback: FLUX Kontext generation
   const providers = [
     { model: 'black-forest-labs/FLUX.1-Kontext-dev', provider: 'fal-ai' },
     { model: 'Qwen/Qwen-Image-Edit-2511', provider: 'fal-ai' },
-    { model: 'tencent/HunyuanImage-3.0-Instruct', provider: 'fal-ai' },
   ];
 
   for (const { model, provider } of providers) {
     try {
       console.log(`Trying ${model}...`);
-      const result = await generateSketchWithHF(prompt, photoBase64, photoMimeType, model, provider);
+      const result = await generateSketchWithFlux(prompt, photoBase64, photoMimeType, model, provider);
       console.log(`${model} successful`);
       return result;
     } catch (err) {
@@ -211,8 +267,8 @@ export async function POST(req: NextRequest) {
         const backPrompt = buildPhotoToSketchPrompt('back', body.garmentType, concept.description);
 
         const [frontImage, backImage] = await Promise.all([
-          generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType),
-          generateSketch(backPrompt, primaryPhoto.base64, primaryPhoto.mimeType),
+          generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType, 'front'),
+          generateSketch(backPrompt, primaryPhoto.base64, primaryPhoto.mimeType, 'back'),
         ]);
 
         return {

@@ -44,30 +44,17 @@ REGLAS:
 - NUNCA cambiar: largo total, ancho de hombros, tipo de manga, proporciones generales, forma de la silueta
 - SÍ se puede cambiar: tipo de cuello, cierres (botones vs cremallera vs alamares), bolsillos, acabados, ribetes, costuras decorativas`;
 
-// Gemini image-to-image prompt: photo + Claude's detailed description → line drawing
+// FLUX Kontext image editing prompt: photo → fashion flat sketch
 export function buildPhotoToSketchPrompt(
   view: 'front' | 'back',
   garmentType: string,
   claudeDescription: string
 ): string {
-  const viewInstruction = view === 'front'
-    ? 'Convert this garment photo into a FRONT VIEW flat technical line drawing.'
-    : 'Based on this garment photo, draw the BACK VIEW as a flat technical line drawing.';
+  if (view === 'front') {
+    return `Convert this ${garmentType} photograph into a clean black-and-white technical fashion flat sketch. Remove all color, shading, texture, and background. Keep ONLY thin black outlines on a pure white background. Maintain the exact same silhouette, proportions, and construction details (seams, closures, stitching, buttons, pockets). The result should look like a professional hand-drawn fashion technical illustration with a fine-tip 0.3mm pen. No mannequin, no body, flat lay perspective. No text or labels.`;
+  }
 
-  return `${viewInstruction}
-
-THIS GARMENT IS: ${garmentType}
-EXACT DESCRIPTION: ${claudeDescription}
-
-CRITICAL RULES:
-- Draw THIS EXACT garment from the photo — same silhouette, same length, same proportions, same details
-- FLAT drawing: the garment laid flat on a table, NO body, NO mannequin, NO human figure
-- ONLY thin black lines on pure white background
-- NO color fill, NO shading, NO gradients, NO texture — ONLY black outlines
-- Include construction details: seams (dashed lines), buttons (small circles), pockets, closures, topstitching
-- The drawing must look like a hand-drawn technical pattern sketch with a fine black pen
-- DO NOT add any text, labels, or annotations to the image
-- DO NOT change the garment — draw exactly what you see in the photo`;
+  return `Based on this ${garmentType}, generate a BACK VIEW technical fashion flat sketch in clean black-and-white line art. Pure white background with only thin black outlines. Same silhouette and proportions as the front. Show back construction details: back seams, yoke, darts, back closures, vents. Professional fashion flat sketch style, like a hand-drawn technical illustration. No body, no mannequin, flat lay. No text or labels. Details: ${claudeDescription}`;
 }
 
 // Prompt for Claude to propose construction notes
