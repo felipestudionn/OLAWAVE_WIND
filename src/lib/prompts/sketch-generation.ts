@@ -1,47 +1,48 @@
 // Concept generation — primary photo is THE garment, secondary photos add detail modifications
 export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto principal de referencia y proponer variantes de diseño.
 
-IMPORTANTE: La FOTO 1 es la FOTO PRINCIPAL. Tu primer concepto SIEMPRE debe ser una reproducción FIEL al 100% de esa prenda exactamente como aparece en la foto.
+REGLA FUNDAMENTAL: TODOS los conceptos comparten la MISMA silueta base, largo, y proporciones de la FOTO PRINCIPAL. Las variantes SOLO cambian detalles constructivos específicos (tipo de cuello, cierres, bolsillos, acabados). La silueta, largo, ancho y forma general NUNCA cambian.
 
 INSTRUCCIONES:
 1. Analiza la FOTO 1 (principal) en detalle absoluto: silueta, corte, largo, mangas, cuello, detalles constructivos, proporciones, acabados, cierres, bolsillos, costuras visibles
-2. El CONCEPTO 1 ("Fiel al original") debe describir la prenda de la foto principal tal cual es, sin NINGÚN cambio
-3. Si hay fotos secundarias (2, 3, 4), lee sus instrucciones y crea conceptos adicionales que partan de la prenda principal pero incorporen los detalles solicitados de las fotos secundarias
-4. Si solo hay 1 foto, genera 3 variantes adicionales con cambios constructivos sutiles (cuello, mangas, largo, acabados)
-
-REGLAS:
-- Cada concepto debe describir la prenda de forma técnica y precisa
-- Incluir silueta, detalles constructivos, acabados, y proporción
-- Describir tanto la VISTA FRONTAL como la VISTA TRASERA
-- Las descripciones deben ser lo suficientemente detalladas para que un ilustrador pueda dibujar la prenda EXACTA
-- El CONCEPTO 1 SIEMPRE se llama "Fiel al original" y describe EXACTAMENTE lo que se ve en la foto principal
-- Escribe en español
+2. Genera una DESCRIPCIÓN BASE de la silueta: forma general, largo, ancho de hombros, tipo de manga, proporciones. Esta descripción es IDÉNTICA para los 4 conceptos.
+3. El CONCEPTO 1 ("Fiel al original") describe la prenda de la foto principal tal cual, sin NINGÚN cambio
+4. Los CONCEPTOS 2-4 mantienen la MISMA silueta base y solo varían detalles puntuales según las fotos secundarias o sugerencias creativas
+5. Si solo hay 1 foto, las variantes cambian SOLO detalles menores (tipo de cierre, acabado de cuello, estilo de bolsillo) manteniendo exactamente la misma forma
 
 FORMATO DE SALIDA (JSON puro, sin markdown):
 {
+  "baseDescription": "Descripción de la silueta base que aplica a TODOS los conceptos: forma, largo, ancho, tipo de manga, proporciones exactas de la foto principal",
   "concepts": [
     {
       "id": "1",
       "title": "Fiel al original",
-      "description": "Descripción técnica completa y fiel de la prenda tal como aparece en la foto principal. Vista frontal: ... Vista trasera: ..."
+      "description": "Copia exacta de la foto principal sin cambios. Vista frontal: ... Vista trasera: ..."
     },
     {
       "id": "2",
-      "title": "...",
-      "description": "..."
+      "title": "Nombre corto del cambio",
+      "description": "MISMA silueta base. Cambios: [solo los detalles específicos que cambian respecto al original]"
     },
     {
       "id": "3",
       "title": "...",
-      "description": "..."
+      "description": "MISMA silueta base. Cambios: [...]"
     },
     {
       "id": "4",
       "title": "...",
-      "description": "..."
+      "description": "MISMA silueta base. Cambios: [...]"
     }
   ]
-}`;
+}
+
+REGLAS:
+- Escribe en español
+- Describir tanto VISTA FRONTAL como VISTA TRASERA en cada concepto
+- Los conceptos 2-4 deben empezar diciendo "MISMA silueta base." y luego SOLO listar qué detalles cambian
+- NUNCA cambiar: largo total, ancho de hombros, tipo de manga, proporciones generales, forma de la silueta
+- SÍ se puede cambiar: tipo de cuello, cierres (botones vs cremallera vs alamares), bolsillos, acabados, ribetes, costuras decorativas`;
 
 // Image-to-image: prompt sent to Gemini WITH the reference photo to convert it to a technical sketch
 export function buildSketchFromPhotoPrompt(
@@ -86,6 +87,27 @@ REQUISITOS CRÍTICOS — ESTILO FLAT SKETCH:
 
 PRENDA: ${garmentType}
 MODIFICACIONES: ${conceptDescription}`;
+}
+
+// Variant prompt: takes the BASE SKETCH (not original photo) and modifies only specific details
+export function buildVariantFromBasePrompt(
+  view: 'front' | 'back',
+  garmentType: string,
+  modifications: string
+): string {
+  const viewLabel = view === 'front' ? 'FRONTAL' : 'TRASERA';
+  return `Esta imagen es un flat sketch técnico de moda. Modifícalo siguiendo las instrucciones, pero MANTÉN EXACTAMENTE la misma silueta, largo, proporciones y forma general.
+
+INSTRUCCIONES CRÍTICAS:
+- Esta es la vista ${viewLabel}
+- MANTÉN: la silueta idéntica, el largo exacto, el ancho de hombros, el tipo de manga, las proporciones generales
+- MODIFICA SOLO: ${modifications}
+- El resultado debe ser un flat sketch técnico con las mismas características: líneas negras finas sobre fondo blanco puro
+- SIN color, SIN relleno, SIN sombreado — solo trazos de línea negra
+- La prenda debe tener EXACTAMENTE el mismo tamaño y posición en la imagen
+- NO cambiar la forma general de la prenda, solo los detalles indicados
+
+PRENDA: ${garmentType}`;
 }
 
 // Text-only prompt for image generation (fallback when no reference photo available)
@@ -183,7 +205,12 @@ NOTAS ADICIONALES: ${data.additionalNotes}
 INSTRUCCIONES POR FOTO:
 ${photoInstructions}
 
-RECUERDA: El concepto 1 SIEMPRE es "Fiel al original" — copia exacta de la foto principal. Los conceptos 2-4 parten de esa base e incorporan cambios. Solo JSON, sin markdown.`;
+RECUERDA:
+- Incluye "baseDescription" con la silueta base (idéntica para todos)
+- Concepto 1 = "Fiel al original", copia exacta sin cambios
+- Conceptos 2-4 = MISMA silueta, solo cambian detalles puntuales según las fotos secundarias
+- NUNCA cambiar silueta, largo ni proporciones entre conceptos
+- Solo JSON, sin markdown.`;
 }
 
 export function buildCommentUserPrompt(data: {
