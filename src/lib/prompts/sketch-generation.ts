@@ -44,47 +44,30 @@ REGLAS:
 - NUNCA cambiar: largo total, ancho de hombros, tipo de manga, proporciones generales, forma de la silueta
 - SÍ se puede cambiar: tipo de cuello, cierres (botones vs cremallera vs alamares), bolsillos, acabados, ribetes, costuras decorativas`;
 
-// SVG sketch generation — Claude sees photos and generates SVG flat sketches directly
-export const SVG_SKETCH_PROMPT = `Eres un experto ilustrador técnico de moda especializado en crear FLAT SKETCHES (dibujos planos técnicos) en formato SVG.
-
-REGLAS SVG CRÍTICAS:
-1. viewBox="0 0 400 500" — la prenda debe estar CENTRADA y ocupar la mayor parte del espacio
-2. Dibuja SOLO la prenda PLANA, como extendida sobre una mesa — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
-3. La prenda debe estar centrada en x=200
-4. Usar stroke="#000000" con stroke-width="1.5" para líneas principales del contorno
-5. Usar stroke="#000000" con stroke-width="0.75" y stroke-dasharray="3 3" para líneas de costura/pespunte internas
-6. Botones: círculos pequeños (r=3) con fill="none" stroke="#000000"
-7. Bolsillos: stroke-width="1" con líneas limpias
-8. NO usar fill excepto fill="none" — NUNCA colores de relleno
-9. Estilo: dibujo técnico plano (flat sketch), NO ilustración de moda, NO artístico
-10. Incluir detalles constructivos: topstitching, pinzas, pliegues, cierres, cremalleras, ojales
-11. El SVG debe ser un elemento válido completo que empiece con <svg y termine con </svg>
-12. Usar comillas simples dentro de los atributos SVG
-13. La prenda debe ser SIMÉTRICA (eje central x=200)
-14. Proporciones realistas — el largo, ancho y forma deben coincidir EXACTAMENTE con la descripción
-
-FORMATO DE SALIDA (JSON puro, sin markdown):
-{
-  "sketchFrontSvg": "<svg viewBox='0 0 400 500' xmlns='http://www.w3.org/2000/svg'>...</svg>",
-  "sketchBackSvg": "<svg viewBox='0 0 400 500' xmlns='http://www.w3.org/2000/svg'>...</svg>"
-}`;
-
-export function buildSvgSketchUserPrompt(
-  conceptDescription: string,
-  garmentType: string
+// Gemini image-to-image prompt: photo + Claude's detailed description → line drawing
+export function buildPhotoToSketchPrompt(
+  view: 'front' | 'back',
+  garmentType: string,
+  claudeDescription: string
 ): string {
-  return `Genera los SVG de FLAT SKETCH (vista frontal y trasera) para este diseño:
+  const viewInstruction = view === 'front'
+    ? 'Convert this garment photo into a FRONT VIEW flat technical line drawing.'
+    : 'Based on this garment photo, draw the BACK VIEW as a flat technical line drawing.';
 
-TIPO DE PRENDA: ${garmentType}
-DESCRIPCIÓN DEL DISEÑO: ${conceptDescription}
+  return `${viewInstruction}
 
-IMPORTANTE:
-- Copia FIELMENTE la silueta, largo, proporciones y todos los detalles constructivos descritos
-- Vista FRONTAL: mostrar apertura, cierres, bolsillos, cuello/escote, detalles frontales
-- Vista TRASERA: interpretar coherentemente la parte trasera (costuras, canesú, espalda)
-- La prenda PLANA centrada en el SVG, sin cuerpo ni maniquí
-- Solo líneas negras sobre fondo blanco, sin rellenos de color
-- Solo JSON válido, sin markdown ni backticks.`;
+THIS GARMENT IS: ${garmentType}
+EXACT DESCRIPTION: ${claudeDescription}
+
+CRITICAL RULES:
+- Draw THIS EXACT garment from the photo — same silhouette, same length, same proportions, same details
+- FLAT drawing: the garment laid flat on a table, NO body, NO mannequin, NO human figure
+- ONLY thin black lines on pure white background
+- NO color fill, NO shading, NO gradients, NO texture — ONLY black outlines
+- Include construction details: seams (dashed lines), buttons (small circles), pockets, closures, topstitching
+- The drawing must look like a hand-drawn technical pattern sketch with a fine black pen
+- DO NOT add any text, labels, or annotations to the image
+- DO NOT change the garment — draw exactly what you see in the photo`;
 }
 
 // Prompt for Claude to propose construction notes
