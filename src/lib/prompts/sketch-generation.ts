@@ -51,10 +51,10 @@ export function buildPhotoToSketchPrompt(
   claudeDescription: string
 ): string {
   if (view === 'front') {
-    return `Convert this ${garmentType} photograph into a clean black-and-white technical fashion flat sketch. Remove all color, shading, texture, and background. Keep ONLY thin black outlines on a pure white background. Maintain the exact same silhouette, proportions, and construction details (seams, closures, stitching, buttons, pockets). The result should look like a professional hand-drawn fashion technical illustration with a fine-tip 0.3mm pen. No mannequin, no body, flat lay perspective. No text or labels.`;
+    return `Redraw this ${garmentType} as a professional fashion flat sketch illustration. Bold thick black outlines on pure white background. Clean confident lines like a fashion CAD technical drawing. Show the exact same garment: same silhouette, same closures, same collar, same proportions. Flat lay perspective, no body, no mannequin. Only bold black line art, no color, no shading, no texture, no gray tones. No text or labels.`;
   }
 
-  return `Based on this ${garmentType}, generate a BACK VIEW technical fashion flat sketch in clean black-and-white line art. Pure white background with only thin black outlines. Same silhouette and proportions as the front. Show back construction details: back seams, yoke, darts, back closures, vents. Professional fashion flat sketch style, like a hand-drawn technical illustration. No body, no mannequin, flat lay. No text or labels. Details: ${claudeDescription}`;
+  return `Redraw this ${garmentType} as a BACK VIEW professional fashion flat sketch illustration. Bold thick black outlines on pure white background. Clean confident lines like a fashion CAD technical drawing. Same silhouette and proportions as the front view. Show back construction: seams, yoke, darts, vents. Flat lay, no body, no mannequin. Only bold black line art, no color, no shading, no texture, no gray tones. No text or labels. Details: ${claudeDescription}`;
 }
 
 // Prompt for Claude to propose construction notes
