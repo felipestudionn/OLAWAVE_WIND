@@ -44,19 +44,34 @@ REGLAS:
 - NUNCA cambiar: largo total, ancho de hombros, tipo de manga, proporciones generales, forma de la silueta
 - SÍ se puede cambiar: tipo de cuello, cierres (botones vs cremallera vs alamares), bolsillos, acabados, ribetes, costuras decorativas`;
 
-// Image-to-image: prompt sent to Gemini WITH the reference photo to convert it to a technical sketch
-export function buildSketchFromPhotoPrompt(
+// Text-only prompt: Claude's detailed description → Gemini generates flat sketch (no photo input)
+export function buildDetailedSketchPrompt(
+  baseDescription: string,
+  conceptDescription: string,
   view: 'front' | 'back',
-  garmentType: string,
-  conceptDescription: string
+  garmentType: string
 ): string {
-  if (view === 'front') {
-    return `Convierte esta foto de prenda en un FLAT SKETCH técnico de moda (dibujo plano técnico / fashion flat).
+  const viewLabel = view === 'front' ? 'FRONTAL' : 'TRASERA (de espaldas)';
+  const viewSpecific = view === 'front'
+    ? `- Vista FRONTAL de la prenda sola, completamente simétrica
+- Mostrar: cuello/escote, apertura frontal, cierres, bolsillos frontales, detalles de manga desde el frente`
+    : `- Vista TRASERA de la prenda sola, completamente simétrica
+- Mostrar: espalda, canesú si tiene, costuras traseras, abertura trasera si aplica, detalles de manga desde atrás`;
 
-REQUISITOS CRÍTICOS — ESTILO FLAT SKETCH:
+  return `Genera un FLAT SKETCH técnico de moda (fashion flat / dibujo plano técnico) de una prenda.
+
+PRENDA: ${garmentType}
+VISTA: ${viewLabel}
+
+SILUETA BASE (forma exacta que DEBE tener la prenda):
+${baseDescription}
+
+DETALLES ESPECÍFICOS DE ESTE DISEÑO:
+${conceptDescription}
+
+ESTILO DEL DIBUJO — FLAT SKETCH TÉCNICO:
 - Dibuja la prenda PLANA, como si estuviera extendida sobre una mesa — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
-- Vista FRONTAL de la prenda sola, completamente simétrica
-- Copia fielmente TODOS los detalles de la foto: silueta, proporciones, largo, corte, cuello, mangas, bolsillos, botones, cremalleras, costuras, cierres (alamares, frog closures, etc.)
+${viewSpecific}
 - SOLO líneas negras finas sobre fondo blanco puro — como un dibujo técnico de patronaje a mano
 - Líneas de contorno limpias y definidas
 - Líneas de costura internas con trazo discontinuo (pespuntes, pinzas, uniones de piezas)
@@ -64,71 +79,7 @@ REQUISITOS CRÍTICOS — ESTILO FLAT SKETCH:
 - SIN color, SIN relleno, SIN sombreado, SIN degradados — solo trazos de línea
 - SIN fondo decorativo — fondo completamente blanco
 - NO incluir texto, etiquetas, medidas ni anotaciones en la imagen
-- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro sobre papel blanco
-
-PRENDA: ${garmentType}
-MODIFICACIONES: ${conceptDescription}`;
-  }
-
-  return `Basándote en esta foto de la prenda, dibuja la VISTA TRASERA como un FLAT SKETCH técnico de moda.
-
-REQUISITOS CRÍTICOS — ESTILO FLAT SKETCH:
-- Dibuja la VISTA TRASERA de esta MISMA prenda, PLANA — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
-- La prenda extendida como si estuviera sobre una mesa, vista desde atrás
-- Interpreta la parte trasera coherentemente con el diseño frontal visible en la foto
-- SOLO líneas negras finas sobre fondo blanco puro — como un dibujo técnico de patronaje a mano
-- Líneas de contorno limpias y definidas
-- Líneas de costura internas con trazo discontinuo (costuras de espalda, pinzas, canesú)
-- Detalles constructivos traseros: costuras centrales, cremallera trasera si aplica, aberturas, ventilaciones, etiqueta
-- SIN color, SIN relleno, SIN sombreado, SIN degradados — solo trazos de línea
-- SIN fondo decorativo — fondo completamente blanco
-- NO incluir texto, etiquetas, medidas ni anotaciones en la imagen
-- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro sobre papel blanco
-
-PRENDA: ${garmentType}
-MODIFICACIONES: ${conceptDescription}`;
-}
-
-// Variant prompt: takes the BASE SKETCH (not original photo) and modifies only specific details
-export function buildVariantFromBasePrompt(
-  view: 'front' | 'back',
-  garmentType: string,
-  modifications: string
-): string {
-  const viewLabel = view === 'front' ? 'FRONTAL' : 'TRASERA';
-  return `Esta imagen es un flat sketch técnico de moda. Modifícalo siguiendo las instrucciones, pero MANTÉN EXACTAMENTE la misma silueta, largo, proporciones y forma general.
-
-INSTRUCCIONES CRÍTICAS:
-- Esta es la vista ${viewLabel}
-- MANTÉN: la silueta idéntica, el largo exacto, el ancho de hombros, el tipo de manga, las proporciones generales
-- MODIFICA SOLO: ${modifications}
-- El resultado debe ser un flat sketch técnico con las mismas características: líneas negras finas sobre fondo blanco puro
-- SIN color, SIN relleno, SIN sombreado — solo trazos de línea negra
-- La prenda debe tener EXACTAMENTE el mismo tamaño y posición en la imagen
-- NO cambiar la forma general de la prenda, solo los detalles indicados
-
-PRENDA: ${garmentType}`;
-}
-
-// Text-only prompt for image generation (fallback when no reference photo available)
-export function buildImagePrompt(concept: string, view: 'front' | 'back', garmentType: string): string {
-  const viewLabel = view === 'front' ? 'FRONTAL' : 'TRASERA (de espaldas)';
-  return `Generate a clean technical fashion FLAT SKETCH drawing.
-
-REQUIREMENTS:
-- Vista ${viewLabel} de la prenda PLANA, extendida — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
-- La prenda dibujada sola, simétrica, como si estuviera sobre una mesa
-- Estilo: dibujo técnico de moda a línea negra fina sobre fondo blanco puro
-- Incluir todos los detalles constructivos: costuras, botones, pliegues, cierres, topstitching, ojales
-- Líneas de costura internas con trazo discontinuo
-- Estilo similar a un flat sketch de ficha técnica profesional de moda / tech pack
-- Solo líneas negras — SIN color, SIN relleno, SIN sombreado
-- Fondo completamente blanco
-- NO incluir texto, etiquetas ni anotaciones en la imagen
-- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro
-
-PRENDA: ${garmentType}
-DESCRIPCIÓN: ${concept}`;
+- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro sobre papel blanco`;
 }
 
 // Prompt for Claude to propose construction notes

@@ -3,9 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   CONCEPT_GENERATION_PROMPT,
   buildConceptUserPrompt,
-  buildImagePrompt,
-  buildSketchFromPhotoPrompt,
-  buildVariantFromBasePrompt,
+  buildDetailedSketchPrompt,
 } from '@/lib/prompts/sketch-generation';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -98,12 +96,8 @@ async function generateConcepts(body: RequestBody): Promise<{ baseDescription: s
   };
 }
 
-// Gemini image-to-image: sends the reference photo + prompt → gets a technical sketch back
-async function generateImageWithGeminiFromPhoto(
-  prompt: string,
-  photoBase64: string,
-  photoMimeType: string
-): Promise<string> {
+// Gemini text-only: Claude's detailed description → Gemini generates flat sketch image
+async function generateImageWithGemini(prompt: string): Promise<string> {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
 
   const url = new URL(
@@ -116,20 +110,17 @@ async function generateImageWithGeminiFromPhoto(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{
-        parts: [
-          { inlineData: { mimeType: photoMimeType, data: photoBase64 } },
-          { text: prompt },
-        ],
+        parts: [{ text: prompt }],
       }],
       generationConfig: {
-        responseModalities: ['IMAGE'],
+        responseModalities: ['IMAGE', 'TEXT'],
       },
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Gemini image-to-image error: ${response.status} - ${errorText}`);
+    throw new Error(`Gemini text-to-image error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -147,7 +138,7 @@ async function generateImageWithGeminiFromPhoto(
   return `data:${mimeType};base64,${imagePart.inline_data.data}`;
 }
 
-// Flux text-only fallback (no reference photo input)
+// Flux text-only fallback
 async function generateImageWithFlux(prompt: string): Promise<string> {
   if (!HF_TOKEN) throw new Error('HUGGING_FACE_ACCESS_TOKEN not configured');
 
@@ -181,30 +172,22 @@ async function generateImageWithFlux(prompt: string): Promise<string> {
   return `data:${contentType};base64,${base64}`;
 }
 
-// Generate a single sketch image — Gemini image-to-image first, Flux text-only fallback
-async function generateImage(
-  photoPrompt: string,
-  textPrompt: string,
-  referencePhoto: { base64: string; mimeType: string }
-): Promise<string> {
-  // Primary: Gemini image-to-image (sends reference photo → gets sketch)
+// Generate a single sketch image — Gemini text-only first, Flux fallback
+async function generateSketchImage(prompt: string): Promise<string> {
+  // Primary: Gemini text-only (Claude's description → flat sketch)
   try {
-    console.log('Generating sketch with Gemini image-to-image...');
-    const result = await generateImageWithGeminiFromPhoto(
-      photoPrompt,
-      referencePhoto.base64,
-      referencePhoto.mimeType
-    );
-    console.log('Gemini image-to-image successful');
+    console.log('Generating sketch with Gemini text-only...');
+    const result = await generateImageWithGemini(prompt);
+    console.log('Gemini text-only successful');
     return result;
   } catch (err) {
-    console.error('Gemini image-to-image failed:', err);
+    console.error('Gemini text-only failed:', err);
   }
 
   // Fallback: Flux text-only
   try {
     console.log('Fallback: Flux text-only...');
-    const result = await generateImageWithFlux(textPrompt);
+    const result = await generateImageWithFlux(prompt);
     console.log('Flux text-only successful');
     return result;
   } catch (err) {
@@ -237,57 +220,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // The first image is always the PRIMARY reference
-    const primaryPhoto = body.images[0];
+    // Step 1: Claude analyzes photos and generates detailed descriptions + 4 concepts
+    console.log('Step 1: Generating design concepts with Claude (photo analysis)...');
+    const { baseDescription, concepts } = await generateConcepts(body);
+    console.log(`Generated ${concepts.length} concepts. Base description length: ${baseDescription.length}`);
 
-    // Step 1: Generate design concepts with Claude
-    console.log('Step 1: Generating design concepts with Claude...');
-    const { concepts } = await generateConcepts(body);
-    console.log(`Generated ${concepts.length} concepts`);
-
-    // Step 2: Generate BASE sketch first (concept 1 = "Fiel al original") from the original photo
-    const baseConcept = concepts[0];
-    console.log('Step 2: Generating BASE sketch from reference photo...');
-    const baseFrontPrompt = buildSketchFromPhotoPrompt('front', body.garmentType, baseConcept.description);
-    const baseBackPrompt = buildSketchFromPhotoPrompt('back', body.garmentType, baseConcept.description);
-    const baseFrontTextPrompt = buildImagePrompt(baseConcept.description, 'front', body.garmentType);
-    const baseBackTextPrompt = buildImagePrompt(baseConcept.description, 'back', body.garmentType);
-
-    const [baseFrontImage, baseBackImage] = await Promise.all([
-      generateImage(baseFrontPrompt, baseFrontTextPrompt, {
-        base64: primaryPhoto.base64,
-        mimeType: primaryPhoto.mimeType,
-      }),
-      generateImage(baseBackPrompt, baseBackTextPrompt, {
-        base64: primaryPhoto.base64,
-        mimeType: primaryPhoto.mimeType,
-      }),
-    ]);
-
-    // Extract base64 data from data URI for use as reference in variants
-    const baseFrontB64 = baseFrontImage.split(',')[1];
-    const baseBackB64 = baseBackImage.split(',')[1];
-    const baseMime = baseFrontImage.split(';')[0].split(':')[1] || 'image/png';
-
-    // Step 3: Generate variant sketches using the BASE SKETCH as reference (not the original photo)
-    const variantConcepts = concepts.slice(1);
-    console.log(`Step 3: Generating ${variantConcepts.length} variants from base sketch...`);
-    const variantOptions = await Promise.all(
-      variantConcepts.map(async (concept) => {
-        const variantFrontPrompt = buildVariantFromBasePrompt('front', body.garmentType, concept.description);
-        const variantBackPrompt = buildVariantFromBasePrompt('back', body.garmentType, concept.description);
-        const textFrontFallback = buildImagePrompt(concept.description, 'front', body.garmentType);
-        const textBackFallback = buildImagePrompt(concept.description, 'back', body.garmentType);
+    // Step 2: Generate all sketches using text-only prompts (Claude's description → Gemini)
+    // Claude already analyzed the photo perfectly — we use its description, not the photo itself
+    console.log('Step 2: Generating all sketches from Claude descriptions (text-only)...');
+    const sketchOptions = await Promise.all(
+      concepts.map(async (concept) => {
+        const frontPrompt = buildDetailedSketchPrompt(baseDescription, concept.description, 'front', body.garmentType);
+        const backPrompt = buildDetailedSketchPrompt(baseDescription, concept.description, 'back', body.garmentType);
 
         const [frontImage, backImage] = await Promise.all([
-          generateImage(variantFrontPrompt, textFrontFallback, {
-            base64: baseFrontB64,
-            mimeType: baseMime,
-          }),
-          generateImage(variantBackPrompt, textBackFallback, {
-            base64: baseBackB64,
-            mimeType: baseMime,
-          }),
+          generateSketchImage(frontPrompt),
+          generateSketchImage(backPrompt),
         ]);
 
         return {
@@ -298,16 +246,6 @@ export async function POST(req: NextRequest) {
         };
       })
     );
-
-    const sketchOptions = [
-      {
-        id: baseConcept.id,
-        description: `${baseConcept.title}: ${baseConcept.description}`,
-        frontImageBase64: baseFrontImage,
-        backImageBase64: baseBackImage,
-      },
-      ...variantOptions,
-    ];
 
     return NextResponse.json({ sketchOptions });
   } catch (error) {
