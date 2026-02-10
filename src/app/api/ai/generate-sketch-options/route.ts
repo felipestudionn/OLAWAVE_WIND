@@ -7,7 +7,6 @@ import {
 } from '@/lib/prompts/sketch-generation';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const HF_TOKEN = process.env.HUGGING_FACE_ACCESS_TOKEN;
 const FAL_KEY = process.env.FAL_KEY;
 
 interface RequestBody {
@@ -136,68 +135,52 @@ async function extractLineartWithFal(
   throw new Error('No image in fal.ai lineart response');
 }
 
-// Step 2b: FLUX Kontext via HuggingFace router — photo + prompt → sketch
-async function generateSketchWithFlux(
+// Step 2b: FLUX Kontext via fal.ai direct — photo + prompt → sketch
+async function generateSketchWithFluxKontext(
   prompt: string,
   photoBase64: string,
-  photoMimeType: string,
-  model: string,
-  provider: string
+  photoMimeType: string
 ): Promise<string> {
-  if (!HF_TOKEN) throw new Error('HUGGING_FACE_ACCESS_TOKEN not configured');
+  if (!FAL_KEY) throw new Error('FAL_KEY not configured');
 
-  const response = await fetch(
-    `https://router.huggingface.co/${provider}/models/${model}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HF_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt,
-        image_url: `data:${photoMimeType};base64,${photoBase64}`,
-        guidance_scale: 8,
-        num_inference_steps: 35,
-        output_format: 'png',
-      }),
-    }
-  );
+  const response = await fetch('https://fal.run/fal-ai/flux-kontext/dev', {
+    method: 'POST',
+    headers: {
+      Authorization: `Key ${FAL_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt,
+      image_url: `data:${photoMimeType};base64,${photoBase64}`,
+      guidance_scale: 8,
+      num_inference_steps: 35,
+      output_format: 'png',
+    }),
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`HF ${model} error: ${response.status} - ${errorText}`);
+    throw new Error(`FLUX Kontext error: ${response.status} - ${errorText}`);
   }
 
-  const contentType = response.headers.get('content-type') || 'image/png';
-
-  if (contentType.includes('application/json')) {
-    const data = await response.json();
-    // fal-ai returns images array with URLs
-    if (data.images?.[0]?.url) {
-      return fetchImageAsDataUri(data.images[0].url);
-    }
-    // HuggingFace native format
-    if (data.image) return `data:image/png;base64,${data.image}`;
-    if (data[0]?.image) return `data:image/png;base64,${data[0].image}`;
-    throw new Error(`Unexpected JSON response from ${model}`);
+  const data = await response.json();
+  if (data.images?.[0]?.url) {
+    return fetchImageAsDataUri(data.images[0].url);
   }
-
-  // Response is raw image bytes
-  const arrayBuffer = await response.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString('base64');
-  return `data:${contentType};base64,${base64}`;
+  throw new Error('No image in FLUX Kontext response');
 }
 
-// Main sketch generation: lineart extraction → FLUX Kontext fallback
+// Main sketch generation: lineart extraction (front) → FLUX Kontext (back/variants)
 async function generateSketch(
   prompt: string,
   photoBase64: string,
   photoMimeType: string,
   view: 'front' | 'back'
 ): Promise<string> {
+  if (!FAL_KEY) throw new Error('FAL_KEY not configured');
+
   // For front view: try fal.ai lineart extraction first (best quality)
-  if (view === 'front' && FAL_KEY) {
+  if (view === 'front') {
     try {
       console.log('Trying fal.ai lineart extraction (front view)...');
       const result = await extractLineartWithFal(photoBase64, photoMimeType);
@@ -208,24 +191,11 @@ async function generateSketch(
     }
   }
 
-  // Fallback: FLUX Kontext generation
-  const providers = [
-    { model: 'black-forest-labs/FLUX.1-Kontext-dev', provider: 'fal-ai' },
-    { model: 'Qwen/Qwen-Image-Edit-2511', provider: 'fal-ai' },
-  ];
-
-  for (const { model, provider } of providers) {
-    try {
-      console.log(`Trying ${model}...`);
-      const result = await generateSketchWithFlux(prompt, photoBase64, photoMimeType, model, provider);
-      console.log(`${model} successful`);
-      return result;
-    } catch (err) {
-      console.error(`${model} failed:`, err);
-    }
-  }
-
-  throw new Error('All image generation providers failed');
+  // FLUX Kontext generation (back views + fallback for front)
+  console.log(`Trying FLUX Kontext (${view} view)...`);
+  const result = await generateSketchWithFluxKontext(prompt, photoBase64, photoMimeType);
+  console.log(`FLUX Kontext (${view} view) successful`);
+  return result;
 }
 
 export async function POST(req: NextRequest) {
