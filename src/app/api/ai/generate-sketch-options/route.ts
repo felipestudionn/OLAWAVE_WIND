@@ -137,43 +137,6 @@ async function extractLineartWithFal(
   throw new Error('No image in fal.ai lineart response');
 }
 
-// Step 2b: FLUX Kontext — clean up lineart into a proper technical flat
-async function cleanLineartWithFlux(
-  lineartDataUri: string,
-  garmentType: string,
-  claudeDescription: string
-): Promise<string> {
-  if (!FAL_KEY) throw new Error('FAL_KEY not configured');
-
-  console.log('Cleaning lineart with FLUX Kontext...');
-  const response = await fetch('https://fal.run/fal-ai/flux-kontext/dev', {
-    method: 'POST',
-    headers: {
-      Authorization: `Key ${FAL_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt: `Clean up this line drawing of a ${garmentType} into a professional fashion flat technical drawing. Keep all the existing lines and details exactly as they are — do not add, remove, or change any design elements. Only clean up: remove any body/figure lines, make the background pure white, make the garment lines clean and uniform black. Keep the exact same proportions and details. ${claudeDescription}`,
-      image_url: lineartDataUri,
-      guidance_scale: 4,
-      num_inference_steps: 40,
-      output_format: 'png',
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`FLUX Kontext cleanup error: ${response.status} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  if (data.images?.[0]?.url) {
-    console.log('FLUX Kontext cleanup successful');
-    return fetchImageAsDataUri(data.images[0].url);
-  }
-  throw new Error('No image in FLUX Kontext response');
-}
-
 // Fallback: FLUX Kontext directly from photo (if lineart fails)
 async function generateSketchDirectWithFlux(
   prompt: string,
@@ -209,27 +172,17 @@ async function generateSketchDirectWithFlux(
   throw new Error('No image in FLUX Kontext response');
 }
 
-// Main pipeline: lineart extraction → FLUX cleanup → fallback direct FLUX
+// Main pipeline: lineart extraction → fallback direct FLUX
 async function generateSketch(
   prompt: string,
   photoBase64: string,
-  photoMimeType: string,
-  garmentType: string,
-  claudeDescription: string
+  photoMimeType: string
 ): Promise<string> {
   if (!FAL_KEY) throw new Error('FAL_KEY not configured');
 
-  // Step 1: Extract lineart from photo (faithful edge tracing)
+  // Lineart extraction — faithful edge tracing, no AI reinterpretation
   try {
-    const lineartDataUri = await extractLineartWithFal(photoBase64, photoMimeType);
-
-    // Step 2: Clean up lineart with FLUX Kontext (remove body, white bg)
-    try {
-      return await cleanLineartWithFlux(lineartDataUri, garmentType, claudeDescription);
-    } catch (err) {
-      console.error('FLUX cleanup failed, returning raw lineart:', err);
-      return lineartDataUri;
-    }
+    return await extractLineartWithFal(photoBase64, photoMimeType);
   } catch (err) {
     console.error('Lineart extraction failed, falling back to direct FLUX:', err);
     return await generateSketchDirectWithFlux(prompt, photoBase64, photoMimeType);
@@ -272,7 +225,7 @@ export async function POST(req: NextRequest) {
     const sketchOptions = await Promise.all(
       concepts.map(async (concept) => {
         const frontPrompt = buildPhotoToSketchPrompt(body.garmentType, concept.description);
-        const frontImage = await generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType, body.garmentType, concept.description);
+        const frontImage = await generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType);
 
         return {
           id: concept.id,
