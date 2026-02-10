@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, ChevronRight, User, LogOut, FolderOpen, Palette } from "lucide-react";
+import { Sparkles, ChevronRight, User, LogOut, FolderOpen, Palette, PenTool } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -135,6 +135,14 @@ export function Navbar() {
                   <Palette className="mr-1.5 h-3.5 w-3.5" />
                   Color Palettes
                 </Link>
+                {/* SketchFlow */}
+                <Link
+                  href="/sketch-flow"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
+                >
+                  <PenTool className="mr-1.5 h-3.5 w-3.5" />
+                  SketchFlow
+                </Link>
                 {/* My Collections */}
                 <Link
                   href="/my-collections"
@@ -176,6 +184,13 @@ export function Navbar() {
                 >
                   <Palette className="mr-1.5 h-3.5 w-3.5" />
                   Color Palettes
+                </Link>
+                <Link
+                  href="/sketch-flow"
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-white/50 text-gray-700 text-sm font-medium transition-all hover:bg-white/80"
+                >
+                  <PenTool className="mr-1.5 h-3.5 w-3.5" />
+                  SketchFlow
                 </Link>
                 <button
                   onClick={() => setShowAuthModal(true)}
@@ -310,6 +325,14 @@ export function Navbar() {
                   Color Palettes
                 </Link>
                 <Link
+                  href="/sketch-flow"
+                  className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <PenTool className="h-4 w-4" />
+                  SketchFlow
+                </Link>
+                <Link
                   href="/my-collections"
                   className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
                   onClick={() => setMobileMenuOpen(false)}
@@ -327,6 +350,14 @@ export function Navbar() {
                 >
                   <Palette className="h-4 w-4" />
                   Color Palettes
+                </Link>
+                <Link
+                  href="/sketch-flow"
+                  className="flex items-center gap-2 py-2 text-base font-medium transition-colors hover:text-primary"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <PenTool className="h-4 w-4" />
+                  SketchFlow
                 </Link>
                 <button
                   onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
