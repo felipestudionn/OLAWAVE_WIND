@@ -7,7 +7,7 @@ import {
 } from '@/lib/prompts/sketch-generation';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const HF_TOKEN = process.env.HUGGING_FACE_ACCESS_TOKEN;
 
 interface RequestBody {
   images: Array<{
@@ -95,53 +95,81 @@ async function generateConcepts(body: RequestBody): Promise<{ baseDescription: s
   };
 }
 
-// Step 2: Gemini image-to-image — photo + Claude's description → line drawing
-async function generateSketchWithGemini(
+// Step 2: HuggingFace image-to-image — photo + prompt → line drawing sketch
+async function generateSketchWithHF(
+  prompt: string,
+  photoBase64: string,
+  photoMimeType: string,
+  model: string,
+  provider: string
+): Promise<string> {
+  if (!HF_TOKEN) throw new Error('HUGGING_FACE_ACCESS_TOKEN not configured');
+
+  // Convert base64 to binary buffer for the multipart request
+  const imageBuffer = Buffer.from(photoBase64, 'base64');
+
+  const response = await fetch(
+    `https://router.huggingface.co/${provider}/models/${model}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${HF_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: `data:${photoMimeType};base64,${photoBase64}`,
+        parameters: {
+          prompt,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`HF ${model} error: ${response.status} - ${errorText}`);
+  }
+
+  const contentType = response.headers.get('content-type') || 'image/png';
+
+  // If response is JSON (some providers return base64 in JSON)
+  if (contentType.includes('application/json')) {
+    const data = await response.json();
+    if (data.image) return `data:image/png;base64,${data.image}`;
+    if (data[0]?.image) return `data:image/png;base64,${data[0].image}`;
+    throw new Error(`Unexpected JSON response from ${model}`);
+  }
+
+  // Response is raw image bytes
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString('base64');
+  return `data:${contentType};base64,${base64}`;
+}
+
+// Try multiple providers: FLUX Kontext → Qwen Image Edit → HunyuanImage
+async function generateSketch(
   prompt: string,
   photoBase64: string,
   photoMimeType: string
 ): Promise<string> {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
+  const providers = [
+    { model: 'black-forest-labs/FLUX.1-Kontext-dev', provider: 'fal-ai' },
+    { model: 'Qwen/Qwen-Image-Edit-2511', provider: 'fal-ai' },
+    { model: 'tencent/HunyuanImage-3.0-Instruct', provider: 'fal-ai' },
+  ];
 
-  const url = new URL(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
-  );
-  url.searchParams.set('key', GEMINI_API_KEY);
-
-  const response = await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { inlineData: { mimeType: photoMimeType, data: photoBase64 } },
-          { text: prompt },
-        ],
-      }],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT'],
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini error: ${response.status} - ${errorText}`);
+  for (const { model, provider } of providers) {
+    try {
+      console.log(`Trying ${model}...`);
+      const result = await generateSketchWithHF(prompt, photoBase64, photoMimeType, model, provider);
+      console.log(`${model} successful`);
+      return result;
+    } catch (err) {
+      console.error(`${model} failed:`, err);
+    }
   }
 
-  const data = await response.json();
-  const parts = data?.candidates?.[0]?.content?.parts;
-  if (!parts) throw new Error('No parts in Gemini response');
-
-  const imagePart = parts.find(
-    (p: { inlineData?: { mimeType: string; data: string } }) => p.inlineData
-  );
-  if (!imagePart?.inlineData?.data) {
-    throw new Error('No image in Gemini response');
-  }
-
-  const mimeType = imagePart.inlineData.mimeType || 'image/png';
-  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  throw new Error('All image generation providers failed');
 }
 
 export async function POST(req: NextRequest) {
@@ -175,16 +203,16 @@ export async function POST(req: NextRequest) {
     const { concepts } = await generateConcepts(body);
     console.log(`Generated ${concepts.length} concepts`);
 
-    // Step 2: Gemini draws each concept — gets BOTH the photo AND Claude's description
-    console.log('Step 2: Gemini drawing sketches (photo + Claude description)...');
+    // Step 2: HuggingFace image-to-image for each concept
+    console.log('Step 2: Generating sketches with HuggingFace image-to-image...');
     const sketchOptions = await Promise.all(
       concepts.map(async (concept) => {
         const frontPrompt = buildPhotoToSketchPrompt('front', body.garmentType, concept.description);
         const backPrompt = buildPhotoToSketchPrompt('back', body.garmentType, concept.description);
 
         const [frontImage, backImage] = await Promise.all([
-          generateSketchWithGemini(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType),
-          generateSketchWithGemini(backPrompt, primaryPhoto.base64, primaryPhoto.mimeType),
+          generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType),
+          generateSketch(backPrompt, primaryPhoto.base64, primaryPhoto.mimeType),
         ]);
 
         return {
