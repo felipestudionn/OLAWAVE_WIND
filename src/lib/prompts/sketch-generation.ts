@@ -29,12 +29,13 @@ export function buildPhotoToSketchPrompt(
   garmentType: string,
   claudeDescription: string
 ): string {
-  return `Transform this ${garmentType} into a professional fashion flat technical drawing (fashion flat sketch).
+  return `Transform this ${garmentType} into a professional fashion technical drawing, front view as if worn on a standing body.
 
 CRITICAL REQUIREMENTS:
 - Pure white background (#FFFFFF), absolutely nothing else in the background
 - Single garment centered, perfectly symmetrical, facing straight forward
-- Flat lay perspective: as if the garment is laid flat on a table, no body, no mannequin, no hanger
+- Front view as worn on a standing female figure — show natural shoulder slope, fitted waist, hip curve
+- Do NOT draw the body or figure — only the garment silhouette as it would look when worn
 - Bold, clean, confident BLACK outlines (2-3px stroke weight)
 - All construction lines must be perfectly straight and parallel where they should be
 - Symmetrical: left side mirrors right side exactly
@@ -51,8 +52,8 @@ ABSOLUTELY NO:
 - No color, no shading, no gradients, no gray tones, no texture fills
 - No text, no labels, no annotations
 - No background elements, no shadows
-- No body or mannequin underneath
-- No wrinkles or draping — this is a flat technical drawing
+- No body, skin, face, hands, or mannequin visible — only the garment outline
+- No wrinkles or heavy draping
 
 GARMENT DETAILS: ${claudeDescription}`;
 }
