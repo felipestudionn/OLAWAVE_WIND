@@ -1,48 +1,29 @@
 // Concept generation — primary photo is THE garment, secondary photos add detail modifications
-export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto principal de referencia y proponer variantes de diseño.
-
-REGLA FUNDAMENTAL: TODOS los conceptos comparten la MISMA silueta base, largo, y proporciones de la FOTO PRINCIPAL. Las variantes SOLO cambian detalles constructivos específicos (tipo de cuello, cierres, bolsillos, acabados). La silueta, largo, ancho y forma general NUNCA cambian.
+export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto de referencia y describir la prenda con máximo detalle para reproducirla fielmente como un sketch técnico.
 
 INSTRUCCIONES:
-1. Analiza la FOTO 1 (principal) en detalle absoluto: silueta, corte, largo, mangas, cuello, detalles constructivos, proporciones, acabados, cierres, bolsillos, costuras visibles
-2. Genera una DESCRIPCIÓN BASE de la silueta: forma general, largo, ancho de hombros, tipo de manga, proporciones. Esta descripción es IDÉNTICA para los 4 conceptos.
-3. El CONCEPTO 1 ("Fiel al original") describe la prenda de la foto principal tal cual, sin NINGÚN cambio
-4. Los CONCEPTOS 2-4 mantienen la MISMA silueta base y solo varían detalles puntuales según las fotos secundarias o sugerencias creativas
-5. Si solo hay 1 foto, las variantes cambian SOLO detalles menores (tipo de cierre, acabado de cuello, estilo de bolsillo) manteniendo exactamente la misma forma
+1. Analiza la FOTO PRINCIPAL en detalle absoluto: silueta, corte, largo, mangas, cuello, detalles constructivos, proporciones, acabados, cierres, bolsillos, costuras visibles
+2. Describe VISTA FRONTAL: cada detalle visible desde delante
+3. Describe VISTA TRASERA: cómo sería la parte de atrás (inferir de la silueta si no es visible)
+4. Incluye todos los detalles constructivos: tipo de costura, tipo de cierre, acabados, ribetes
 
 FORMATO DE SALIDA (JSON puro, sin markdown):
 {
-  "baseDescription": "Descripción de la silueta base que aplica a TODOS los conceptos: forma, largo, ancho, tipo de manga, proporciones exactas de la foto principal",
+  "baseDescription": "Descripción completa de la silueta: forma, largo, ancho, tipo de manga, proporciones exactas",
   "concepts": [
     {
       "id": "1",
       "title": "Fiel al original",
-      "description": "Copia exacta de la foto principal sin cambios. Vista frontal: ... Vista trasera: ..."
-    },
-    {
-      "id": "2",
-      "title": "Nombre corto del cambio",
-      "description": "MISMA silueta base. Cambios: [solo los detalles específicos que cambian respecto al original]"
-    },
-    {
-      "id": "3",
-      "title": "...",
-      "description": "MISMA silueta base. Cambios: [...]"
-    },
-    {
-      "id": "4",
-      "title": "...",
-      "description": "MISMA silueta base. Cambios: [...]"
+      "description": "Copia exacta de la foto principal. Vista frontal: [descripción detallada]. Vista trasera: [descripción detallada]."
     }
   ]
 }
 
 REGLAS:
 - Escribe en español
-- Describir tanto VISTA FRONTAL como VISTA TRASERA en cada concepto
-- Los conceptos 2-4 deben empezar diciendo "MISMA silueta base." y luego SOLO listar qué detalles cambian
-- NUNCA cambiar: largo total, ancho de hombros, tipo de manga, proporciones generales, forma de la silueta
-- SÍ se puede cambiar: tipo de cuello, cierres (botones vs cremallera vs alamares), bolsillos, acabados, ribetes, costuras decorativas`;
+- Solo 1 concepto: "Fiel al original" — reproducción 100% fiel de la foto
+- Describir VISTA FRONTAL y VISTA TRASERA con máximo detalle constructivo
+- Incluir: tipo de cuello, tipo de cierre, bolsillos, costuras, acabados, proporciones, largo de manga`;
 
 // FLUX Kontext image editing prompt: photo → fashion flat sketch
 export function buildPhotoToSketchPrompt(
@@ -120,7 +101,7 @@ export function buildConceptUserPrompt(data: {
     })
     .join('\n');
 
-  return `Genera 4 conceptos de diseño basados en la FOTO PRINCIPAL:
+  return `Describe esta prenda con máximo detalle para reproducirla como sketch técnico:
 
 TIPO DE PRENDA: ${data.garmentType}
 TEMPORADA: ${data.season}
@@ -132,10 +113,9 @@ INSTRUCCIONES POR FOTO:
 ${photoInstructions}
 
 RECUERDA:
-- Incluye "baseDescription" con la silueta base (idéntica para todos)
-- Concepto 1 = "Fiel al original", copia exacta sin cambios
-- Conceptos 2-4 = MISMA silueta, solo cambian detalles puntuales según las fotos secundarias
-- NUNCA cambiar silueta, largo ni proporciones entre conceptos
+- Solo 1 concepto: "Fiel al original" — copia exacta al 100%
+- Incluye "baseDescription" con la silueta completa
+- Describe vista frontal y trasera con todos los detalles constructivos
 - Solo JSON, sin markdown.`;
 }
 

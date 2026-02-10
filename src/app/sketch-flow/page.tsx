@@ -6,7 +6,6 @@ import ImageUploader from '@/components/sketch-flow/ImageUploader';
 import PhotoCard from '@/components/sketch-flow/PhotoCard';
 import GarmentDetailsForm from '@/components/sketch-flow/GarmentDetailsForm';
 import TechPackPreview from '@/components/sketch-flow/TechPackPreview';
-import SketchOptionCard from '@/components/sketch-flow/SketchOptionCard';
 import CommentSelector from '@/components/sketch-flow/CommentSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTechPacks } from '@/hooks/useTechPacks';
@@ -71,7 +70,7 @@ export default function SketchFlowPage() {
   const canGenerate = images.length >= 1 && garmentDetails.garmentType !== '';
   const selectedSketch = sketchOptions.find((o) => o.id === selectedSketchId) || null;
 
-  // Step 1 → 2: Generate sketch options
+  // Generate sketch + comments in one flow (skip selection step)
   const handleGenerateSketches = useCallback(async () => {
     if (!canGenerate) return;
     setFlowStep('generating-sketches');
@@ -95,22 +94,47 @@ export default function SketchFlowPage() {
         additionalNotes: garmentDetails.additionalNotes,
       };
 
-      setGenerationStep('Generando opciones de sketch...');
+      setGenerationStep('Generando sketch técnico...');
 
-      const response = await fetch('/api/ai/generate-sketch-options', {
+      const sketchResponse = await fetch('/api/ai/generate-sketch-options', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
+      if (!sketchResponse.ok) {
+        const data = await sketchResponse.json();
         throw new Error(data.error || 'Error en la generación');
       }
 
-      const result = await response.json();
-      setSketchOptions(result.sketchOptions);
-      setFlowStep('sketch-selection');
+      const sketchResult = await sketchResponse.json();
+      const sketch = sketchResult.sketchOptions[0];
+      setSketchOptions(sketchResult.sketchOptions);
+      setSelectedSketchId(sketch.id);
+
+      // Auto-proceed to comments generation
+      setGenerationStep('Generando propuestas de comentarios...');
+
+      const commentsResponse = await fetch('/api/ai/propose-comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          garmentType: garmentDetails.garmentType,
+          conceptDescription: sketch.description,
+          fabric: garmentDetails.fabric,
+          additionalNotes: garmentDetails.additionalNotes,
+        }),
+      });
+
+      if (!commentsResponse.ok) {
+        const data = await commentsResponse.json();
+        throw new Error(data.error || 'Error al generar comentarios');
+      }
+
+      const commentsResult = await commentsResponse.json();
+      setProposedNotes(commentsResult.proposedNotes);
+      setSuggestedMeasurements(commentsResult.suggestedMeasurements);
+      setFlowStep('comments');
       setGenerationStep('');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ha ocurrido un error inesperado';
@@ -119,44 +143,6 @@ export default function SketchFlowPage() {
       setGenerationStep('');
     }
   }, [canGenerate, images, garmentDetails]);
-
-  // Step 3 → 4: Generate comment proposals
-  const handleGenerateComments = useCallback(async () => {
-    if (!selectedSketch) return;
-    setFlowStep('generating-comments');
-    setError(null);
-
-    try {
-      setGenerationStep('Generando propuestas de comentarios...');
-
-      const response = await fetch('/api/ai/propose-comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          garmentType: garmentDetails.garmentType,
-          conceptDescription: selectedSketch.description,
-          fabric: garmentDetails.fabric,
-          additionalNotes: garmentDetails.additionalNotes,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Error al generar comentarios');
-      }
-
-      const result = await response.json();
-      setProposedNotes(result.proposedNotes);
-      setSuggestedMeasurements(result.suggestedMeasurements);
-      setFlowStep('comments');
-      setGenerationStep('');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Ha ocurrido un error inesperado';
-      setError(message);
-      setFlowStep('sketch-selection');
-      setGenerationStep('');
-    }
-  }, [selectedSketch, garmentDetails]);
 
   // Step 4 → 5: Compose final tech pack
   const handleConfirmComments = useCallback(async () => {
@@ -193,11 +179,6 @@ export default function SketchFlowPage() {
   // Navigation
   const handleBackToInput = useCallback(() => {
     setFlowStep('input');
-    setError(null);
-  }, []);
-
-  const handleBackToSketches = useCallback(() => {
-    setFlowStep('sketch-selection');
     setError(null);
   }, []);
 
@@ -252,7 +233,7 @@ export default function SketchFlowPage() {
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">SketchFlow</h1>
             </div>
             <p className="text-gray-500 text-sm max-w-xl">
-              Sube fotos de referencia, indica qué te gusta de cada una, y la IA generará opciones de sketch técnico para tu ficha.
+              Sube fotos de referencia y la IA generará un sketch técnico fiel al original para tu ficha.
             </p>
           </div>
 
@@ -261,11 +242,9 @@ export default function SketchFlowPage() {
             <div className="flex items-center gap-2 mb-6 text-xs text-gray-400">
               <span className="text-gray-400">1. Datos</span>
               <ChevronDown className="h-3 w-3 -rotate-90" />
-              <span className={flowStep === 'sketch-selection' ? 'text-gray-900 font-medium' : 'text-gray-400'}>2. Elegir sketch</span>
+              <span className={flowStep === 'comments' ? 'text-gray-900 font-medium' : 'text-gray-400'}>2. Comentarios</span>
               <ChevronDown className="h-3 w-3 -rotate-90" />
-              <span className={flowStep === 'comments' ? 'text-gray-900 font-medium' : 'text-gray-400'}>3. Comentarios</span>
-              <ChevronDown className="h-3 w-3 -rotate-90" />
-              <span className={flowStep === 'final' ? 'text-gray-900 font-medium' : 'text-gray-400'}>4. Ficha final</span>
+              <span className={flowStep === 'final' ? 'text-gray-900 font-medium' : 'text-gray-400'}>3. Ficha final</span>
             </div>
           )}
 
@@ -330,7 +309,7 @@ export default function SketchFlowPage() {
                     }`}
                 >
                   <Sparkles className="h-5 w-5" />
-                  Generar opciones de sketch
+                  Generar sketch técnico
                 </button>
               </div>
             </div>
@@ -349,8 +328,8 @@ export default function SketchFlowPage() {
             </div>
           )}
 
-          {/* === STEP 2: SKETCH SELECTION === */}
-          {flowStep === 'sketch-selection' && (
+          {/* === STEP 2: COMMENT SELECTION === */}
+          {flowStep === 'comments' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <button
@@ -365,63 +344,7 @@ export default function SketchFlowPage() {
                   className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
-                  Regenerar opciones
-                </button>
-              </div>
-
-              <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">Elige tu sketch</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                  Selecciona la opción que más se acerque a lo que buscas. Puedes regenerar si ninguna te convence.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sketchOptions.map((option) => (
-                    <SketchOptionCard
-                      key={option.id}
-                      option={option}
-                      isSelected={selectedSketchId === option.id}
-                      onSelect={() => setSelectedSketchId(option.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-
-              {/* Error */}
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-
-              {/* Next button */}
-              <div className="flex justify-center">
-                <button
-                  onClick={handleGenerateComments}
-                  disabled={!selectedSketchId}
-                  className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-base font-medium transition-all shadow-lg
-                    ${selectedSketchId
-                      ? 'bg-gray-900 text-white hover:bg-gray-800 hover:shadow-xl'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                >
-                  Siguiente: comentarios
-                  <ArrowRight className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* === STEP 3: COMMENT SELECTION === */}
-          {flowStep === 'comments' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={handleBackToSketches}
-                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  Volver a sketches
+                  Regenerar sketch
                 </button>
               </div>
 
