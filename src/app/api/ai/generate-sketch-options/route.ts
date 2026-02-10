@@ -104,38 +104,7 @@ async function fetchImageAsDataUri(url: string): Promise<string> {
   return `data:${contentType};base64,${base64}`;
 }
 
-// Step 2a: fal.ai lineart preprocessor — photo → clean line drawing (BEST quality)
-async function extractLineartWithFal(
-  photoBase64: string,
-  photoMimeType: string
-): Promise<string> {
-  if (!FAL_KEY) throw new Error('FAL_KEY not configured');
-
-  const response = await fetch('https://fal.run/fal-ai/image-preprocessors/lineart', {
-    method: 'POST',
-    headers: {
-      Authorization: `Key ${FAL_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      image_url: `data:${photoMimeType};base64,${photoBase64}`,
-      coarse: false,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`fal.ai lineart error: ${response.status} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  if (data.image?.url) {
-    return fetchImageAsDataUri(data.image.url);
-  }
-  throw new Error('No image in fal.ai lineart response');
-}
-
-// Step 2b: FLUX Kontext via fal.ai direct — photo + prompt → sketch
+// FLUX Kontext via fal.ai direct — photo + prompt → sketch
 async function generateSketchWithFluxKontext(
   prompt: string,
   photoBase64: string,
@@ -170,7 +139,7 @@ async function generateSketchWithFluxKontext(
   throw new Error('No image in FLUX Kontext response');
 }
 
-// Main sketch generation: lineart extraction (front) → FLUX Kontext (back/variants)
+// Main sketch generation: FLUX Kontext for both views
 async function generateSketch(
   prompt: string,
   photoBase64: string,
@@ -179,20 +148,7 @@ async function generateSketch(
 ): Promise<string> {
   if (!FAL_KEY) throw new Error('FAL_KEY not configured');
 
-  // For front view: try fal.ai lineart extraction first (best quality)
-  if (view === 'front') {
-    try {
-      console.log('Trying fal.ai lineart extraction (front view)...');
-      const result = await extractLineartWithFal(photoBase64, photoMimeType);
-      console.log('fal.ai lineart extraction successful');
-      return result;
-    } catch (err) {
-      console.error('fal.ai lineart extraction failed:', err);
-    }
-  }
-
-  // FLUX Kontext generation (back views + fallback for front)
-  console.log(`Trying FLUX Kontext (${view} view)...`);
+  console.log(`Generating ${view} view with FLUX Kontext...`);
   const result = await generateSketchWithFluxKontext(prompt, photoBase64, photoMimeType);
   console.log(`FLUX Kontext (${view} view) successful`);
   return result;
