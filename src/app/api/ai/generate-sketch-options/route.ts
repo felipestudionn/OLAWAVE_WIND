@@ -3,12 +3,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   CONCEPT_GENERATION_PROMPT,
   buildConceptUserPrompt,
-  buildDetailedSketchPrompt,
+  SVG_SKETCH_PROMPT,
+  buildSvgSketchUserPrompt,
 } from '@/lib/prompts/sketch-generation';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const HF_TOKEN = process.env.HUGGING_FACE_ACCESS_TOKEN;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 interface RequestBody {
   images: Array<{
@@ -41,6 +40,11 @@ function parseJsonFromText(text: string): unknown {
     }
     return JSON.parse(cleaned);
   }
+}
+
+function svgToDataUri(svg: string): string {
+  const encoded = Buffer.from(svg).toString('base64');
+  return `data:image/svg+xml;base64,${encoded}`;
 }
 
 // Step 1: Claude analyzes photos and generates 4 design concepts
@@ -96,104 +100,67 @@ async function generateConcepts(body: RequestBody): Promise<{ baseDescription: s
   };
 }
 
-// Gemini text-only: Claude's detailed description → Gemini generates flat sketch image
-async function generateImageWithGemini(prompt: string): Promise<string> {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
+// Step 2: Claude generates SVG flat sketches for a concept (front + back)
+async function generateSvgSketches(
+  concept: DesignConcept,
+  garmentType: string,
+  photos: RequestBody['images']
+): Promise<{ frontSvg: string; backSvg: string }> {
+  if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not configured');
 
-  const url = new URL(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
-  );
-  url.searchParams.set('key', GEMINI_API_KEY);
+  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-  const response = await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{ text: prompt }],
-      }],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT'],
+  // Include photos so Claude can SEE the garment while drawing
+  const contentBlocks: Anthropic.MessageCreateParams['messages'][0]['content'] = [];
+
+  for (let i = 0; i < photos.length; i++) {
+    const img = photos[i];
+    contentBlocks.push({
+      type: 'image' as const,
+      source: {
+        type: 'base64' as const,
+        media_type: img.mimeType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif',
+        data: img.base64,
       },
-    }),
+    });
+    if (i === 0) {
+      contentBlocks.push({
+        type: 'text' as const,
+        text: 'FOTO PRINCIPAL — esta es la prenda que debes dibujar como flat sketch SVG',
+      });
+    }
+  }
+
+  contentBlocks.push({
+    type: 'text' as const,
+    text: buildSvgSketchUserPrompt(concept.description, garmentType),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini text-to-image error: ${response.status} - ${errorText}`);
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 16000,
+    system: SVG_SKETCH_PROMPT,
+    messages: [{ role: 'user', content: contentBlocks }],
+  });
+
+  const textContent = response.content.find((c) => c.type === 'text');
+  if (!textContent || textContent.type !== 'text') {
+    throw new Error('No text content in Claude SVG response');
   }
 
-  const data = await response.json();
-  const parts = data?.candidates?.[0]?.content?.parts;
-  if (!parts) throw new Error('No parts in Gemini response');
+  const result = parseJsonFromText(textContent.text) as {
+    sketchFrontSvg?: string;
+    sketchBackSvg?: string;
+  };
 
-  const imagePart = parts.find(
-    (p: { inline_data?: { mime_type: string; data: string } }) => p.inline_data
-  );
-  if (!imagePart?.inline_data?.data) {
-    throw new Error('No image in Gemini response');
+  if (!result.sketchFrontSvg || !result.sketchBackSvg) {
+    throw new Error('Incomplete SVG response from Claude');
   }
 
-  const mimeType = imagePart.inline_data.mime_type || 'image/png';
-  return `data:${mimeType};base64,${imagePart.inline_data.data}`;
-}
-
-// Flux text-only fallback
-async function generateImageWithFlux(prompt: string): Promise<string> {
-  if (!HF_TOKEN) throw new Error('HUGGING_FACE_ACCESS_TOKEN not configured');
-
-  const response = await fetch(
-    'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HF_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          num_inference_steps: 4,
-          width: 512,
-          height: 768,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`);
-  }
-
-  const contentType = response.headers.get('content-type') || 'image/jpeg';
-  const arrayBuffer = await response.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString('base64');
-  return `data:${contentType};base64,${base64}`;
-}
-
-// Generate a single sketch image — Gemini text-only first, Flux fallback
-async function generateSketchImage(prompt: string): Promise<string> {
-  // Primary: Gemini text-only (Claude's description → flat sketch)
-  try {
-    console.log('Generating sketch with Gemini text-only...');
-    const result = await generateImageWithGemini(prompt);
-    console.log('Gemini text-only successful');
-    return result;
-  } catch (err) {
-    console.error('Gemini text-only failed:', err);
-  }
-
-  // Fallback: Flux text-only
-  try {
-    console.log('Fallback: Flux text-only...');
-    const result = await generateImageWithFlux(prompt);
-    console.log('Flux text-only successful');
-    return result;
-  } catch (err) {
-    console.error('Flux text-only also failed:', err);
-    throw new Error('Image generation failed with all providers');
-  }
+  return {
+    frontSvg: result.sketchFrontSvg,
+    backSvg: result.sketchBackSvg,
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -220,29 +187,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 1: Claude analyzes photos and generates detailed descriptions + 4 concepts
+    // Step 1: Claude analyzes photos → baseDescription + 4 concepts
     console.log('Step 1: Generating design concepts with Claude (photo analysis)...');
-    const { baseDescription, concepts } = await generateConcepts(body);
-    console.log(`Generated ${concepts.length} concepts. Base description length: ${baseDescription.length}`);
+    const { concepts } = await generateConcepts(body);
+    console.log(`Generated ${concepts.length} concepts`);
 
-    // Step 2: Generate all sketches using text-only prompts (Claude's description → Gemini)
-    // Claude already analyzed the photo perfectly — we use its description, not the photo itself
-    console.log('Step 2: Generating all sketches from Claude descriptions (text-only)...');
+    // Step 2: Claude generates SVG flat sketches for each concept (in parallel)
+    // Claude SEES the photos while drawing → accurate representation
+    console.log('Step 2: Generating SVG sketches with Claude (4 concepts in parallel)...');
     const sketchOptions = await Promise.all(
       concepts.map(async (concept) => {
-        const frontPrompt = buildDetailedSketchPrompt(baseDescription, concept.description, 'front', body.garmentType);
-        const backPrompt = buildDetailedSketchPrompt(baseDescription, concept.description, 'back', body.garmentType);
-
-        const [frontImage, backImage] = await Promise.all([
-          generateSketchImage(frontPrompt),
-          generateSketchImage(backPrompt),
-        ]);
+        const { frontSvg, backSvg } = await generateSvgSketches(
+          concept,
+          body.garmentType,
+          body.images
+        );
 
         return {
           id: concept.id,
           description: `${concept.title}: ${concept.description}`,
-          frontImageBase64: frontImage,
-          backImageBase64: backImage,
+          frontImageBase64: svgToDataUri(frontSvg),
+          backImageBase64: svgToDataUri(backSvg),
         };
       })
     );

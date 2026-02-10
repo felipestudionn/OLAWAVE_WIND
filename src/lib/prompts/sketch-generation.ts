@@ -44,42 +44,47 @@ REGLAS:
 - NUNCA cambiar: largo total, ancho de hombros, tipo de manga, proporciones generales, forma de la silueta
 - SÍ se puede cambiar: tipo de cuello, cierres (botones vs cremallera vs alamares), bolsillos, acabados, ribetes, costuras decorativas`;
 
-// Text-only prompt: Claude's detailed description → Gemini generates flat sketch (no photo input)
-export function buildDetailedSketchPrompt(
-  baseDescription: string,
+// SVG sketch generation — Claude sees photos and generates SVG flat sketches directly
+export const SVG_SKETCH_PROMPT = `Eres un experto ilustrador técnico de moda especializado en crear FLAT SKETCHES (dibujos planos técnicos) en formato SVG.
+
+REGLAS SVG CRÍTICAS:
+1. viewBox="0 0 400 500" — la prenda debe estar CENTRADA y ocupar la mayor parte del espacio
+2. Dibuja SOLO la prenda PLANA, como extendida sobre una mesa — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
+3. La prenda debe estar centrada en x=200
+4. Usar stroke="#000000" con stroke-width="1.5" para líneas principales del contorno
+5. Usar stroke="#000000" con stroke-width="0.75" y stroke-dasharray="3 3" para líneas de costura/pespunte internas
+6. Botones: círculos pequeños (r=3) con fill="none" stroke="#000000"
+7. Bolsillos: stroke-width="1" con líneas limpias
+8. NO usar fill excepto fill="none" — NUNCA colores de relleno
+9. Estilo: dibujo técnico plano (flat sketch), NO ilustración de moda, NO artístico
+10. Incluir detalles constructivos: topstitching, pinzas, pliegues, cierres, cremalleras, ojales
+11. El SVG debe ser un elemento válido completo que empiece con <svg y termine con </svg>
+12. Usar comillas simples dentro de los atributos SVG
+13. La prenda debe ser SIMÉTRICA (eje central x=200)
+14. Proporciones realistas — el largo, ancho y forma deben coincidir EXACTAMENTE con la descripción
+
+FORMATO DE SALIDA (JSON puro, sin markdown):
+{
+  "sketchFrontSvg": "<svg viewBox='0 0 400 500' xmlns='http://www.w3.org/2000/svg'>...</svg>",
+  "sketchBackSvg": "<svg viewBox='0 0 400 500' xmlns='http://www.w3.org/2000/svg'>...</svg>"
+}`;
+
+export function buildSvgSketchUserPrompt(
   conceptDescription: string,
-  view: 'front' | 'back',
   garmentType: string
 ): string {
-  const viewLabel = view === 'front' ? 'FRONTAL' : 'TRASERA (de espaldas)';
-  const viewSpecific = view === 'front'
-    ? `- Vista FRONTAL de la prenda sola, completamente simétrica
-- Mostrar: cuello/escote, apertura frontal, cierres, bolsillos frontales, detalles de manga desde el frente`
-    : `- Vista TRASERA de la prenda sola, completamente simétrica
-- Mostrar: espalda, canesú si tiene, costuras traseras, abertura trasera si aplica, detalles de manga desde atrás`;
+  return `Genera los SVG de FLAT SKETCH (vista frontal y trasera) para este diseño:
 
-  return `Genera un FLAT SKETCH técnico de moda (fashion flat / dibujo plano técnico) de una prenda.
+TIPO DE PRENDA: ${garmentType}
+DESCRIPCIÓN DEL DISEÑO: ${conceptDescription}
 
-PRENDA: ${garmentType}
-VISTA: ${viewLabel}
-
-SILUETA BASE (forma exacta que DEBE tener la prenda):
-${baseDescription}
-
-DETALLES ESPECÍFICOS DE ESTE DISEÑO:
-${conceptDescription}
-
-ESTILO DEL DIBUJO — FLAT SKETCH TÉCNICO:
-- Dibuja la prenda PLANA, como si estuviera extendida sobre una mesa — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
-${viewSpecific}
-- SOLO líneas negras finas sobre fondo blanco puro — como un dibujo técnico de patronaje a mano
-- Líneas de contorno limpias y definidas
-- Líneas de costura internas con trazo discontinuo (pespuntes, pinzas, uniones de piezas)
-- Detalles constructivos visibles: topstitching, ribetes, ojales, botones (como círculos pequeños), cremalleras, pliegues
-- SIN color, SIN relleno, SIN sombreado, SIN degradados — solo trazos de línea
-- SIN fondo decorativo — fondo completamente blanco
-- NO incluir texto, etiquetas, medidas ni anotaciones en la imagen
-- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro sobre papel blanco`;
+IMPORTANTE:
+- Copia FIELMENTE la silueta, largo, proporciones y todos los detalles constructivos descritos
+- Vista FRONTAL: mostrar apertura, cierres, bolsillos, cuello/escote, detalles frontales
+- Vista TRASERA: interpretar coherentemente la parte trasera (costuras, canesú, espalda)
+- La prenda PLANA centrada en el SVG, sin cuerpo ni maniquí
+- Solo líneas negras sobre fondo blanco, sin rellenos de color
+- Solo JSON válido, sin markdown ni backticks.`;
 }
 
 // Prompt for Claude to propose construction notes
