@@ -45,11 +45,37 @@ export interface SuggestedMeasurements {
   [key: string]: string;
 }
 
+// --- New v2 types ---
+
+export interface SketchOption {
+  id: string;
+  description: string;
+  frontImageBase64: string;
+  backImageBase64: string;
+}
+
+export interface ProposedNote {
+  text: string;
+  position: string;
+  x: number;
+  y: number;
+  selected: boolean;
+}
+
+export type FlowStep = 'input' | 'generating-sketches' | 'sketch-selection' | 'generating-comments' | 'comments' | 'final';
+
 export interface TechPackResult {
   sketchFrontSvg: string;
   sketchBackSvg: string;
   technicalDescription: string;
   constructionNotes: ConstructionNote[];
+  suggestedMeasurements: SuggestedMeasurements;
+}
+
+// v2 result using images instead of SVG
+export interface TechPackResultV2 {
+  selectedSketch: SketchOption;
+  selectedNotes: ConstructionNote[];
   suggestedMeasurements: SuggestedMeasurements;
 }
 
@@ -71,6 +97,8 @@ export interface TechPack {
   additional_notes: string;
   sketch_front_svg: string | null;
   sketch_back_svg: string | null;
+  sketch_front_image: string | null;
+  sketch_back_image: string | null;
   technical_description: string | null;
   construction_notes: ConstructionNote[];
   suggested_measurements: SuggestedMeasurements;

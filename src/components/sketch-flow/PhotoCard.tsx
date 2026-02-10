@@ -26,17 +26,17 @@ export default function PhotoCard({ image, index, onInstructionChange, onRemove 
           <X className="h-3 w-3 text-gray-500" />
         </button>
         <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] py-0.5 text-center rounded-b-lg font-medium">
-          Photo {index + 1}
+          Foto {index + 1}
         </div>
       </div>
       <div className="flex-1 min-w-0">
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          What do you like from this photo?
+          ¿Qué te gusta de esta foto?
         </label>
         <textarea
           value={image.instructions}
           onChange={(e) => onInstructionChange(index, e.target.value)}
-          placeholder="e.g. 'The collar and shoulder details', 'The buttons and length'..."
+          placeholder="Ej: 'El cuello y las hombreras', 'Los botones y el largo'..."
           className="w-full h-20 px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 placeholder:text-gray-400"
         />
       </div>

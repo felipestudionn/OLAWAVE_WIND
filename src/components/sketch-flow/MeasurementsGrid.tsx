@@ -16,11 +16,11 @@ const MEASUREMENT_ROWS = [
 const SIZE_COLUMNS = ['XS', 'S', 'M', 'L', 'XL'];
 
 const LABELS: Record<string, string> = {
-  bust: 'Bust',
-  waist: 'Waist',
-  hip: 'Hip',
-  total_length: 'Total Length',
-  sleeve_length: 'Sleeve Length',
+  bust: 'Pecho',
+  waist: 'Cintura',
+  hip: 'Cadera',
+  total_length: 'Largo total',
+  sleeve_length: 'Largo manga',
 };
 
 export default function MeasurementsGrid({ measurements, onMeasurementChange }: MeasurementsGridProps) {
@@ -30,7 +30,7 @@ export default function MeasurementsGrid({ measurements, onMeasurementChange }: 
         <thead>
           <tr>
             <th className="border border-gray-300 px-1.5 py-1 text-left text-gray-500 font-medium">
-              Measure
+              Medida
             </th>
             {SIZE_COLUMNS.map((size) => (
               <th key={size} className="border border-gray-300 px-1.5 py-1 text-center text-gray-500 font-medium w-12">

@@ -9,16 +9,16 @@ interface GarmentDetailsFormProps {
 
 const GARMENT_TYPES: { value: GarmentType; label: string }[] = [
   { value: 'top', label: 'Top' },
-  { value: 'blouse', label: 'Blouse' },
-  { value: 'shirt', label: 'Shirt' },
-  { value: 'jacket', label: 'Jacket' },
+  { value: 'blouse', label: 'Blusa' },
+  { value: 'shirt', label: 'Camisa' },
+  { value: 'jacket', label: 'Chaqueta' },
   { value: 'blazer', label: 'Blazer' },
-  { value: 'dress', label: 'Dress' },
-  { value: 'pants', label: 'Pants' },
-  { value: 'skirt', label: 'Skirt' },
-  { value: 'set', label: 'Set / Ensemble' },
-  { value: 'coat', label: 'Coat / Outerwear' },
-  { value: 'other', label: 'Other' },
+  { value: 'dress', label: 'Vestido' },
+  { value: 'pants', label: 'Pantalón' },
+  { value: 'skirt', label: 'Falda' },
+  { value: 'set', label: 'Conjunto' },
+  { value: 'coat', label: 'Abrigo' },
+  { value: 'other', label: 'Otro' },
 ];
 
 const SEASONS = [
@@ -37,61 +37,61 @@ export default function GarmentDetailsForm({ details, onChange }: GarmentDetails
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">Garment details</h3>
-      <p className="text-sm text-gray-500 mb-4">Define the type, season, and fabric for your tech pack.</p>
+      <h3 className="text-lg font-semibold text-gray-900 mb-1">Detalles de la prenda</h3>
+      <p className="text-sm text-gray-500 mb-4">Define el tipo, temporada y tejido de tu ficha técnica.</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Garment type *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de prenda *</label>
           <select
             value={details.garmentType}
             onChange={(e) => update('garmentType', e.target.value)}
             className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400"
           >
-            <option value="">Select type...</option>
+            <option value="">Seleccionar tipo...</option>
             {GARMENT_TYPES.map((t) => (
               <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Season *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Temporada</label>
           <select
             value={details.season}
             onChange={(e) => update('season', e.target.value)}
             className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400"
           >
-            <option value="">Select season...</option>
+            <option value="">Seleccionar temporada...</option>
             {SEASONS.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Style name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de estilo</label>
           <input
             type="text"
             value={details.styleName}
             onChange={(e) => update('styleName', e.target.value)}
-            placeholder="e.g. Set Tweed, Oversized Blazer..."
+            placeholder="Ej: Set Tweed, Blazer Oversize..."
             className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 placeholder:text-gray-400"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Main fabric</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tejido principal</label>
           <input
             type="text"
             value={details.fabric}
             onChange={(e) => update('fabric', e.target.value)}
-            placeholder="e.g. Tweed rojo/negro, Satin, Denim..."
+            placeholder="Ej: Tweed rojo/negro, Satén, Denim..."
             className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 placeholder:text-gray-400"
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Additional notes</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Notas adicionales</label>
           <textarea
             value={details.additionalNotes}
             onChange={(e) => update('additionalNotes', e.target.value)}
-            placeholder="e.g. 'Peplum at the back', 'Piping of 3cm frayed on both sides', 'Oversized fit'..."
+            placeholder="Ej: 'Peplum en espalda', 'Vivo de 3cm desfluecado ambos lados', 'Fit oversize'..."
             rows={3}
             className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 placeholder:text-gray-400"
           />

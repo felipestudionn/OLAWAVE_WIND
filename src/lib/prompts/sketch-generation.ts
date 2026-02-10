@@ -1,60 +1,117 @@
-export const SKETCH_SYSTEM_PROMPT = `You are an expert fashion technical designer and SVG illustrator.
-Your specialty is creating clean, precise technical garment sketches in SVG format
-that overlay onto a fashion croquis (mannequin template).
+// Prompt for Claude to analyze reference photos and generate 3-4 design concepts
+export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar fotos de referencia y proponer variantes de diseño.
 
-CRITICAL SVG RULES:
-1. Output SVG with viewBox="0 0 300 500"
-2. Do NOT draw a mannequin or body - ONLY the garment
-3. The garment must be sized and positioned to fit over a mannequin with these landmarks:
-   - Neckline: y=65-75
-   - Shoulders: y=75-85, spanning x=95 to x=205
-   - Bust: y=110
-   - Waist: y=160
-   - Hips: y=200
-   - Knee: y=340
-   - Ankle: y=450
-   - Arms extend from shoulders down to approximately y=220 (wrists at sides)
-   - Center axis: x=150
-4. Use stroke="#000000" with stroke-width="1.5" for main garment lines
-5. Use stroke="#000000" with stroke-width="0.75" and stroke-dasharray="3 3" for seam/stitch lines
-6. Buttons: small circles (r=2.5) with fill="none" stroke="#000000"
-7. Pockets: lighter stroke-width="1" lines
-8. DO NOT use fills except for very light pattern indications (use fill="none" by default)
-9. Style: technical flat sketch (NOT fashion illustration, NOT artistic, NOT stylized)
-10. Include construction details: topstitching, darts, pleats, closures, zippers
-11. The SVG must be a complete valid SVG element starting with <svg and ending with </svg>
-12. Use single quotes inside SVG attributes
+INSTRUCCIONES:
+1. Analiza todas las fotos de referencia proporcionadas
+2. Lee las instrucciones específicas de cada foto (qué elementos quiere el usuario de cada una)
+3. Genera EXACTAMENTE 4 conceptos de diseño diferentes que combinen los elementos solicitados
+4. Cada concepto debe ser una interpretación distinta pero coherente
 
-POSITION REFERENCE FOR CONSTRUCTION NOTES:
-- "front-collar" / "back-collar": near y=70
-- "front-shoulder" / "back-shoulder": near y=80
-- "front-bust" / "back-bust": near y=110
-- "front-waist" / "back-waist": near y=160
-- "front-hip" / "back-hip": near y=200
-- "front-hem" / "back-hem": varies by garment length
-- "front-sleeve" / "back-sleeve": near the arm area
-- Notes should have x values between 200-280 (right side) to avoid overlapping the sketch
+REGLAS:
+- Cada concepto debe describir la prenda de forma técnica y precisa
+- Incluir silueta, detalles constructivos, acabados, y proporción
+- Describir tanto la VISTA FRONTAL como la VISTA TRASERA
+- Las descripciones deben ser lo suficientemente detalladas para que un ilustrador pueda dibujar la prenda
+- Escribe en español
 
-OUTPUT FORMAT:
-Return ONLY valid JSON with no markdown formatting, no code blocks, no backticks:
+FORMATO DE SALIDA (JSON puro, sin markdown):
 {
-  "sketchFrontSvg": "<svg viewBox='0 0 300 500' xmlns='http://www.w3.org/2000/svg'>...</svg>",
-  "sketchBackSvg": "<svg viewBox='0 0 300 500' xmlns='http://www.w3.org/2000/svg'>...</svg>",
-  "technicalDescription": "Detailed construction description for pattern makers...",
-  "constructionNotes": [
-    { "text": "Note text", "position": "front-collar", "x": 220, "y": 80 },
-    { "text": "Note text", "position": "back-hem", "x": 220, "y": 390 }
+  "concepts": [
+    {
+      "id": "1",
+      "title": "Nombre corto del concepto",
+      "description": "Descripción técnica completa de la prenda para vista frontal y trasera. Incluir silueta, largo, mangas, cuello, detalles constructivos, acabados, etc."
+    },
+    {
+      "id": "2",
+      "title": "...",
+      "description": "..."
+    },
+    {
+      "id": "3",
+      "title": "...",
+      "description": "..."
+    },
+    {
+      "id": "4",
+      "title": "...",
+      "description": "..."
+    }
+  ]
+}`;
+
+// Template for generating sketch images with Gemini Imagen
+export function buildImagePrompt(concept: string, view: 'front' | 'back', garmentType: string): string {
+  const viewLabel = view === 'front' ? 'FRONTAL' : 'TRASERA (de espaldas)';
+  return `Generate a clean technical fashion flat sketch drawing.
+
+REQUIREMENTS:
+- Vista ${viewLabel} de la prenda sobre un croquis/maniquí técnico de moda femenino
+- Estilo: dibujo técnico de moda a línea negra sobre fondo blanco puro
+- El maniquí debe ser un croquis técnico proporcional (NO fashion illustration estilizada)
+- Proporciones realistas del cuerpo humano (8 cabezas de altura)
+- La prenda dibujada encima del croquis con líneas negras más gruesas
+- Incluir detalles constructivos: costuras, botones, pliegues, cierres, topstitching
+- Líneas de costura con trazo discontinuo donde aplique
+- Estilo similar a un sketch de ficha técnica profesional de moda
+- El maniquí debe tener: cabeza simple con línea central, cuerpo con brazos ligeramente separados, piernas rectas
+- Solo blanco y negro, sin colores
+- Fondo completamente blanco
+- NO incluir texto, etiquetas ni anotaciones en la imagen
+
+PRENDA: ${garmentType}
+DESCRIPCIÓN: ${concept}`;
+}
+
+// Prompt for Claude to propose construction notes
+export const COMMENT_PROPOSAL_PROMPT = `Eres un experto técnico de moda especializado en fichas técnicas (tech packs).
+
+Tu trabajo es proponer notas de construcción/anotaciones técnicas que podrían incluirse en una ficha técnica para esta prenda.
+
+INSTRUCCIONES:
+1. Analiza la descripción del diseño
+2. Propón entre 6 y 8 notas técnicas relevantes
+3. Cada nota debe ser una indicación constructiva precisa para patronaje
+4. Las notas deben cubrir diferentes aspectos: costuras, acabados, fornituras, medidas clave, detalles especiales
+
+TIPOS DE NOTAS:
+- Tipo de costura o acabado (ej: "Vivo de 3cm desfluecado ambos lados")
+- Detalle de confección (ej: "Peplum fruncido en cintura trasera")
+- Fornitura (ej: "Botón forrado Ø 15mm")
+- Indicación de patronaje (ej: "Manga montada con caída natural")
+- Acabado (ej: "Dobladillo invisible 2cm")
+- Material o entretela (ej: "Entretela termoadhesiva en cuello y puños")
+
+POSICIONES VÁLIDAS:
+- "front-collar", "back-collar"
+- "front-shoulder", "back-shoulder"
+- "front-bust", "back-bust"
+- "front-waist", "back-waist"
+- "front-hip", "back-hip"
+- "front-hem", "back-hem"
+- "front-sleeve", "back-sleeve"
+
+COORDENADAS:
+- x: entre 200 y 280 (para notas del lado derecho)
+- y: según posición (collar ~70, shoulder ~85, bust ~130, waist ~200, hip ~260, hem ~350, sleeve ~140)
+- Escribe en español
+
+FORMATO DE SALIDA (JSON puro, sin markdown):
+{
+  "notes": [
+    { "text": "Texto de la nota", "position": "front-waist", "x": 220, "y": 200 },
+    ...
   ],
   "suggestedMeasurements": {
-    "bust": "suggested value or empty string",
-    "waist": "suggested value or empty string",
-    "seat": "suggested value or empty string",
-    "totalLength": "suggested value or empty string",
-    "sleeveLength": "suggested value or empty string"
+    "bust": "",
+    "waist": "",
+    "seat": "",
+    "totalLength": "",
+    "sleeveLength": ""
   }
 }`;
 
-export function buildUserPrompt(data: {
+export function buildConceptUserPrompt(data: {
   garmentType: string;
   season: string;
   styleName: string;
@@ -63,27 +120,48 @@ export function buildUserPrompt(data: {
   images: Array<{ instructions: string }>;
 }): string {
   const photoInstructions = data.images
-    .map((img, i) => `- Photo ${i + 1}: ${img.instructions || 'Use as general reference'}`)
+    .map((img, i) => `- Foto ${i + 1}: ${img.instructions || 'Usar como referencia general'}`)
     .join('\n');
 
-  return `Create a technical garment sketch for the following:
+  return `Genera 4 conceptos de diseño para la siguiente prenda:
 
-GARMENT TYPE: ${data.garmentType}
-SEASON: ${data.season}
-STYLE NAME: ${data.styleName}
-FABRIC: ${data.fabric}
-ADDITIONAL NOTES: ${data.additionalNotes}
+TIPO DE PRENDA: ${data.garmentType}
+TEMPORADA: ${data.season}
+NOMBRE/ESTILO: ${data.styleName}
+TEJIDO: ${data.fabric}
+NOTAS ADICIONALES: ${data.additionalNotes}
 
-REFERENCE PHOTO INSTRUCTIONS:
+INSTRUCCIONES POR FOTO DE REFERENCIA:
 ${photoInstructions}
 
-Analyze ALL reference photos carefully. Combine the specific elements mentioned in each photo's instructions into a single cohesive garment design. Generate both front and back technical SVG sketches.
+Analiza TODAS las fotos de referencia cuidadosamente. Combina los elementos específicos mencionados en cada foto para crear 4 variantes coherentes del diseño. Recuerda: solo JSON, sin markdown.`;
+}
 
-Remember:
-- SVG viewBox MUST be "0 0 300 500"
-- Only draw the garment, NOT the body/mannequin
-- Use precise technical flat drawing style
-- Include all construction details (seams, buttons, closures, topstitching)
-- Position the garment to align with the mannequin landmarks provided in your system instructions
-- Return ONLY valid JSON, no markdown`;
+export function buildCommentUserPrompt(data: {
+  garmentType: string;
+  conceptDescription: string;
+  fabric: string;
+  additionalNotes: string;
+}): string {
+  return `Propón notas de construcción para esta prenda:
+
+TIPO DE PRENDA: ${data.garmentType}
+DESCRIPCIÓN DEL DISEÑO: ${data.conceptDescription}
+TEJIDO: ${data.fabric}
+NOTAS ADICIONALES DEL USUARIO: ${data.additionalNotes}
+
+Recuerda: solo JSON, sin markdown.`;
+}
+
+// Keep old prompts for backward compatibility
+export const SKETCH_SYSTEM_PROMPT = CONCEPT_GENERATION_PROMPT;
+export function buildUserPrompt(data: {
+  garmentType: string;
+  season: string;
+  styleName: string;
+  fabric: string;
+  additionalNotes: string;
+  images: Array<{ instructions: string }>;
+}): string {
+  return buildConceptUserPrompt(data);
 }

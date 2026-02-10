@@ -86,8 +86,8 @@ export default function ImageUploader({ images, onImagesChange, maxImages = 4 }:
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">Upload reference photos</h3>
-      <p className="text-sm text-gray-500 mb-4">Add 1 to 4 inspiration photos. Drag & drop or click to upload.</p>
+      <h3 className="text-lg font-semibold text-gray-900 mb-1">Fotos de referencia</h3>
+      <p className="text-sm text-gray-500 mb-4">Añade de 1 a 4 fotos de inspiración. Arrastra o haz clic para subir.</p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {slots.map((img, i) => (
           <div
@@ -112,7 +112,7 @@ export default function ImageUploader({ images, onImagesChange, maxImages = 4 }:
                   <X className="h-3.5 w-3.5 text-gray-600" />
                 </button>
                 <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 px-2 rounded-b-xl text-center">
-                  Photo {i + 1}
+                  Foto {i + 1}
                 </div>
               </>
             ) : (
@@ -123,7 +123,7 @@ export default function ImageUploader({ images, onImagesChange, maxImages = 4 }:
                   <ImageIcon className="h-5 w-5" />
                 )}
                 <span className="text-xs font-medium">
-                  {i === 0 && images.length === 0 ? 'Add photo' : `Photo ${i + 1}`}
+                  {i === 0 && images.length === 0 ? 'Añadir foto' : `Foto ${i + 1}`}
                 </span>
               </div>
             )}
