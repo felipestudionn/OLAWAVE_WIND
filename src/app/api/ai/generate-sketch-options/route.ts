@@ -4,6 +4,7 @@ import {
   CONCEPT_GENERATION_PROMPT,
   buildConceptUserPrompt,
   buildImagePrompt,
+  buildSketchFromPhotoPrompt,
 } from '@/lib/prompts/sketch-generation';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -61,9 +62,10 @@ async function generateConcepts(body: RequestBody): Promise<DesignConcept[]> {
         data: img.base64,
       },
     });
+    const label = i === 0 ? 'FOTO PRINCIPAL' : `Foto secundaria ${i + 1}`;
     imageBlocks.push({
       type: 'text' as const,
-      text: `Foto ${i + 1} instrucciones: ${img.instructions || 'Usar como referencia general'}`,
+      text: `${label} instrucciones: ${img.instructions || (i === 0 ? 'Copiar fielmente esta prenda' : 'Usar como referencia de detalles')}`,
     });
   }
 
@@ -92,7 +94,56 @@ async function generateConcepts(body: RequestBody): Promise<DesignConcept[]> {
   return result.concepts;
 }
 
-// Step 2a: Generate sketch image with Hugging Face Flux
+// Gemini image-to-image: sends the reference photo + prompt → gets a technical sketch back
+async function generateImageWithGeminiFromPhoto(
+  prompt: string,
+  photoBase64: string,
+  photoMimeType: string
+): Promise<string> {
+  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
+
+  const url = new URL(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent'
+  );
+  url.searchParams.set('key', GEMINI_API_KEY);
+
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { inlineData: { mimeType: photoMimeType, data: photoBase64 } },
+          { text: prompt },
+        ],
+      }],
+      generationConfig: {
+        responseModalities: ['IMAGE'],
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini image-to-image error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const parts = data?.candidates?.[0]?.content?.parts;
+  if (!parts) throw new Error('No parts in Gemini response');
+
+  const imagePart = parts.find(
+    (p: { inline_data?: { mime_type: string; data: string } }) => p.inline_data
+  );
+  if (!imagePart?.inline_data?.data) {
+    throw new Error('No image in Gemini response');
+  }
+
+  const mimeType = imagePart.inline_data.mime_type || 'image/png';
+  return `data:${mimeType};base64,${imagePart.inline_data.data}`;
+}
+
+// Flux text-only fallback (no reference photo input)
 async function generateImageWithFlux(prompt: string): Promise<string> {
   if (!HF_TOKEN) throw new Error('HUGGING_FACE_ACCESS_TOKEN not configured');
 
@@ -120,74 +171,40 @@ async function generateImageWithFlux(prompt: string): Promise<string> {
     throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`);
   }
 
-  // Flux returns raw image bytes (JPEG)
   const contentType = response.headers.get('content-type') || 'image/jpeg';
   const arrayBuffer = await response.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString('base64');
   return `data:${contentType};base64,${base64}`;
 }
 
-// Step 2b: Generate sketch image with Gemini Imagen (fallback)
-async function generateImageWithGemini(prompt: string): Promise<string> {
-  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
-
-  const url = new URL(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
-  );
-  url.searchParams.set('key', GEMINI_API_KEY);
-
-  const response = await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  const parts = data?.candidates?.[0]?.content?.parts;
-  if (!parts) throw new Error('No parts in Gemini response');
-
-  // Find the image part
-  const imagePart = parts.find(
-    (p: { inline_data?: { mime_type: string; data: string } }) => p.inline_data
-  );
-  if (!imagePart?.inline_data?.data) {
-    throw new Error('No image in Gemini response');
-  }
-
-  const mimeType = imagePart.inline_data.mime_type || 'image/png';
-  return `data:${mimeType};base64,${imagePart.inline_data.data}`;
-}
-
-// Generate a single image with fallback — returns base64 with data URI prefix
-async function generateImage(prompt: string): Promise<string> {
-  // Try Hugging Face Flux first
+// Generate a single sketch image — Gemini image-to-image first, Flux text-only fallback
+async function generateImage(
+  photoPrompt: string,
+  textPrompt: string,
+  referencePhoto: { base64: string; mimeType: string }
+): Promise<string> {
+  // Primary: Gemini image-to-image (sends reference photo → gets sketch)
   try {
-    console.log('Generating image with Flux...');
-    const result = await generateImageWithFlux(prompt);
-    console.log('Flux generation successful');
+    console.log('Generating sketch with Gemini image-to-image...');
+    const result = await generateImageWithGeminiFromPhoto(
+      photoPrompt,
+      referencePhoto.base64,
+      referencePhoto.mimeType
+    );
+    console.log('Gemini image-to-image successful');
     return result;
-  } catch (fluxError) {
-    console.error('Flux failed, trying Gemini fallback:', fluxError);
+  } catch (err) {
+    console.error('Gemini image-to-image failed:', err);
   }
 
-  // Fallback to Gemini
+  // Fallback: Flux text-only
   try {
-    console.log('Generating image with Gemini fallback...');
-    const result = await generateImageWithGemini(prompt);
-    console.log('Gemini generation successful');
+    console.log('Fallback: Flux text-only...');
+    const result = await generateImageWithFlux(textPrompt);
+    console.log('Flux text-only successful');
     return result;
-  } catch (geminiError) {
-    console.error('Gemini fallback also failed:', geminiError);
+  } catch (err) {
+    console.error('Flux text-only also failed:', err);
     throw new Error('Image generation failed with all providers');
   }
 }
@@ -216,22 +233,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // The first image is always the PRIMARY reference
+    const primaryPhoto = body.images[0];
+
     // Step 1: Generate design concepts with Claude
     console.log('Step 1: Generating design concepts with Claude...');
     const concepts = await generateConcepts(body);
     console.log(`Generated ${concepts.length} concepts`);
 
-    // Step 2: Generate images for each concept (front + back) in parallel
-    console.log('Step 2: Generating sketch images...');
+    // Step 2: Generate sketch images for each concept using primary photo as reference
+    // Front+back per concept, all concepts in parallel
+    console.log('Step 2: Generating sketch images from reference photo...');
     const sketchOptions = await Promise.all(
       concepts.map(async (concept) => {
-        const frontPrompt = buildImagePrompt(concept.description, 'front', body.garmentType);
-        const backPrompt = buildImagePrompt(concept.description, 'back', body.garmentType);
+        const photoFrontPrompt = buildSketchFromPhotoPrompt('front', body.garmentType, concept.description);
+        const photoBackPrompt = buildSketchFromPhotoPrompt('back', body.garmentType, concept.description);
+        const textFrontPrompt = buildImagePrompt(concept.description, 'front', body.garmentType);
+        const textBackPrompt = buildImagePrompt(concept.description, 'back', body.garmentType);
 
-        // Generate front and back in parallel for each concept
         const [frontImage, backImage] = await Promise.all([
-          generateImage(frontPrompt),
-          generateImage(backPrompt),
+          generateImage(photoFrontPrompt, textFrontPrompt, {
+            base64: primaryPhoto.base64,
+            mimeType: primaryPhoto.mimeType,
+          }),
+          generateImage(photoBackPrompt, textBackPrompt, {
+            base64: primaryPhoto.base64,
+            mimeType: primaryPhoto.mimeType,
+          }),
         ]);
 
         return {

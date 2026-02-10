@@ -1,17 +1,20 @@
-// Prompt for Claude to analyze reference photos and generate 3-4 design concepts
-export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar fotos de referencia y proponer variantes de diseño.
+// Concept generation — primary photo is THE garment, secondary photos add detail modifications
+export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto principal de referencia y proponer variantes de diseño.
+
+IMPORTANTE: La FOTO 1 es la FOTO PRINCIPAL. Tu primer concepto SIEMPRE debe ser una reproducción FIEL al 100% de esa prenda exactamente como aparece en la foto.
 
 INSTRUCCIONES:
-1. Analiza todas las fotos de referencia proporcionadas
-2. Lee las instrucciones específicas de cada foto (qué elementos quiere el usuario de cada una)
-3. Genera EXACTAMENTE 4 conceptos de diseño diferentes que combinen los elementos solicitados
-4. Cada concepto debe ser una interpretación distinta pero coherente
+1. Analiza la FOTO 1 (principal) en detalle absoluto: silueta, corte, largo, mangas, cuello, detalles constructivos, proporciones, acabados, cierres, bolsillos, costuras visibles
+2. El CONCEPTO 1 ("Fiel al original") debe describir la prenda de la foto principal tal cual es, sin NINGÚN cambio
+3. Si hay fotos secundarias (2, 3, 4), lee sus instrucciones y crea conceptos adicionales que partan de la prenda principal pero incorporen los detalles solicitados de las fotos secundarias
+4. Si solo hay 1 foto, genera 3 variantes adicionales con cambios constructivos sutiles (cuello, mangas, largo, acabados)
 
 REGLAS:
 - Cada concepto debe describir la prenda de forma técnica y precisa
 - Incluir silueta, detalles constructivos, acabados, y proporción
 - Describir tanto la VISTA FRONTAL como la VISTA TRASERA
-- Las descripciones deben ser lo suficientemente detalladas para que un ilustrador pueda dibujar la prenda
+- Las descripciones deben ser lo suficientemente detalladas para que un ilustrador pueda dibujar la prenda EXACTA
+- El CONCEPTO 1 SIEMPRE se llama "Fiel al original" y describe EXACTAMENTE lo que se ve en la foto principal
 - Escribe en español
 
 FORMATO DE SALIDA (JSON puro, sin markdown):
@@ -19,8 +22,8 @@ FORMATO DE SALIDA (JSON puro, sin markdown):
   "concepts": [
     {
       "id": "1",
-      "title": "Nombre corto del concepto",
-      "description": "Descripción técnica completa de la prenda para vista frontal y trasera. Incluir silueta, largo, mangas, cuello, detalles constructivos, acabados, etc."
+      "title": "Fiel al original",
+      "description": "Descripción técnica completa y fiel de la prenda tal como aparece en la foto principal. Vista frontal: ... Vista trasera: ..."
     },
     {
       "id": "2",
@@ -40,24 +43,67 @@ FORMATO DE SALIDA (JSON puro, sin markdown):
   ]
 }`;
 
-// Template for generating sketch images with Gemini Imagen
+// Image-to-image: prompt sent to Gemini WITH the reference photo to convert it to a technical sketch
+export function buildSketchFromPhotoPrompt(
+  view: 'front' | 'back',
+  garmentType: string,
+  conceptDescription: string
+): string {
+  if (view === 'front') {
+    return `Convierte esta foto de prenda en un FLAT SKETCH técnico de moda (dibujo plano técnico / fashion flat).
+
+REQUISITOS CRÍTICOS — ESTILO FLAT SKETCH:
+- Dibuja la prenda PLANA, como si estuviera extendida sobre una mesa — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
+- Vista FRONTAL de la prenda sola, completamente simétrica
+- Copia fielmente TODOS los detalles de la foto: silueta, proporciones, largo, corte, cuello, mangas, bolsillos, botones, cremalleras, costuras, cierres (alamares, frog closures, etc.)
+- SOLO líneas negras finas sobre fondo blanco puro — como un dibujo técnico de patronaje a mano
+- Líneas de contorno limpias y definidas
+- Líneas de costura internas con trazo discontinuo (pespuntes, pinzas, uniones de piezas)
+- Detalles constructivos visibles: topstitching, ribetes, ojales, botones (como círculos pequeños), cremalleras, pliegues
+- SIN color, SIN relleno, SIN sombreado, SIN degradados — solo trazos de línea
+- SIN fondo decorativo — fondo completamente blanco
+- NO incluir texto, etiquetas, medidas ni anotaciones en la imagen
+- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro sobre papel blanco
+
+PRENDA: ${garmentType}
+MODIFICACIONES: ${conceptDescription}`;
+  }
+
+  return `Basándote en esta foto de la prenda, dibuja la VISTA TRASERA como un FLAT SKETCH técnico de moda.
+
+REQUISITOS CRÍTICOS — ESTILO FLAT SKETCH:
+- Dibuja la VISTA TRASERA de esta MISMA prenda, PLANA — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
+- La prenda extendida como si estuviera sobre una mesa, vista desde atrás
+- Interpreta la parte trasera coherentemente con el diseño frontal visible en la foto
+- SOLO líneas negras finas sobre fondo blanco puro — como un dibujo técnico de patronaje a mano
+- Líneas de contorno limpias y definidas
+- Líneas de costura internas con trazo discontinuo (costuras de espalda, pinzas, canesú)
+- Detalles constructivos traseros: costuras centrales, cremallera trasera si aplica, aberturas, ventilaciones, etiqueta
+- SIN color, SIN relleno, SIN sombreado, SIN degradados — solo trazos de línea
+- SIN fondo decorativo — fondo completamente blanco
+- NO incluir texto, etiquetas, medidas ni anotaciones en la imagen
+- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro sobre papel blanco
+
+PRENDA: ${garmentType}
+MODIFICACIONES: ${conceptDescription}`;
+}
+
+// Text-only prompt for image generation (fallback when no reference photo available)
 export function buildImagePrompt(concept: string, view: 'front' | 'back', garmentType: string): string {
   const viewLabel = view === 'front' ? 'FRONTAL' : 'TRASERA (de espaldas)';
-  return `Generate a clean technical fashion flat sketch drawing.
+  return `Generate a clean technical fashion FLAT SKETCH drawing.
 
 REQUIREMENTS:
-- Vista ${viewLabel} de la prenda sobre un croquis/maniquí técnico de moda femenino
-- Estilo: dibujo técnico de moda a línea negra sobre fondo blanco puro
-- El maniquí debe ser un croquis técnico proporcional (NO fashion illustration estilizada)
-- Proporciones realistas del cuerpo humano (8 cabezas de altura)
-- La prenda dibujada encima del croquis con líneas negras más gruesas
-- Incluir detalles constructivos: costuras, botones, pliegues, cierres, topstitching
-- Líneas de costura con trazo discontinuo donde aplique
-- Estilo similar a un sketch de ficha técnica profesional de moda
-- El maniquí debe tener: cabeza simple con línea central, cuerpo con brazos ligeramente separados, piernas rectas
-- Solo blanco y negro, sin colores
+- Vista ${viewLabel} de la prenda PLANA, extendida — SIN CUERPO, SIN MANIQUÍ, SIN FIGURA HUMANA
+- La prenda dibujada sola, simétrica, como si estuviera sobre una mesa
+- Estilo: dibujo técnico de moda a línea negra fina sobre fondo blanco puro
+- Incluir todos los detalles constructivos: costuras, botones, pliegues, cierres, topstitching, ojales
+- Líneas de costura internas con trazo discontinuo
+- Estilo similar a un flat sketch de ficha técnica profesional de moda / tech pack
+- Solo líneas negras — SIN color, SIN relleno, SIN sombreado
 - Fondo completamente blanco
 - NO incluir texto, etiquetas ni anotaciones en la imagen
+- El resultado debe parecer un dibujo técnico hecho a mano con rotulador fino negro
 
 PRENDA: ${garmentType}
 DESCRIPCIÓN: ${concept}`;
@@ -120,10 +166,13 @@ export function buildConceptUserPrompt(data: {
   images: Array<{ instructions: string }>;
 }): string {
   const photoInstructions = data.images
-    .map((img, i) => `- Foto ${i + 1}: ${img.instructions || 'Usar como referencia general'}`)
+    .map((img, i) => {
+      const label = i === 0 ? 'FOTO PRINCIPAL' : `Foto secundaria ${i + 1}`;
+      return `- ${label}: ${img.instructions || (i === 0 ? 'Copiar fielmente esta prenda' : 'Usar como referencia de detalles')}`;
+    })
     .join('\n');
 
-  return `Genera 4 conceptos de diseño para la siguiente prenda:
+  return `Genera 4 conceptos de diseño basados en la FOTO PRINCIPAL:
 
 TIPO DE PRENDA: ${data.garmentType}
 TEMPORADA: ${data.season}
@@ -131,10 +180,10 @@ NOMBRE/ESTILO: ${data.styleName}
 TEJIDO: ${data.fabric}
 NOTAS ADICIONALES: ${data.additionalNotes}
 
-INSTRUCCIONES POR FOTO DE REFERENCIA:
+INSTRUCCIONES POR FOTO:
 ${photoInstructions}
 
-Analiza TODAS las fotos de referencia cuidadosamente. Combina los elementos específicos mencionados en cada foto para crear 4 variantes coherentes del diseño. Recuerda: solo JSON, sin markdown.`;
+RECUERDA: El concepto 1 SIEMPRE es "Fiel al original" — copia exacta de la foto principal. Los conceptos 2-4 parten de esa base e incorporan cambios. Solo JSON, sin markdown.`;
 }
 
 export function buildCommentUserPrompt(data: {
@@ -153,7 +202,7 @@ NOTAS ADICIONALES DEL USUARIO: ${data.additionalNotes}
 Recuerda: solo JSON, sin markdown.`;
 }
 
-// Keep old prompts for backward compatibility
+// Backward-compat exports
 export const SKETCH_SYSTEM_PROMPT = CONCEPT_GENERATION_PROMPT;
 export function buildUserPrompt(data: {
   garmentType: string;
