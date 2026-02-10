@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import sharp from 'sharp';
 import {
   CONCEPT_GENERATION_PROMPT,
   buildConceptUserPrompt,
@@ -42,7 +43,8 @@ function parseJsonFromText(text: string): unknown {
   }
 }
 
-// Step 1: Claude analyzes photos and generates 4 design concepts
+// ─── Step 1: Claude analyzes photos → garment description ────────────────────
+
 async function generateConcepts(body: RequestBody): Promise<{ baseDescription: string; concepts: DesignConcept[] }> {
   if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not configured');
 
@@ -95,7 +97,9 @@ async function generateConcepts(body: RequestBody): Promise<{ baseDescription: s
   };
 }
 
-// Helper: fetch image from URL and convert to data URI
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// Fetch image from URL and convert to data URI
 async function fetchImageAsDataUri(url: string): Promise<string> {
   const res = await fetch(url);
   const arrayBuffer = await res.arrayBuffer();
@@ -104,15 +108,20 @@ async function fetchImageAsDataUri(url: string): Promise<string> {
   return `data:${contentType};base64,${base64}`;
 }
 
-// Step 2a: fal.ai lineart preprocessor — photo → faithful line tracing
-async function extractLineartWithFal(
-  photoBase64: string,
-  photoMimeType: string
-): Promise<string> {
+// Extract raw base64 + mimeType from a data URI
+function parseDataUri(dataUri: string): { base64: string; mimeType: string } {
+  const match = dataUri.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error('Invalid data URI');
+  return { mimeType: match[1], base64: match[2] };
+}
+
+// ─── Step 2a: BiRefNet — remove background ───────────────────────────────────
+
+async function removeBackground(photoBase64: string, photoMimeType: string): Promise<string> {
   if (!FAL_KEY) throw new Error('FAL_KEY not configured');
 
-  console.log('Extracting lineart from photo...');
-  const response = await fetch('https://fal.run/fal-ai/image-preprocessors/lineart', {
+  console.log('Step 2a: Removing background with BiRefNet...');
+  const response = await fetch('https://fal.run/fal-ai/birefnet/v2', {
     method: 'POST',
     headers: {
       Authorization: `Key ${FAL_KEY}`,
@@ -120,13 +129,48 @@ async function extractLineartWithFal(
     },
     body: JSON.stringify({
       image_url: `data:${photoMimeType};base64,${photoBase64}`,
+      model: 'General Use (Heavy)',
+      operating_resolution: '2048x2048',
+      output_format: 'png',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`BiRefNet error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  if (data.image?.url) {
+    console.log('Background removal successful');
+    return fetchImageAsDataUri(data.image.url);
+  }
+  throw new Error('No image in BiRefNet response');
+}
+
+// ─── Step 2b: Lineart extraction ─────────────────────────────────────────────
+
+async function extractLineart(imageDataUri: string): Promise<string> {
+  if (!FAL_KEY) throw new Error('FAL_KEY not configured');
+
+  const { base64, mimeType } = parseDataUri(imageDataUri);
+
+  console.log('Step 2b: Extracting lineart...');
+  const response = await fetch('https://fal.run/fal-ai/image-preprocessors/lineart', {
+    method: 'POST',
+    headers: {
+      Authorization: `Key ${FAL_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      image_url: `data:${mimeType};base64,${base64}`,
       coarse: false,
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`fal.ai lineart error: ${response.status} - ${errorText}`);
+    throw new Error(`Lineart error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -134,10 +178,70 @@ async function extractLineartWithFal(
     console.log('Lineart extraction successful');
     return fetchImageAsDataUri(data.image.url);
   }
-  throw new Error('No image in fal.ai lineart response');
+  throw new Error('No image in lineart response');
 }
 
-// Fallback: FLUX Kontext directly from photo (if lineart fails)
+// ─── Step 2c: Invert image colors with sharp ────────────────────────────────
+
+async function invertImage(imageDataUri: string): Promise<string> {
+  const { base64 } = parseDataUri(imageDataUri);
+  const inputBuffer = Buffer.from(base64, 'base64');
+
+  console.log('Step 2c: Inverting lineart colors...');
+  const outputBuffer = await sharp(inputBuffer)
+    .negate()
+    .grayscale()
+    .png()
+    .toBuffer();
+
+  const outputBase64 = outputBuffer.toString('base64');
+  return `data:image/png;base64,${outputBase64}`;
+}
+
+// ─── Step 2d: FLUX ControlNet — lineart-guided fashion flat generation ───────
+
+async function generateFlatWithControlNet(
+  lineartDataUri: string,
+  garmentType: string,
+  claudeDescription: string
+): Promise<string> {
+  if (!FAL_KEY) throw new Error('FAL_KEY not configured');
+
+  console.log('Step 2d: Generating fashion flat with FLUX ControlNet...');
+  const response = await fetch('https://fal.run/fal-ai/flux-general', {
+    method: 'POST',
+    headers: {
+      Authorization: `Key ${FAL_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt: `Professional fashion flat technical drawing of a ${garmentType}. Clean black line art on pure white background. Flat lay front view, perfectly symmetrical. No body, no mannequin, no shading, no color, no gray tones. Sharp precise vector-like lines like Adobe Illustrator. ${claudeDescription}`,
+      controlnets: [{
+        path: 'promeai/FLUX.1-controlnet-lineart-promeai',
+        control_image_url: lineartDataUri,
+        conditioning_scale: 0.8,
+      }],
+      num_inference_steps: 28,
+      guidance_scale: 3.5,
+      output_format: 'png',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`FLUX ControlNet error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  if (data.images?.[0]?.url) {
+    console.log('FLUX ControlNet generation successful');
+    return fetchImageAsDataUri(data.images[0].url);
+  }
+  throw new Error('No image in FLUX ControlNet response');
+}
+
+// ─── Fallback: FLUX Kontext directly from photo ─────────────────────────────
+
 async function generateSketchDirectWithFlux(
   prompt: string,
   photoBase64: string,
@@ -145,6 +249,7 @@ async function generateSketchDirectWithFlux(
 ): Promise<string> {
   if (!FAL_KEY) throw new Error('FAL_KEY not configured');
 
+  console.log('Fallback: Direct FLUX Kontext from photo...');
   const response = await fetch('https://fal.run/fal-ai/flux-kontext/dev', {
     method: 'POST',
     headers: {
@@ -172,22 +277,36 @@ async function generateSketchDirectWithFlux(
   throw new Error('No image in FLUX Kontext response');
 }
 
-// Main pipeline: lineart extraction → fallback direct FLUX
+// ─── Main pipeline: bg removal → lineart → invert → ControlNet ─────────────
+
 async function generateSketch(
-  prompt: string,
+  fallbackPrompt: string,
   photoBase64: string,
-  photoMimeType: string
+  photoMimeType: string,
+  garmentType: string,
+  claudeDescription: string
 ): Promise<string> {
   if (!FAL_KEY) throw new Error('FAL_KEY not configured');
 
-  // Lineart extraction — faithful edge tracing, no AI reinterpretation
   try {
-    return await extractLineartWithFal(photoBase64, photoMimeType);
+    // Step 1: Remove background
+    const cleanPhoto = await removeBackground(photoBase64, photoMimeType);
+
+    // Step 2: Extract lineart from clean photo
+    const lineart = await extractLineart(cleanPhoto);
+
+    // Step 3: Invert colors (white-on-dark → black-on-white)
+    const invertedLineart = await invertImage(lineart);
+
+    // Step 4: Generate fashion flat guided by lineart structure
+    return await generateFlatWithControlNet(invertedLineart, garmentType, claudeDescription);
   } catch (err) {
-    console.error('Lineart extraction failed, falling back to direct FLUX:', err);
-    return await generateSketchDirectWithFlux(prompt, photoBase64, photoMimeType);
+    console.error('Pipeline failed, falling back to direct FLUX Kontext:', err);
+    return await generateSketchDirectWithFlux(fallbackPrompt, photoBase64, photoMimeType);
   }
 }
+
+// ─── API Route ───────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
@@ -215,17 +334,23 @@ export async function POST(req: NextRequest) {
 
     const primaryPhoto = body.images[0];
 
-    // Step 1: Claude analyzes photos → detailed descriptions + 4 concepts
+    // Step 1: Claude analyzes photos → garment description
     console.log('Step 1: Claude analyzing photos...');
     const { concepts } = await generateConcepts(body);
     console.log(`Generated ${concepts.length} concepts`);
 
-    // Step 2: Lineart extraction → FLUX cleanup for each concept
-    console.log('Step 2: Generating sketches (lineart → FLUX cleanup)...');
+    // Step 2: Pipeline — bg removal → lineart → invert → ControlNet flat
+    console.log('Step 2: Generating sketches (BiRefNet → Lineart → Invert → ControlNet)...');
     const sketchOptions = await Promise.all(
       concepts.map(async (concept) => {
-        const frontPrompt = buildPhotoToSketchPrompt(body.garmentType, concept.description);
-        const frontImage = await generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType);
+        const fallbackPrompt = buildPhotoToSketchPrompt(body.garmentType, concept.description);
+        const frontImage = await generateSketch(
+          fallbackPrompt,
+          primaryPhoto.base64,
+          primaryPhoto.mimeType,
+          body.garmentType,
+          concept.description
+        );
 
         return {
           id: concept.id,
