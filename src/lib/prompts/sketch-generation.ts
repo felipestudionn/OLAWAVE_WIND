@@ -1,61 +1,42 @@
 // Concept generation — primary photo is THE garment, secondary photos add detail modifications
-export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto de referencia y describir la prenda con máximo detalle para reproducirla fielmente como un sketch técnico de vista frontal.
+export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es describir la prenda de la foto de forma concisa y precisa para que un modelo de IA pueda dibujarla fielmente como un sketch técnico.
 
 INSTRUCCIONES:
-1. Analiza la FOTO PRINCIPAL con lupa: silueta exacta, corte, largo, mangas, cuello, cierres, bolsillos, costuras
-2. CIERRES: describe tipo exacto (botones, alamares/brandeburgos, cremallera, corchetes, lazos), número exacto, posición exacta, forma del cierre
-3. CUELLO: tipo exacto (mao/mandarín, solapa, cuello camisero, etc.), altura, forma, acabado
-4. BOLSILLOS: tipo (plastrón, vivo, ojal, parche), posición, tamaño, tapeta si la tiene
-5. COSTURAS: pespuntes visibles, costuras decorativas, ribetes, vivos, acabados de bordes
-6. MANGAS: tipo (montada, raglán, japonesa), largo exacto, puño, acabado
-7. PROPORCIONES: largo total respecto a cadera, ancho de hombros, cintura marcada o recta
+1. Describe la silueta general: tipo de prenda, largo, forma, proporciones
+2. Describe cada elemento visible: cuello, cierres, bolsillos, mangas, puños, costuras decorativas
+3. Sé CONCISO — una frase por elemento. No repitas información ni exageres.
+4. El objetivo es que el sketch sea FIEL a la foto, no que tenga más detalle del necesario.
 
 FORMATO DE SALIDA (JSON puro, sin markdown):
 {
-  "baseDescription": "Descripción completa de la silueta: forma, largo, ancho, tipo de manga, proporciones exactas",
+  "baseDescription": "Descripción concisa de la silueta y proporciones generales",
   "concepts": [
     {
       "id": "1",
       "title": "Fiel al original",
-      "description": "Copia exacta de la foto principal. Vista frontal: [descripción ultra-detallada de cada elemento visible: silueta, corte, cuello, mangas, cierres, costuras, proporciones, acabados, bolsillos, largo]."
+      "description": "Descripción concisa de la prenda vista frontal: silueta, cuello, cierres, bolsillos, mangas, acabados."
     }
   ]
 }
 
 REGLAS:
 - Escribe en español
-- Solo 1 concepto: "Fiel al original" — reproducción 100% fiel de la foto
-- Describir solo VISTA FRONTAL con máximo detalle constructivo
-- Cada detalle debe ser descrito: tipo exacto de cuello, forma y posición de cierre, bolsillos, acabados, costuras, pespuntes, proporciones, largo de manga`;
+- Solo 1 concepto: "Fiel al original"
+- Solo vista frontal
+- Descripción CONCISA y PRECISA — no exagerar ni inventar detalles que no se ven claramente`;
 
 // FLUX Kontext image editing prompt: photo → fashion flat sketch (front view only)
 export function buildPhotoToSketchPrompt(
   garmentType: string,
   claudeDescription: string
 ): string {
-  return `Redraw this exact ${garmentType} as a professional fashion flat technical drawing. Copy EVERY detail from this photo exactly.
+  return `Convert this ${garmentType} photo into a clean technical fashion flat drawing. Be faithful to the original — do not exaggerate, add, or change any details.
 
-COPY THESE DETAILS EXACTLY FROM THE PHOTO:
-- Exact collar type and shape as shown
-- Exact closure type: buttons, toggles, zippers, frog closures — draw them exactly as they appear
-- Exact number and position of closures/buttons
-- Exact pocket shapes, flap details, welt pockets
-- Exact seam lines, topstitching, decorative stitching
-- Exact proportions: sleeve length, body length, shoulder width
-- Exact hem shape and finishing
+STYLE: Clean vector-like black line art on pure white background. Flat lay front view, symmetrical. Sharp precise lines like Adobe Illustrator. No color, no shading, no body, no mannequin, no text.
 
-DRAWING STYLE:
-- Pure white background, nothing else
-- Flat lay perspective: garment laid flat on a table
-- Bold clean BLACK outlines (2-3px weight), perfectly symmetrical
-- Sharp precise lines like Adobe Illustrator or CLO3D fashion flat
-- Fine dashed lines for stitch details
-- No color, no shading, no gray, no texture — only black line art
-- No body, no mannequin, no text, no labels, no shadows
+ACCURACY: Reproduce the garment exactly as shown in the photo — same proportions, same closures, same pockets, same collar shape. Do not embellish or stylize.
 
-IMPORTANT: Do not simplify or generalize the design. Every closure, every seam, every pocket detail from the original photo MUST appear in the sketch. This is a technical drawing for manufacturing — accuracy is critical.
-
-GARMENT DETAILS: ${claudeDescription}`;
+REFERENCE: ${claudeDescription}`;
 }
 
 // Prompt for Claude to propose construction notes

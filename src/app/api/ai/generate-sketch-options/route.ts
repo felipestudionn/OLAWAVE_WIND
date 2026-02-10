@@ -121,7 +121,7 @@ async function generateSketchWithFluxKontext(
     body: JSON.stringify({
       prompt,
       image_url: `data:${photoMimeType};base64,${photoBase64}`,
-      guidance_scale: 15,
+      guidance_scale: 7,
       num_inference_steps: 50,
       output_format: 'png',
     }),
