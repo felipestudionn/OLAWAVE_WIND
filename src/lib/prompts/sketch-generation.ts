@@ -1,11 +1,10 @@
 // Concept generation — primary photo is THE garment, secondary photos add detail modifications
-export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto de referencia y describir la prenda con máximo detalle para reproducirla fielmente como un sketch técnico.
+export const CONCEPT_GENERATION_PROMPT = `Eres un diseñador técnico de moda experto. Tu trabajo es analizar la foto de referencia y describir la prenda con máximo detalle para reproducirla fielmente como un sketch técnico de vista frontal.
 
 INSTRUCCIONES:
 1. Analiza la FOTO PRINCIPAL en detalle absoluto: silueta, corte, largo, mangas, cuello, detalles constructivos, proporciones, acabados, cierres, bolsillos, costuras visibles
-2. Describe VISTA FRONTAL: cada detalle visible desde delante
-3. Describe VISTA TRASERA: cómo sería la parte de atrás (inferir de la silueta si no es visible)
-4. Incluye todos los detalles constructivos: tipo de costura, tipo de cierre, acabados, ribetes
+2. Describe VISTA FRONTAL con máximo detalle: cada elemento visible desde delante, incluyendo tipo exacto de cuello, forma de cierre, número y posición de botones, tipo de bolsillos, costuras decorativas, pespuntes, acabados de bordes, proporciones exactas
+3. Incluye todos los detalles constructivos: tipo de costura, tipo de cierre, acabados, ribetes, entretelas visibles
 
 FORMATO DE SALIDA (JSON puro, sin markdown):
 {
@@ -14,7 +13,7 @@ FORMATO DE SALIDA (JSON puro, sin markdown):
     {
       "id": "1",
       "title": "Fiel al original",
-      "description": "Copia exacta de la foto principal. Vista frontal: [descripción detallada]. Vista trasera: [descripción detallada]."
+      "description": "Copia exacta de la foto principal. Vista frontal: [descripción ultra-detallada de cada elemento visible: silueta, corte, cuello, mangas, cierres, costuras, proporciones, acabados, bolsillos, largo]."
     }
   ]
 }
@@ -22,20 +21,40 @@ FORMATO DE SALIDA (JSON puro, sin markdown):
 REGLAS:
 - Escribe en español
 - Solo 1 concepto: "Fiel al original" — reproducción 100% fiel de la foto
-- Describir VISTA FRONTAL y VISTA TRASERA con máximo detalle constructivo
-- Incluir: tipo de cuello, tipo de cierre, bolsillos, costuras, acabados, proporciones, largo de manga`;
+- Describir solo VISTA FRONTAL con máximo detalle constructivo
+- Cada detalle debe ser descrito: tipo exacto de cuello, forma y posición de cierre, bolsillos, acabados, costuras, pespuntes, proporciones, largo de manga`;
 
-// FLUX Kontext image editing prompt: photo → fashion flat sketch
+// FLUX Kontext image editing prompt: photo → fashion flat sketch (front view only)
 export function buildPhotoToSketchPrompt(
-  view: 'front' | 'back',
   garmentType: string,
   claudeDescription: string
 ): string {
-  if (view === 'front') {
-    return `Redraw this ${garmentType} as a professional fashion flat sketch illustration. Bold thick black outlines on pure white background. Clean confident lines like a fashion CAD technical drawing. Show the exact same garment: same silhouette, same closures, same collar, same proportions. Flat lay perspective, no body, no mannequin. Only bold black line art, no color, no shading, no texture, no gray tones. No text or labels.`;
-  }
+  return `Transform this ${garmentType} into a professional fashion flat technical drawing (fashion flat sketch).
 
-  return `Redraw this ${garmentType} as a BACK VIEW professional fashion flat sketch illustration. Bold thick black outlines on pure white background. Clean confident lines like a fashion CAD technical drawing. Same silhouette and proportions as the front view. Show back construction: seams, yoke, darts, vents. Flat lay, no body, no mannequin. Only bold black line art, no color, no shading, no texture, no gray tones. No text or labels. Details: ${claudeDescription}`;
+CRITICAL REQUIREMENTS:
+- Pure white background (#FFFFFF), absolutely nothing else in the background
+- Single garment centered, perfectly symmetrical, facing straight forward
+- Flat lay perspective: as if the garment is laid flat on a table, no body, no mannequin, no hanger
+- Bold, clean, confident BLACK outlines (2-3px stroke weight)
+- All construction lines must be perfectly straight and parallel where they should be
+- Symmetrical: left side mirrors right side exactly
+
+STYLE:
+- Professional fashion CAD technical illustration style
+- Like a high-end fashion flat from CLO3D or Adobe Illustrator
+- Sharp precise lines, no sketchy or hand-drawn wobble
+- Include every visible construction detail: seams, darts, topstitching, buttons, zippers, pockets, collars, cuffs
+- Show stitch lines as fine dashed lines where appropriate
+- Buttons as small filled circles with cross-stitch detail
+
+ABSOLUTELY NO:
+- No color, no shading, no gradients, no gray tones, no texture fills
+- No text, no labels, no annotations
+- No background elements, no shadows
+- No body or mannequin underneath
+- No wrinkles or draping — this is a flat technical drawing
+
+GARMENT DETAILS: ${claudeDescription}`;
 }
 
 // Prompt for Claude to propose construction notes
@@ -58,13 +77,13 @@ TIPOS DE NOTAS:
 - Material o entretela (ej: "Entretela termoadhesiva en cuello y puños")
 
 POSICIONES VÁLIDAS:
-- "front-collar", "back-collar"
-- "front-shoulder", "back-shoulder"
-- "front-bust", "back-bust"
-- "front-waist", "back-waist"
-- "front-hip", "back-hip"
-- "front-hem", "back-hem"
-- "front-sleeve", "back-sleeve"
+- "front-collar"
+- "front-shoulder"
+- "front-bust"
+- "front-waist"
+- "front-hip"
+- "front-hem"
+- "front-sleeve"
 
 COORDENADAS:
 - x: entre 200 y 280 (para notas del lado derecho)
@@ -115,7 +134,7 @@ ${photoInstructions}
 RECUERDA:
 - Solo 1 concepto: "Fiel al original" — copia exacta al 100%
 - Incluye "baseDescription" con la silueta completa
-- Describe vista frontal y trasera con todos los detalles constructivos
+- Describe solo vista frontal con todos los detalles constructivos
 - Solo JSON, sin markdown.`;
 }
 

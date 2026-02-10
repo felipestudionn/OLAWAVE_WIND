@@ -121,8 +121,8 @@ async function generateSketchWithFluxKontext(
     body: JSON.stringify({
       prompt,
       image_url: `data:${photoMimeType};base64,${photoBase64}`,
-      guidance_scale: 10,
-      num_inference_steps: 40,
+      guidance_scale: 15,
+      num_inference_steps: 50,
       output_format: 'png',
     }),
   });
@@ -189,19 +189,13 @@ export async function POST(req: NextRequest) {
     console.log('Step 2: Generating sketches with HuggingFace image-to-image...');
     const sketchOptions = await Promise.all(
       concepts.map(async (concept) => {
-        const frontPrompt = buildPhotoToSketchPrompt('front', body.garmentType, concept.description);
-        const backPrompt = buildPhotoToSketchPrompt('back', body.garmentType, concept.description);
-
-        const [frontImage, backImage] = await Promise.all([
-          generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType, 'front'),
-          generateSketch(backPrompt, primaryPhoto.base64, primaryPhoto.mimeType, 'back'),
-        ]);
+        const frontPrompt = buildPhotoToSketchPrompt(body.garmentType, concept.description);
+        const frontImage = await generateSketch(frontPrompt, primaryPhoto.base64, primaryPhoto.mimeType, 'front');
 
         return {
           id: concept.id,
           description: `${concept.title}: ${concept.description}`,
           frontImageBase64: frontImage,
-          backImageBase64: backImage,
         };
       })
     );

@@ -164,7 +164,7 @@ export default function SketchFlowPage() {
           additional_notes: garmentDetails.additionalNotes,
           reference_images: [],
           sketch_front_image: selectedSketch.frontImageBase64,
-          sketch_back_image: selectedSketch.backImageBase64,
+          sketch_back_image: null,
           construction_notes: selectedNotes,
           suggested_measurements: suggestedMeasurements,
           status: 'complete',

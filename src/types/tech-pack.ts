@@ -51,7 +51,7 @@ export interface SketchOption {
   id: string;
   description: string;
   frontImageBase64: string;
-  backImageBase64: string;
+  backImageBase64?: string;
 }
 
 export interface ProposedNote {

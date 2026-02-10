@@ -45,9 +45,8 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
       setMeasurements((prev) => ({ ...prev, [key]: value }));
     }, []);
 
-    // Separate notes for front and back
-    const frontNotes = notes.filter((n) => !n.position.includes('back'));
-    const backNotes = notes.filter((n) => n.position.includes('back'));
+    // All notes are front-only
+    const frontNotes = notes;
 
     return (
       <div
@@ -72,8 +71,8 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
           onFieldChange={handleHeaderChange}
         />
 
-        {/* Sketch area — main body */}
-        <div className="flex gap-2 mb-4" style={{ minHeight: 480 }}>
+        {/* Sketch area — single front view */}
+        <div className="flex gap-2 mb-4" style={{ minHeight: 560 }}>
           {/* Measurement lines — left side */}
           <div className="relative flex-shrink-0" style={{ width: 60 }}>
             <MeasurementLines
@@ -85,8 +84,8 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
             />
           </div>
 
-          {/* Front sketch image */}
-          <div className="flex-1 relative" style={{ maxWidth: 320, height: 480 }}>
+          {/* Front sketch image — centered, larger */}
+          <div className="flex-1 relative" style={{ maxWidth: 480, height: 560, margin: '0 auto' }}>
             <div className="w-full h-full flex items-center justify-center bg-white">
               <img
                 src={selectedSketch.frontImageBase64}
@@ -109,33 +108,6 @@ const TechPackPreview = forwardRef<HTMLDivElement, TechPackPreviewProps>(
             </div>
             <div className="absolute bottom-0 left-0 right-0 text-center text-[9px] text-gray-400 font-medium uppercase tracking-wider">
               Frontal
-            </div>
-          </div>
-
-          {/* Back sketch image */}
-          <div className="flex-1 relative" style={{ maxWidth: 320, height: 480 }}>
-            <div className="w-full h-full flex items-center justify-center bg-white">
-              <img
-                src={selectedSketch.backImageBase64}
-                alt="Vista trasera"
-                className="max-w-full max-h-full object-contain"
-              />
-            </div>
-            {/* Back notes */}
-            <div className="absolute inset-0 pointer-events-none">
-              {backNotes.map((note, i) => (
-                <RedNote
-                  key={`back-${i}`}
-                  note={note}
-                  onTextChange={(text) => {
-                    const originalIndex = notes.findIndex((n) => n === note);
-                    if (originalIndex !== -1) handleNoteChange(originalIndex, text);
-                  }}
-                />
-              ))}
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 text-center text-[9px] text-gray-400 font-medium uppercase tracking-wider">
-              Trasera
             </div>
           </div>
         </div>

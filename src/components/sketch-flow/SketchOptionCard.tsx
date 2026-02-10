@@ -29,27 +29,16 @@ export default function SketchOptionCard({ option, isSelected, onSelect }: Sketc
         </div>
       )}
 
-      {/* Sketch previews */}
-      <div className="flex gap-2 mb-2">
-        {/* Front */}
-        <div className="flex-1 bg-white border border-gray-100 rounded-lg overflow-hidden">
+      {/* Sketch preview */}
+      <div className="mb-2">
+        <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
           <img
             src={option.frontImageBase64}
             alt="Vista frontal"
             className="w-full h-auto object-contain"
-            style={{ maxHeight: 200 }}
+            style={{ maxHeight: 280 }}
           />
           <p className="text-[8px] text-gray-400 text-center py-0.5 uppercase tracking-wider">Frontal</p>
-        </div>
-        {/* Back */}
-        <div className="flex-1 bg-white border border-gray-100 rounded-lg overflow-hidden">
-          <img
-            src={option.backImageBase64}
-            alt="Vista trasera"
-            className="w-full h-auto object-contain"
-            style={{ maxHeight: 200 }}
-          />
-          <p className="text-[8px] text-gray-400 text-center py-0.5 uppercase tracking-wider">Trasera</p>
         </div>
       </div>
 
